@@ -187,19 +187,15 @@
   .rows-wrap { display:flex; flex-direction:column; gap:7px }
 
   /* ── BUDGET ROWS ── */
-  .budget-row {
-    background:var(--surface);
-    backdrop-filter:var(--blur); -webkit-backdrop-filter:var(--blur);
-    border:1px solid var(--border); border-radius:var(--radius-sm);
-    padding:13px 15px; transition:all .2s;
-  }
+  .budget-row { background:var(--surface); backdrop-filter:var(--blur); -webkit-backdrop-filter:var(--blur); border:1px solid var(--border); border-radius:var(--radius-sm); padding:13px 15px; transition:all .2s; }
   .budget-row:hover { background:var(--surface-hv); border-color:var(--border-hv) }
   .budget-row.done { border-left:3px solid var(--c-save) }
 
-  .row-top { display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap }
+  .row-top { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
   .row-dot { width:7px; height:7px; border-radius:50%; background:var(--text-3); flex-shrink:0 }
   .budget-row.done .row-dot { background:var(--c-save); box-shadow:0 0 6px rgba(52,211,153,.5) }
-  .row-cat { font-size:14px; font-weight:600; flex:1; min-width:0; color:var(--text) }
+  .row-cat { font-size:14px; font-weight:600; color:var(--text); flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row-tags { display:flex; align-items:center; gap:5px; flex-wrap:wrap; margin-bottom:8px; }
 
   .badge { font-size:9px; font-family:'JetBrains Mono',monospace; padding:2px 7px; border-radius:4px; text-transform:uppercase; letter-spacing:.5px; font-weight:700; white-space:nowrap }
   .badge.ok   { background:rgba(52,211,153,.12);  color:var(--c-save);  border:1px solid rgba(52,211,153,.25) }
@@ -551,10 +547,6 @@
   </div>
 
   <footer>© 2026 &nbsp;·&nbsp; @savio.rocha_ &nbsp;·&nbsp; Todos os direitos reservados</footer>
-  <div style="position:fixed;bottom:20px;left:20px;display:flex;gap:8px;z-index:50">
-    <button onclick="exportData()" style="padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-muted);font-family:JetBrains Mono,monospace;font-size:10px;font-weight:600;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--green)';this.style.color='var(--green)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">⬇ exportar dados</button>
-    <label style="padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-muted);font-family:JetBrains Mono,monospace;font-size:10px;font-weight:600;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">⬆ importar dados<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
-  </div>
 </div>
 
 <!-- HAMBURGER BUTTON -->
@@ -925,10 +917,11 @@ function renderPanel(m) {
       var rowClass = 'budget-row' + (r.done ? ' done' : '');
       var dotHtml = '<span class="row-dot"></span>';
       var bancoHtml = r.banco ? '<span class="banco-tag">🏦 ' + r.banco + '</span>' : '';
-      var tipoLabel = r.tipo === 'N' ? 'Necessidade' : r.tipo === 'D' ? 'Desejo' : r.tipo === 'P' ? 'Poupanca' : '';
+      var tipoLabel = r.tipo === 'N' ? 'Necessidade' : r.tipo === 'D' ? 'Desejo' : r.tipo === 'P' ? 'Poupança' : '';
       var tipoHtml = tipoLabel ? '<span class="tipo-tag ' + r.tipo + '">' + tipoLabel + '</span>' : '';
       var badgeHtml = '<span class="badge ' + (r.done ? 'ok' : 'pend') + '">' + (r.done ? 'ok' : 'pendente') + '</span>';
-      var editBtn = '<button class="btn-icon" style="margin-left:auto" onclick="openEdit(\'' + m + '\',' + r.id + ')">✏️</button>';
+      var tagsHtml = (tipoHtml || bancoHtml || badgeHtml) ? '<div class="row-tags">' + tipoHtml + bancoHtml + badgeHtml + '</div>' : '';
+      var editBtn = '<button class="btn-icon" style="margin-left:auto;flex-shrink:0" onclick="openEdit(\'' + m + '\',' + r.id + ')">✏️</button>';
       var diffHtml = '';
       if (d !== null) {
         var dcls = d >= 0 ? 'num-diff-pos' : 'num-diff-neg';
@@ -936,8 +929,9 @@ function renderPanel(m) {
       }
       var fillClass = 'progress-fill ' + (r.done ? 'ok' : fc);
       html += '<div class="' + rowClass + '">'
-        + '<div class="row-top">' + dotHtml + '<span class="row-cat">' + r.cat + '</span>' + tipoHtml + bancoHtml + badgeHtml + editBtn + '</div>'
-        + '<div class="row-nums"><span class="num-plan">' + fmt(r.plan) + '</span><span class="num-arrow">-></span>'
+        + '<div class="row-top">' + dotHtml + '<span class="row-cat">' + r.cat + '</span>' + editBtn + '</div>'
+        + tagsHtml
+        + '<div class="row-nums"><span class="num-plan">' + fmt(r.plan) + '</span><span class="num-arrow">→</span>'
         + '<span class="num-gasto">' + (r.gasto != null ? fmt(r.gasto) : '-') + '</span>' + diffHtml + '</div>'
         + '<div class="progress-bar"><div class="' + fillClass + '" style="width:' + pct + '%"></div></div>'
         + '</div>';
