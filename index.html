@@ -543,50 +543,6 @@
 var MONTHS = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
 var BANCO_DEFAULTS = ['Nubank','Inter','Bradesco','Itau','BB','Caixa','C6','PicPay'];
 
-var SEED_BUDGET = {
-  FEV:[
-    {id:1,cat:'Alimentacao',plan:214,gasto:214,banco:'',tipo:'N',done:true},
-    {id:2,cat:'Lazer',plan:130.46,gasto:130.46,banco:'',tipo:'D',done:true},
-    {id:3,cat:'Cuidado Pessoal',plan:29,gasto:29,banco:'',tipo:'N',done:true},
-    {id:4,cat:'Emergencia',plan:33,gasto:33,banco:'',tipo:'P',done:true}
-  ],
-  MAR:[
-    {id:1,cat:'Alimentacao',plan:200,gasto:39,banco:'',tipo:'N',done:false},
-    {id:2,cat:'Lazer / Esporte',plan:150,gasto:83,banco:'',tipo:'D',done:false},
-    {id:3,cat:'Contas / Compras',plan:2322,gasto:2322,banco:'',tipo:'N',done:true},
-    {id:4,cat:'Cuidado Pessoal',plan:15,gasto:null,banco:'',tipo:'N',done:false},
-    {id:5,cat:'Assinaturas',plan:72,gasto:72,banco:'',tipo:'D',done:true},
-    {id:6,cat:'Emergencia',plan:297,gasto:null,banco:'',tipo:'P',done:false},
-    {id:7,cat:'Tesouro Direto',plan:57,gasto:57,banco:'',tipo:'P',done:false},
-    {id:8,cat:'Ajuda',plan:50,gasto:null,banco:'',tipo:'D',done:false},
-    {id:9,cat:'Dizimo',plan:100,gasto:null,banco:'',tipo:'D',done:false},
-    {id:10,cat:'Presentes',plan:null,gasto:null,banco:'',tipo:'',done:false}
-  ],
-  ABR:[
-    {id:1,cat:'Alimentacao',plan:200,gasto:null,banco:'',tipo:'N',done:false},
-    {id:2,cat:'Lazer',plan:50,gasto:null,banco:'',tipo:'D',done:false},
-    {id:3,cat:'Contas',plan:406,gasto:null,banco:'',tipo:'N',done:false},
-    {id:4,cat:'Cuidado Pessoal',plan:25,gasto:null,banco:'',tipo:'N',done:false},
-    {id:5,cat:'Assinaturas',plan:72,gasto:null,banco:'',tipo:'D',done:false},
-    {id:6,cat:'Emergencia',plan:50,gasto:null,banco:'',tipo:'P',done:false},
-    {id:7,cat:'Tesouro Direto',plan:57,gasto:null,banco:'',tipo:'P',done:false},
-    {id:8,cat:'Ajuda',plan:50,gasto:null,banco:'',tipo:'D',done:false},
-    {id:9,cat:'Dizimo',plan:100,gasto:null,banco:'',tipo:'D',done:false}
-  ]
-};
-
-var SEED_OBJ = [
-  {id:1,nome:'Notebook',total:4500,tenho:850,prio:'Baixa',status:'Parcelado',meses:['MAR','ABR'],pagamentos:{MAR:500,ABR:350}},
-  {id:2,nome:'Bike',total:881,tenho:881,prio:'Alta',status:'Comprado',meses:['MAR'],pagamentos:{}},
-  {id:3,nome:'Tenis',total:312,tenho:312,prio:'Baixa',status:'Comprado',meses:['MAR'],pagamentos:{}},
-  {id:4,nome:'Fone',total:50,tenho:50,prio:'Media',status:'Comprado',meses:['MAR'],pagamentos:{}},
-  {id:5,nome:'Cobertura',total:48,tenho:48,prio:'Baixa',status:'Comprado',meses:['MAR'],pagamentos:{}},
-  {id:6,nome:'Capa de Dormir',total:32,tenho:32,prio:'Alta',status:'Comprado',meses:['MAR'],pagamentos:{}},
-  {id:7,nome:'Camisa',total:58,tenho:58,prio:'Baixa',status:'Comprado',meses:['MAR'],pagamentos:{}},
-  {id:8,nome:'Biblia',total:59,tenho:59,prio:'Baixa',status:'Comprado',meses:['MAR'],pagamentos:{}},
-  {id:9,nome:'Spray',total:34,tenho:34,prio:'Baixa',status:'Comprado',meses:['MAR'],pagamentos:{}}
-];
-
 var db = {};
 var objetivos = [];
 var activeMonth = 'MAR';
