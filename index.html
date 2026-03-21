@@ -1107,7 +1107,8 @@ function renderObjetivos() {
 
   if (!list.length && objetivos.length === 0) {
     summary.innerHTML = '';
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">🎯</div><p>Nenhum objetivo cadastrado</p></div>';
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">🎯</div><p>Nenhum objetivo cadastrado</p></div>'
+      + '<button class="obj-add-btn" onclick="openObjModal()">+ Novo objetivo</button>';
     return;
   }
   if (!list.length) {
