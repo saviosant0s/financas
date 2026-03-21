@@ -1544,6 +1544,7 @@ function handleAuthAction() {
   if (!fbReady) { showToast('Configure o Firebase primeiro', 'error'); return; }
   if (fbUser) {
     fbUser = null; fbIdToken = null;
+    if (_refreshTimer) { clearTimeout(_refreshTimer); _refreshTimer = null; }
     localStorage.removeItem('fbSession');
     localStorage.removeItem('fin-db');
     localStorage.removeItem('fin-obj');
@@ -1589,13 +1590,55 @@ async function onGoogleCredential(response) {
     if (!res.ok) throw new Error(data.error && data.error.message || 'auth failed');
     fbIdToken = data.idToken;
     fbUser = { uid: data.localId, displayName: data.displayName, email: data.email, photoURL: data.photoUrl };
-    localStorage.setItem('fbSession', JSON.stringify({ t: fbIdToken, u: fbUser, exp: Date.now() + 55*60*1000 }));
+    // Store refresh token and expiry
+    var exp = Date.now() + 55 * 60 * 1000;
+    localStorage.setItem('fbSession', JSON.stringify({ t: fbIdToken, u: fbUser, exp: exp, rt: data.refreshToken }));
+    scheduleTokenRefresh(exp);
     updateAuthBar();
     await syncFromCloud();
     showToast('Logado!', 'success');
   } catch(e) {
     setAuthSyncStatus('erro: ' + e.message);
     showToast('Erro: ' + e.message, 'error');
+  }
+}
+
+// Auto-refresh token before it expires
+var _refreshTimer = null;
+function scheduleTokenRefresh(expMs) {
+  if (_refreshTimer) clearTimeout(_refreshTimer);
+  var msUntilRefresh = expMs - Date.now() - 2 * 60 * 1000; // refresh 2 min before expiry
+  if (msUntilRefresh < 0) msUntilRefresh = 0;
+  _refreshTimer = setTimeout(doTokenRefresh, msUntilRefresh);
+}
+
+async function doTokenRefresh() {
+  try {
+    var s = JSON.parse(localStorage.getItem('fbSession') || 'null');
+    if (!s || !s.rt) return; // no refresh token — user must re-login
+    var cfg = getFbConfig();
+    var res = await fetch('https://securetoken.googleapis.com/v1/token?key=' + cfg.apiKey, {
+      method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'},
+      body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(s.rt)
+    });
+    var data = await res.json();
+    if (!res.ok) throw new Error('refresh failed');
+    fbIdToken = data.id_token;
+    var exp = Date.now() + 55 * 60 * 1000;
+    s.t = fbIdToken; s.exp = exp; s.rt = data.refresh_token;
+    localStorage.setItem('fbSession', JSON.stringify(s));
+    scheduleTokenRefresh(exp);
+    setAuthSyncStatus('sessão renovada ✓');
+  } catch(e) {
+    // Refresh failed — clear session and ask user to re-login
+    console.warn('Token refresh failed:', e.message);
+    fbIdToken = null;
+    localStorage.removeItem('fbSession');
+    setAuthSyncStatus('sessão expirada — faça login novamente');
+    setTimeout(function() {
+      fbUser = null;
+      updateAuthBar();
+    }, 3000);
   }
 }
 
@@ -1645,14 +1688,20 @@ function tryRestoreSession() {
   var cfg = getFbConfig();
   if (!cfg || !cfg.apiKey) return;
   fbReady = true;
-  // Always call updateAuthBar — shows login screen if no user
   updateAuthBar();
   try {
     var s = JSON.parse(localStorage.getItem('fbSession') || 'null');
     if (s && s.exp > Date.now()) {
       fbIdToken = s.t; fbUser = s.u;
+      scheduleTokenRefresh(s.exp);
       updateAuthBar();
       syncFromCloud();
+    } else if (s && s.rt) {
+      // Token expired but we have a refresh token — refresh immediately
+      fbUser = s.u;
+      doTokenRefresh().then(function() {
+        if (fbIdToken) { updateAuthBar(); syncFromCloud(); }
+      });
     }
   } catch(e) {}
 }
