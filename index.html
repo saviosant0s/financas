@@ -300,13 +300,13 @@
 
     <div class="form-row">
       <div class="form-group"><label class="form-label">API Key</label><input class="form-input" type="text" id="fbApiKey" placeholder="AIzaSy..."></div>
-      <div class="form-group"><label class="form-label">Auth Domain</label><input class="form-input" type="text" id="fbAuthDomain" placeholder="seu-projeto.firebaseapp.com"></div>
+      <div class="form-group"><label class="form-label">Project ID</label><input class="form-input" type="text" id="fbAuthDomain" placeholder="financas-867c5"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Project ID</label><input class="form-input" type="text" id="fbProjectId" placeholder="seu-projeto"></div>
-      <div class="form-group"><label class="form-label">App ID</label><input class="form-input" type="text" id="fbAppId" placeholder="1:123:web:abc"></div>
+      <div class="form-group"><label class="form-label">Project ID (confirmar)</label><input class="form-input" type="text" id="fbProjectId" placeholder="financas-867c5"></div>
+      <div class="form-group"><label class="form-label">Client ID (OAuth) <span>· ver abaixo</span></label><input class="form-input" type="text" id="fbAppId" placeholder="34624127819-xxx.apps.googleusercontent.com"></div>
     </div>
-    <div style="font-size:11px;color:var(--text-dim);font-family:JetBrains Mono,monospace;margin-bottom:16px">Os outros campos (storageBucket, messagingSenderId) nao sao necessarios.</div>
+    <div style="font-size:11px;color:var(--text-dim);font-family:JetBrains Mono,monospace;margin-bottom:16px">Client ID: Firebase Console → Authentication → Metodo de login → Google → ID do cliente Web OAuth</div>
     <button onclick="saveFirebaseConfig()" style="width:100%;padding:12px;background:var(--green);color:#000;border:none;border-radius:var(--radius-sm);font-family:Sora,sans-serif;font-weight:700;font-size:14px;cursor:pointer">Salvar e conectar</button>
     <div id="fbStatus" style="margin-top:12px;font-size:12px;font-family:JetBrains Mono,monospace;text-align:center;min-height:18px"></div>
   </div>
@@ -1445,47 +1445,77 @@ async function syncPull() {
   } catch(e) { setSyncStatus('Erro de conexao. Tente a aba Copiar / Colar.', 'red'); }
 }
 
-// FIREBASE (compat SDK loaded via script tags in <head>)
-var fbApp  = null;
-var fbAuth = null;
-var fbDb   = null;
-var fbUser = null;
-var fbUnsub = null;
-var fbReady = false;
+// FIREBASE REST API (no SDK needed - uses fetch + Google Identity Services)
+var fbUser   = null;   // { uid, displayName, email, photoURL }
+var fbIdToken = null;  // Firebase ID token
+var fbReady  = false;
 
 function getFbConfig() {
   try { return JSON.parse(localStorage.getItem('fbConfig') || 'null'); } catch(e) { return null; }
 }
 
-function initFirebase(cfg) {
-  try {
-    if (typeof firebase === 'undefined') {
-      console.error('Firebase SDK nao carregado');
-      return false;
-    }
-    // delete previous app if exists
-    firebase.apps.forEach(function(a){ try{ a.delete(); }catch(e){} });
-    fbApp  = firebase.initializeApp(cfg);
-    fbAuth = firebase.auth();
-    fbDb   = firebase.firestore();
-    fbAuth.onAuthStateChanged(function(user) {
-      fbUser = user;
-      updateAuthBar();
-      if (user) fbListenUserData();
-      else { if (fbUnsub){ fbUnsub(); fbUnsub=null; } setAuthSyncStatus(''); }
-    });
-    fbReady = true;
-    return true;
-  } catch(e) {
-    console.error('Firebase init error', e);
-    return false;
-  }
+// Convert JS -> Firestore document fields
+function toFS(obj) {
+  var f = {};
+  Object.keys(obj).forEach(function(k){ f[k] = fsVal(obj[k]); });
+  return f;
+}
+function fsVal(v) {
+  if (v === null || v === undefined) return { nullValue: null };
+  if (typeof v === 'boolean')  return { booleanValue: v };
+  if (typeof v === 'number')   return { doubleValue: v };
+  if (typeof v === 'string')   return { stringValue: v };
+  if (Array.isArray(v))        return { arrayValue: { values: v.map(fsVal) } };
+  if (typeof v === 'object')   return { mapValue: { fields: toFS(v) } };
+  return { stringValue: String(v) };
+}
+function fromFS(fields) {
+  if (!fields) return {};
+  var obj = {};
+  Object.keys(fields).forEach(function(k){ obj[k] = fromFSVal(fields[k]); });
+  return obj;
+}
+function fromFSVal(v) {
+  if (!v) return null;
+  if ('nullValue'    in v) return null;
+  if ('booleanValue' in v) return v.booleanValue;
+  if ('integerValue' in v) return Number(v.integerValue);
+  if ('doubleValue'  in v) return v.doubleValue;
+  if ('stringValue'  in v) return v.stringValue;
+  if ('arrayValue'   in v) return (v.arrayValue.values||[]).map(fromFSVal);
+  if ('mapValue'     in v) return fromFS(v.mapValue.fields);
+  return null;
 }
 
+function fsUrl() {
+  var cfg = getFbConfig();
+  return 'https://firestore.googleapis.com/v1/projects/' + cfg.projectId +
+         '/databases/(default)/documents/users/' + fbUser.uid + '/data/financas';
+}
+
+async function fsGet() {
+  var res = await fetch(fsUrl(), { headers: { 'Authorization': 'Bearer ' + fbIdToken } });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error('fsGet ' + res.status);
+  return await res.json();
+}
+
+async function fsSet(payload) {
+  var body = JSON.stringify({ fields: toFS(payload) });
+  var headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + fbIdToken };
+  // Try POST (create), fall back to PATCH (update)
+  var res = await fetch(fsUrl() + '?currentDocument.exists=false', { method: 'POST', headers: headers, body: body });
+  if (res.status === 409 || res.status === 400) {
+    res = await fetch(fsUrl(), { method: 'PATCH', headers: headers, body: body });
+  }
+  if (!res.ok) { var e = await res.json(); console.error('fsSet', e); }
+}
+
+// Auth bar
 function updateAuthBar() {
-  var bar      = document.getElementById('authBar');
-  var btn      = document.getElementById('authActionBtn');
-  var nameEl   = document.getElementById('authName');
+  var bar = document.getElementById('authBar');
+  var btn = document.getElementById('authActionBtn');
+  var nameEl = document.getElementById('authName');
   var avatarEl = document.getElementById('authAvatar');
   bar.style.display = 'flex';
   document.querySelector('.container').style.paddingTop = '56px';
@@ -1505,7 +1535,6 @@ function updateAuthBar() {
     setAuthSyncStatus('');
   }
 }
-
 function setAuthSyncStatus(msg) {
   var el = document.getElementById('authSyncStatus');
   if (el) el.textContent = msg;
@@ -1514,24 +1543,65 @@ function setAuthSyncStatus(msg) {
 function handleAuthAction() {
   if (!fbReady) { openFirebaseModal(); return; }
   if (fbUser) {
-    fbAuth.signOut();
+    fbUser = null; fbIdToken = null;
+    localStorage.removeItem('fbSession');
+    updateAuthBar();
+    showToast('Saiu da conta', 'success');
   } else {
-    var provider = new firebase.auth.GoogleAuthProvider();
-    fbAuth.signInWithPopup(provider).catch(function(e) {
-      showToast('Erro no login: ' + e.message, 'error');
-    });
+    startGoogleLogin();
   }
 }
 
-function fbListenUserData() {
-  if (!fbDb || !fbUser) return;
-  if (fbUnsub) fbUnsub();
+function startGoogleLogin() {
+  var cfg = getFbConfig();
+  if (!cfg || !cfg.clientId) { showToast('Configure a conta primeiro', 'error'); return; }
+  if (typeof google === 'undefined' || !google.accounts) {
+    showToast('Google Sign-In nao carregou. Verifique sua conexao.', 'error'); return;
+  }
+  google.accounts.id.initialize({ client_id: cfg.clientId, callback: onGoogleCredential, auto_select: false });
+  google.accounts.id.prompt(function(n) {
+    if (n.isNotDisplayed() || n.isSkippedMoment()) {
+      var d = document.createElement('div');
+      d.id = 'gsi-popup';
+      d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:999;display:flex;align-items:center;justify-content:center';
+      d.innerHTML = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:32px;text-align:center"><p style="color:var(--text);margin-bottom:20px;font-size:14px;font-weight:600">Entrar com Google</p><div id="gsi-btn"></div><br><button onclick="var p=document.getElementById(\'gsi-popup\');if(p)p.remove()" style="font-size:11px;color:var(--text-muted);background:transparent;border:none;cursor:pointer;margin-top:12px">Cancelar</button></div>';
+      document.body.appendChild(d);
+      google.accounts.id.renderButton(document.getElementById('gsi-btn'), { theme:'filled_black', size:'large' });
+    }
+  });
+}
+
+async function onGoogleCredential(response) {
+  var popup = document.getElementById('gsi-popup');
+  if (popup) popup.remove();
+  setAuthSyncStatus('autenticando...');
+  try {
+    var cfg = getFbConfig();
+    var res = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + cfg.apiKey, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ postBody: 'id_token=' + response.credential + '&providerId=google.com',
+        requestUri: location.href.split('?')[0], returnIdpCredential: true, returnSecureToken: true })
+    });
+    var data = await res.json();
+    if (!res.ok) throw new Error(data.error && data.error.message || 'auth failed');
+    fbIdToken = data.idToken;
+    fbUser = { uid: data.localId, displayName: data.displayName, email: data.email, photoURL: data.photoUrl };
+    localStorage.setItem('fbSession', JSON.stringify({ t: fbIdToken, u: fbUser, exp: Date.now() + 55*60*1000 }));
+    updateAuthBar();
+    await syncFromCloud();
+    showToast('Logado!', 'success');
+  } catch(e) {
+    setAuthSyncStatus('erro: ' + e.message);
+    showToast('Erro: ' + e.message, 'error');
+  }
+}
+
+async function syncFromCloud() {
   setAuthSyncStatus('sincronizando...');
-  var docRef = fbDb.collection('users').doc(fbUser.uid)
-                   .collection('data').doc('financas');
-  fbUnsub = docRef.onSnapshot(function(snap) {
-    if (snap.exists) {
-      var d = snap.data();
+  try {
+    var doc = await fsGet();
+    if (doc && doc.fields) {
+      var d = fromFS(doc.fields);
       if (d.db)        db        = d.db;
       if (d.objetivos) objetivos = d.objetivos;
       if (d.meta) {
@@ -1544,99 +1614,75 @@ function fbListenUserData() {
       save(); render();
       setAuthSyncStatus('sincronizado ✓');
     } else {
-      fbSaveData(); // first login — push local data
+      await fbSaveData();
     }
-  }, function(err) {
-    setAuthSyncStatus('erro: ' + err.code);
-  });
+  } catch(e) { setAuthSyncStatus('erro: ' + e.message); }
 }
 
-function fbSaveData() {
-  if (!fbDb || !fbUser) return;
+async function fbSaveData() {
+  if (!fbIdToken || !fbUser) return;
   setAuthSyncStatus('salvando...');
-  var docRef = fbDb.collection('users').doc(fbUser.uid)
-                   .collection('data').doc('financas');
-  docRef.set({
-    db: db, objetivos: objetivos,
-    meta: { month: activeMonth, sortMode: sortMode, objFilter: objFilter,
-            rendas: rendas, periodos: periodos },
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(function() {
+  try {
+    await fsSet({ db:db, objetivos:objetivos,
+      meta:{ month:activeMonth, sortMode:sortMode, objFilter:objFilter, rendas:rendas, periodos:periodos } });
     setAuthSyncStatus('salvo ✓');
-  }).catch(function(e) {
-    setAuthSyncStatus('erro ao salvar');
-    console.error('fbSaveData error', e);
-  });
+  } catch(e) { setAuthSyncStatus('erro ao salvar'); }
+}
+
+function tryRestoreSession() {
+  var cfg = getFbConfig();
+  if (!cfg || !cfg.apiKey) return;
+  fbReady = true;
+  updateAuthBar();
+  try {
+    var s = JSON.parse(localStorage.getItem('fbSession') || 'null');
+    if (s && s.exp > Date.now()) {
+      fbIdToken = s.t; fbUser = s.u;
+      updateAuthBar();
+      syncFromCloud();
+    }
+  } catch(e) {}
 }
 
 function openFirebaseModal() {
   var cfg = getFbConfig() || {};
-  document.getElementById('fbApiKey').value     = cfg.apiKey      || '';
-  document.getElementById('fbAuthDomain').value = cfg.authDomain  || '';
-  document.getElementById('fbProjectId').value  = cfg.projectId   || '';
-  document.getElementById('fbAppId').value      = cfg.appId       || '';
+  document.getElementById('fbApiKey').value     = cfg.apiKey    || '';
+  document.getElementById('fbAuthDomain').value = cfg.projectId || '';
+  document.getElementById('fbProjectId').value  = cfg.projectId || '';
+  document.getElementById('fbAppId').value      = cfg.clientId  || '';
   document.getElementById('fbStatus').textContent = '';
   document.getElementById('modalFirebase').classList.add('open');
 }
 function closeFirebaseModal() { document.getElementById('modalFirebase').classList.remove('open'); }
 
 function saveFirebaseConfig() {
-  var cfg = {
-    apiKey:     document.getElementById('fbApiKey').value.trim(),
-    authDomain: document.getElementById('fbAuthDomain').value.trim(),
-    projectId:  document.getElementById('fbProjectId').value.trim(),
-    appId:      document.getElementById('fbAppId').value.trim()
-  };
-  if (!cfg.apiKey || !cfg.projectId) {
-    document.getElementById('fbStatus').textContent = 'Preencha API Key e Project ID';
-    document.getElementById('fbStatus').style.color = 'var(--red)';
-    return;
+  var apiKey    = document.getElementById('fbApiKey').value.trim();
+  var projectId = document.getElementById('fbProjectId').value.trim();
+  var clientId  = document.getElementById('fbAppId').value.trim();
+  if (!apiKey || !projectId || !clientId) {
+    document.getElementById('fbStatus').textContent = 'Preencha API Key, Project ID e Client ID';
+    document.getElementById('fbStatus').style.color = 'var(--red)'; return;
   }
-  if (typeof firebase === 'undefined') {
-    document.getElementById('fbStatus').textContent = 'Firebase SDK nao carregou. Verifique sua conexao.';
-    document.getElementById('fbStatus').style.color = 'var(--red)';
-    return;
-  }
+  var cfg = { apiKey: apiKey, projectId: projectId, clientId: clientId };
   localStorage.setItem('fbConfig', JSON.stringify(cfg));
-  document.getElementById('fbStatus').textContent = 'Conectando...';
-  document.getElementById('fbStatus').style.color = 'var(--text-muted)';
-  if (initFirebase(cfg)) {
-    document.getElementById('fbStatus').textContent = 'Conectado! Clique em Entrar com Google.';
-    document.getElementById('fbStatus').style.color = 'var(--green)';
-    setTimeout(closeFirebaseModal, 2000);
-  } else {
-    document.getElementById('fbStatus').textContent = 'Erro. Verifique as credenciais e tente novamente.';
-    document.getElementById('fbStatus').style.color = 'var(--red)';
-  }
+  fbReady = true;
+  document.getElementById('fbStatus').textContent = 'Salvo! Agora clique em Entrar com Google.';
+  document.getElementById('fbStatus').style.color = 'var(--green)';
+  updateAuthBar();
+  setTimeout(closeFirebaseModal, 1800);
 }
 
 // INIT
 (async function() {
   await load();
   render();
-
-  // Auto-init Firebase if config saved
-  var fbCfg = getFbConfig();
-  if (fbCfg && fbCfg.apiKey) {
-    // Wait for Firebase SDK to be ready
-    var attempts = 0;
-    var fbInterval = setInterval(function() {
-      attempts++;
-      if (typeof firebase !== 'undefined') {
-        clearInterval(fbInterval);
-        initFirebase(fbCfg);
-      } else if (attempts > 20) {
-        clearInterval(fbInterval);
-        console.warn('Firebase SDK nao carregou apos 2s');
-      }
-    }, 100);
-  }
+  tryRestoreSession();
 
   // Wrap save() to also push to Firestore when logged in
   var _origSaveFn = save;
   save = async function() {
     await _origSaveFn();
-    if (fbReady && fbUser && fbDb) fbSaveData();
+    if (fbReady && fbUser && fbIdToken) fbSaveData();
   };
 })();
 </script>
