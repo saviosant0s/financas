@@ -678,8 +678,8 @@
   <div class="sort-bar">
     <span class="sort-label">Ordenar:</span>
     <button class="sort-btn active" onclick="setSort('default',this)">Padrao</button>
-    <button class="sort-btn" onclick="setSort('plan_desc',this)">Valor planejado</button>
-    <button class="sort-btn" onclick="setSort('gasto_desc',this)">Valor gasto</button>
+    <button class="sort-btn" onclick="setSort('plan_desc',this)">Maior planejado</button>
+    <button class="sort-btn" onclick="setSort('gasto_desc',this)">Maior gasto</button>
   </div>
   <div id="panels"></div>
 
@@ -724,6 +724,8 @@
 <!-- DROPDOWN MENU -->
 <div class="hamburger-menu" id="hamburgerMenu">
   <button class="menu-item" onclick="openReport();closeMenu()"><span class="mi-icon">📊</span> Relatório Anual</button>
+  <div class="menu-divider"></div>
+  <button class="menu-item" onclick="window.open('https://wa.me/5575988926392?text=Oi%20S%C3%A1vio%2C%20tenho%20um%20feedback%20sobre%20o%20app%20de%20finan%C3%A7as!','_blank');closeMenu()"><span class="mi-icon">💬</span> Enviar feedback</button>
   <div class="menu-divider"></div>
   <button class="menu-item" onclick="exportData();closeMenu()"><span class="mi-icon">⬇</span> Exportar dados</button>
   <label class="menu-item"><span class="mi-icon">⬆</span> Importar dados<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
@@ -1514,7 +1516,7 @@ function closeReport() {
 }
 
 function renderReport() {
-  var activeMths = MONTHS.filter(function(m){ return db[m] && db[m].length > 0; });
+  var activeMths = MONTHS.filter(function(m){ return (db[m] && db[m].length > 0) || getMesRenda(m) > 0; });
   var totalPlan=0, totalGasto=0, totalRenda=0, mesesComRenda=0;
 
   activeMths.forEach(function(m) {
