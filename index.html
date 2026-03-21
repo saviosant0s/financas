@@ -1451,7 +1451,16 @@ var fbIdToken = null;  // Firebase ID token
 var fbReady  = false;
 
 function getFbConfig() {
-  try { return JSON.parse(localStorage.getItem('fbConfig') || 'null'); } catch(e) { return null; }
+  // Credentials embedded — no manual setup needed on any device
+  var embedded = {
+    apiKey:    'AIzaSyCHGFMDVlowr-ppnsnhVbDBCtsV29V4ry8',
+    projectId: 'financas-867c5',
+    clientId:  '34624127819-kiu9v3go24u4ltjnpe3b269i63ujbcp0.apps.googleusercontent.com'
+  };
+  try {
+    var stored = JSON.parse(localStorage.getItem('fbConfig') || 'null');
+    return stored || embedded;
+  } catch(e) { return embedded; }
 }
 
 // Convert JS -> Firestore document fields
@@ -1633,6 +1642,10 @@ function tryRestoreSession() {
   var cfg = getFbConfig();
   if (!cfg || !cfg.apiKey) return;
   fbReady = true;
+  // Save embedded config to localStorage so modal shows correctly
+  if (!localStorage.getItem('fbConfig')) {
+    localStorage.setItem('fbConfig', JSON.stringify(cfg));
+  }
   updateAuthBar();
   try {
     var s = JSON.parse(localStorage.getItem('fbSession') || 'null');
