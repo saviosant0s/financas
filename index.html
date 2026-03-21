@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
 <style>
   :root{--bg:#0b0f14;--surface:#131920;--surface2:#1a2230;--border:#1e2d3d;--border-hover:#2a4060;--green:#26d97f;--green-dim:#1a8f54;--gold:#f5c842;--red:#ff5f5f;--blue:#4da6ff;--text:#e8edf3;--text-muted:#5f7a94;--text-dim:#3a5068;--radius:14px;--radius-sm:8px}
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -266,9 +267,49 @@
 <div class="hamburger-menu" id="hamburgerMenu">
   <button class="menu-item" onclick="openReport()"><span class="mi-icon">📊</span> Relatorio Anual</button>
   <button class="menu-item" onclick="openSyncModal();closeMenu()"><span class="mi-icon">☁️</span> Sincronizar dados</button>
+  <button class="menu-item" onclick="openFirebaseModal();closeMenu()"><span class="mi-icon">🔑</span> Conta (login automatico)</button>
   <div class="menu-divider"></div>
   <button class="menu-item" onclick="exportData();closeMenu()"><span class="mi-icon">⬇</span> Exportar dados</button>
   <label class="menu-item"><span class="mi-icon">⬆</span> Importar dados<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+</div>
+
+<!-- AUTH BAR (shown when Firebase configured) -->
+<div id="authBar" style="position:fixed;top:0;left:0;right:0;background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:none;align-items:center;justify-content:space-between;z-index:70;gap:12px">
+  <div style="display:flex;align-items:center;gap:10px">
+    <img id="authAvatar" src="" style="width:28px;height:28px;border-radius:50%;display:none">
+    <span id="authName" style="font-size:13px;color:var(--text-muted);font-family:JetBrains Mono,monospace"></span>
+    <span id="authSyncStatus" style="font-size:10px;color:var(--text-dim);font-family:JetBrains Mono,monospace"></span>
+  </div>
+  <button id="authActionBtn" onclick="handleAuthAction()" style="padding:6px 14px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-muted);font-family:JetBrains Mono,monospace;font-size:10px;font-weight:600;cursor:pointer;transition:all .2s"></button>
+</div>
+
+<!-- MODAL FIREBASE CONFIG -->
+<div class="modal-overlay" id="modalFirebase">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-title"><span>Configurar Conta (Firebase)</span><button class="modal-close" onclick="closeFirebaseModal()">x</button></div>
+
+    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:20px;font-size:12px;color:var(--text-muted);line-height:1.8">
+      <strong style="color:var(--text);display:block;margin-bottom:6px">Setup rapido (gratuito, 5 minutos):</strong>
+      1. Acesse <strong style="color:var(--blue)">console.firebase.google.com</strong><br>
+      2. Crie um projeto (qualquer nome)<br>
+      3. Ative o <strong style="color:var(--text)">Firestore Database</strong> (modo producao)<br>
+      4. Va em <strong style="color:var(--text)">Authentication</strong> → habilite <strong style="color:var(--text)">Google</strong><br>
+      5. Va em <strong style="color:var(--text)">Configuracoes do projeto</strong> → Adicione um app Web → copie o firebaseConfig<br>
+      6. Cole os valores abaixo
+    </div>
+
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">API Key</label><input class="form-input" type="text" id="fbApiKey" placeholder="AIzaSy..."></div>
+      <div class="form-group"><label class="form-label">Auth Domain</label><input class="form-input" type="text" id="fbAuthDomain" placeholder="seu-projeto.firebaseapp.com"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Project ID</label><input class="form-input" type="text" id="fbProjectId" placeholder="seu-projeto"></div>
+      <div class="form-group"><label class="form-label">App ID</label><input class="form-input" type="text" id="fbAppId" placeholder="1:123:web:abc"></div>
+    </div>
+    <div style="font-size:11px;color:var(--text-dim);font-family:JetBrains Mono,monospace;margin-bottom:16px">Os outros campos (storageBucket, messagingSenderId) nao sao necessarios.</div>
+    <button onclick="saveFirebaseConfig()" style="width:100%;padding:12px;background:var(--green);color:#000;border:none;border-radius:var(--radius-sm);font-family:Sora,sans-serif;font-weight:700;font-size:14px;cursor:pointer">Salvar e conectar</button>
+    <div id="fbStatus" style="margin-top:12px;font-size:12px;font-family:JetBrains Mono,monospace;text-align:center;min-height:18px"></div>
+  </div>
 </div>
 
 <!-- MODAL QR -->
@@ -1094,13 +1135,14 @@ function showToast(msg, type) {
 
 // KEYBOARD
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { closeModal(); closeRendaModal(); closeObjModal(); closeReport(); closeMenu(); closeSyncModal(); closeQRModal(); }
+  if (e.key === 'Escape') { closeModal(); closeRendaModal(); closeObjModal(); closeReport(); closeMenu(); closeSyncModal(); closeQRModal(); closeFirebaseModal(); }
 });
 document.getElementById('modal').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeModal(); });
 document.getElementById('modalRenda').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeRendaModal(); });
 document.getElementById('modalObj').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeObjModal(); });
 document.getElementById('modalSync').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeSyncModal(); });
 document.getElementById('modalQR').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeQRModal(); });
+document.getElementById('modalFirebase').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeFirebaseModal(); });
 document.getElementById('fBanco').addEventListener('input', renderBancoSuggestions);
 
 // EXPORT / IMPORT
@@ -1403,8 +1445,200 @@ async function syncPull() {
   } catch(e) { setSyncStatus('Erro de conexao. Tente a aba Copiar / Colar.', 'red'); }
 }
 
+// FIREBASE (compat SDK loaded via script tags in <head>)
+var fbApp  = null;
+var fbAuth = null;
+var fbDb   = null;
+var fbUser = null;
+var fbUnsub = null;
+var fbReady = false;
+
+function getFbConfig() {
+  try { return JSON.parse(localStorage.getItem('fbConfig') || 'null'); } catch(e) { return null; }
+}
+
+function initFirebase(cfg) {
+  try {
+    if (typeof firebase === 'undefined') {
+      console.error('Firebase SDK nao carregado');
+      return false;
+    }
+    // delete previous app if exists
+    firebase.apps.forEach(function(a){ try{ a.delete(); }catch(e){} });
+    fbApp  = firebase.initializeApp(cfg);
+    fbAuth = firebase.auth();
+    fbDb   = firebase.firestore();
+    fbAuth.onAuthStateChanged(function(user) {
+      fbUser = user;
+      updateAuthBar();
+      if (user) fbListenUserData();
+      else { if (fbUnsub){ fbUnsub(); fbUnsub=null; } setAuthSyncStatus(''); }
+    });
+    fbReady = true;
+    return true;
+  } catch(e) {
+    console.error('Firebase init error', e);
+    return false;
+  }
+}
+
+function updateAuthBar() {
+  var bar      = document.getElementById('authBar');
+  var btn      = document.getElementById('authActionBtn');
+  var nameEl   = document.getElementById('authName');
+  var avatarEl = document.getElementById('authAvatar');
+  bar.style.display = 'flex';
+  document.querySelector('.container').style.paddingTop = '56px';
+  if (fbUser) {
+    nameEl.textContent = fbUser.displayName || fbUser.email || 'Logado';
+    if (fbUser.photoURL) { avatarEl.src = fbUser.photoURL; avatarEl.style.display = 'block'; }
+    else avatarEl.style.display = 'none';
+    btn.textContent = 'Sair';
+    btn.style.borderColor = 'rgba(255,95,95,.3)';
+    btn.style.color = 'var(--red)';
+  } else {
+    avatarEl.style.display = 'none';
+    nameEl.textContent = 'Nao conectado';
+    btn.textContent = 'Entrar com Google';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.color = 'var(--text-muted)';
+    setAuthSyncStatus('');
+  }
+}
+
+function setAuthSyncStatus(msg) {
+  var el = document.getElementById('authSyncStatus');
+  if (el) el.textContent = msg;
+}
+
+function handleAuthAction() {
+  if (!fbReady) { openFirebaseModal(); return; }
+  if (fbUser) {
+    fbAuth.signOut();
+  } else {
+    var provider = new firebase.auth.GoogleAuthProvider();
+    fbAuth.signInWithPopup(provider).catch(function(e) {
+      showToast('Erro no login: ' + e.message, 'error');
+    });
+  }
+}
+
+function fbListenUserData() {
+  if (!fbDb || !fbUser) return;
+  if (fbUnsub) fbUnsub();
+  setAuthSyncStatus('sincronizando...');
+  var docRef = fbDb.collection('users').doc(fbUser.uid)
+                   .collection('data').doc('financas');
+  fbUnsub = docRef.onSnapshot(function(snap) {
+    if (snap.exists) {
+      var d = snap.data();
+      if (d.db)        db        = d.db;
+      if (d.objetivos) objetivos = d.objetivos;
+      if (d.meta) {
+        activeMonth = d.meta.month     || activeMonth;
+        sortMode    = d.meta.sortMode  || sortMode;
+        objFilter   = d.meta.objFilter || objFilter;
+        rendas      = d.meta.rendas    || rendas;
+        periodos    = d.meta.periodos  || periodos;
+      }
+      save(); render();
+      setAuthSyncStatus('sincronizado ✓');
+    } else {
+      fbSaveData(); // first login — push local data
+    }
+  }, function(err) {
+    setAuthSyncStatus('erro: ' + err.code);
+  });
+}
+
+function fbSaveData() {
+  if (!fbDb || !fbUser) return;
+  setAuthSyncStatus('salvando...');
+  var docRef = fbDb.collection('users').doc(fbUser.uid)
+                   .collection('data').doc('financas');
+  docRef.set({
+    db: db, objetivos: objetivos,
+    meta: { month: activeMonth, sortMode: sortMode, objFilter: objFilter,
+            rendas: rendas, periodos: periodos },
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function() {
+    setAuthSyncStatus('salvo ✓');
+  }).catch(function(e) {
+    setAuthSyncStatus('erro ao salvar');
+    console.error('fbSaveData error', e);
+  });
+}
+
+function openFirebaseModal() {
+  var cfg = getFbConfig() || {};
+  document.getElementById('fbApiKey').value     = cfg.apiKey      || '';
+  document.getElementById('fbAuthDomain').value = cfg.authDomain  || '';
+  document.getElementById('fbProjectId').value  = cfg.projectId   || '';
+  document.getElementById('fbAppId').value      = cfg.appId       || '';
+  document.getElementById('fbStatus').textContent = '';
+  document.getElementById('modalFirebase').classList.add('open');
+}
+function closeFirebaseModal() { document.getElementById('modalFirebase').classList.remove('open'); }
+
+function saveFirebaseConfig() {
+  var cfg = {
+    apiKey:     document.getElementById('fbApiKey').value.trim(),
+    authDomain: document.getElementById('fbAuthDomain').value.trim(),
+    projectId:  document.getElementById('fbProjectId').value.trim(),
+    appId:      document.getElementById('fbAppId').value.trim()
+  };
+  if (!cfg.apiKey || !cfg.projectId) {
+    document.getElementById('fbStatus').textContent = 'Preencha API Key e Project ID';
+    document.getElementById('fbStatus').style.color = 'var(--red)';
+    return;
+  }
+  if (typeof firebase === 'undefined') {
+    document.getElementById('fbStatus').textContent = 'Firebase SDK nao carregou. Verifique sua conexao.';
+    document.getElementById('fbStatus').style.color = 'var(--red)';
+    return;
+  }
+  localStorage.setItem('fbConfig', JSON.stringify(cfg));
+  document.getElementById('fbStatus').textContent = 'Conectando...';
+  document.getElementById('fbStatus').style.color = 'var(--text-muted)';
+  if (initFirebase(cfg)) {
+    document.getElementById('fbStatus').textContent = 'Conectado! Clique em Entrar com Google.';
+    document.getElementById('fbStatus').style.color = 'var(--green)';
+    setTimeout(closeFirebaseModal, 2000);
+  } else {
+    document.getElementById('fbStatus').textContent = 'Erro. Verifique as credenciais e tente novamente.';
+    document.getElementById('fbStatus').style.color = 'var(--red)';
+  }
+}
+
 // INIT
-(async function() { await load(); render(); })();
+(async function() {
+  await load();
+  render();
+
+  // Auto-init Firebase if config saved
+  var fbCfg = getFbConfig();
+  if (fbCfg && fbCfg.apiKey) {
+    // Wait for Firebase SDK to be ready
+    var attempts = 0;
+    var fbInterval = setInterval(function() {
+      attempts++;
+      if (typeof firebase !== 'undefined') {
+        clearInterval(fbInterval);
+        initFirebase(fbCfg);
+      } else if (attempts > 20) {
+        clearInterval(fbInterval);
+        console.warn('Firebase SDK nao carregou apos 2s');
+      }
+    }, 100);
+  }
+
+  // Wrap save() to also push to Firestore when logged in
+  var _origSaveFn = save;
+  save = async function() {
+    await _origSaveFn();
+    if (fbReady && fbUser && fbDb) fbSaveData();
+  };
+})();
 </script>
 </body>
 </html>
