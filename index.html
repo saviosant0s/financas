@@ -1610,6 +1610,7 @@ async function syncFromCloud() {
   try {
     var doc = await fsGet();
     if (doc && doc.fields) {
+      // Cloud has data — load it
       var d = fromFS(doc.fields);
       if (d.db)        db        = d.db;
       if (d.objetivos) objetivos = d.objetivos;
@@ -1623,7 +1624,18 @@ async function syncFromCloud() {
       save(); render();
       setAuthSyncStatus('sincronizado ✓');
     } else {
-      await fbSaveData();
+      // First login — only push if user had local saved data
+      var hadLocalData = !!localStorage.getItem('fin-db');
+      if (hadLocalData) {
+        await fbSaveData();
+      } else {
+        // Fresh account — start empty
+        db = {}; MONTHS.forEach(function(m){ db[m] = []; });
+        objetivos = []; rendas = {}; periodos = {};
+        save(); render();
+        await fbSaveData();
+        setAuthSyncStatus('conta criada ✓');
+      }
     }
   } catch(e) { setAuthSyncStatus('erro: ' + e.message); }
 }
