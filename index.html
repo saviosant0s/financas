@@ -642,10 +642,10 @@ async function save() {
 }
 function seed() {
   db = {};
-  MONTHS.forEach(function(m) {
-    db[m] = SEED_BUDGET[m] ? JSON.parse(JSON.stringify(SEED_BUDGET[m])) : [];
-  });
-  objetivos = JSON.parse(JSON.stringify(SEED_OBJ));
+  MONTHS.forEach(function(m){ db[m] = []; });
+  objetivos = [];
+  rendas = {};
+  periodos = {};
 }
 
 // SORT
