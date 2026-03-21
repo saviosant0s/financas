@@ -169,11 +169,8 @@
   @keyframes flashGold{0%,100%{opacity:1}50%{opacity:.3}}
   .flash{animation:flashGold .4s ease}
   /* HAMBURGER MENU */
-  .hamburger-btn{position:fixed;top:20px;right:20px;z-index:90;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:4px;transition:border-color .2s}
-  .hamburger-btn:hover{border-color:var(--border-hover)}
-  .hamburger-btn span{display:block;width:18px;height:2px;background:var(--text-muted);border-radius:2px;transition:background .2s}
-  .hamburger-btn:hover span{background:var(--text)}
-  .hamburger-menu{position:fixed;top:62px;right:20px;z-index:90;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:6px;min-width:180px;display:none;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+  .hamburger-btn{display:none} /* now embedded in authBar */
+  .hamburger-menu{position:fixed;top:48px;left:16px;z-index:90;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:6px;min-width:180px;display:none;box-shadow:0 8px 32px rgba(0,0,0,.4)}
   .hamburger-menu.open{display:block}
   .menu-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--text-muted);transition:all .2s;border:none;background:transparent;width:100%;text-align:left;font-family:'Sora',sans-serif}
   .menu-item:hover{background:var(--surface2);color:var(--text)}
@@ -197,7 +194,7 @@
   .chart-block-title{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:2px;font-family:'JetBrains Mono',monospace;margin-bottom:18px}
   .chart-wrap{position:relative;height:260px}
   .chart-wrap-tall{position:relative;height:300px}
-  @media(max-width:600px){.report-grid{grid-template-columns:1fr 1fr}.hamburger-btn{top:16px;right:16px}}
+  @media(max-width:600px){.report-grid{grid-template-columns:1fr 1fr}}
 
   /* LOGIN SCREEN */
   #loginScreen{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0}
@@ -285,25 +282,30 @@
 </div>
 
 <!-- HAMBURGER BUTTON -->
-<button class="hamburger-btn" onclick="toggleMenu()" id="hamburgerBtn">
-  <span></span><span></span><span></span>
-</button>
+<!-- AUTH BAR -->
+<div id="authBar" style="position:fixed;top:0;left:0;right:0;background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:none;align-items:center;justify-content:space-between;z-index:70;gap:12px;height:48px">
+  <div style="display:flex;align-items:center;gap:8px">
+    <!-- Hamburger inside nav -->
+    <button onclick="toggleMenu()" id="hamburgerBtn" style="background:transparent;border:none;cursor:pointer;padding:8px;display:flex;flex-direction:column;gap:4px;border-radius:var(--radius-sm);transition:background .2s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">
+      <span style="display:block;width:18px;height:2px;background:var(--text-muted);border-radius:2px"></span>
+      <span style="display:block;width:18px;height:2px;background:var(--text-muted);border-radius:2px"></span>
+      <span style="display:block;width:18px;height:2px;background:var(--text-muted);border-radius:2px"></span>
+    </button>
+    <span style="font-size:12px;font-weight:600;color:var(--green);font-family:'JetBrains Mono',monospace;letter-spacing:1px">financas</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <img id="authAvatar" src="" style="width:26px;height:26px;border-radius:50%;display:none">
+    <span id="authName" style="font-size:12px;color:var(--text-muted);font-family:'JetBrains Mono',monospace"></span>
+    <span id="authSyncStatus" style="font-size:10px;color:var(--text-dim);font-family:'JetBrains Mono',monospace"></span>
+    <button id="authActionBtn" onclick="handleAuthAction()" style="padding:5px 12px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;transition:all .2s"></button>
+  </div>
+</div>
 <!-- DROPDOWN MENU -->
 <div class="hamburger-menu" id="hamburgerMenu">
-  <button class="menu-item" onclick="openReport()"><span class="mi-icon">📊</span> Relatorio Anual</button>
+  <button class="menu-item" onclick="openReport();closeMenu()"><span class="mi-icon">📊</span> Relatorio Anual</button>
   <div class="menu-divider"></div>
   <button class="menu-item" onclick="exportData();closeMenu()"><span class="mi-icon">⬇</span> Exportar dados</button>
   <label class="menu-item"><span class="mi-icon">⬆</span> Importar dados<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
-</div>
-
-<!-- AUTH BAR (shown when Firebase configured) -->
-<div id="authBar" style="position:fixed;top:0;left:0;right:0;background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:none;align-items:center;justify-content:space-between;z-index:70;gap:12px">
-  <div style="display:flex;align-items:center;gap:10px">
-    <img id="authAvatar" src="" style="width:28px;height:28px;border-radius:50%;display:none">
-    <span id="authName" style="font-size:13px;color:var(--text-muted);font-family:JetBrains Mono,monospace"></span>
-    <span id="authSyncStatus" style="font-size:10px;color:var(--text-dim);font-family:JetBrains Mono,monospace"></span>
-  </div>
-  <button id="authActionBtn" onclick="handleAuthAction()" style="padding:6px 14px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-muted);font-family:JetBrains Mono,monospace;font-size:10px;font-weight:600;cursor:pointer;transition:all .2s"></button>
 </div>
 
 <div class="report-overlay" id="reportOverlay">
@@ -1252,7 +1254,7 @@ function updateAuthBar() {
     if (loginScr) loginScr.style.display = 'none';
     if (appCont)  appCont.style.display = 'block';
     bar.style.display = 'flex';
-    appCont.style.paddingTop = '56px';
+    appCont.style.paddingTop = '64px';
     nameEl.textContent = fbUser.displayName || fbUser.email || 'Logado';
     if (fbUser.photoURL) { avatarEl.src = fbUser.photoURL; avatarEl.style.display = 'block'; }
     else avatarEl.style.display = 'none';
