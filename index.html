@@ -618,8 +618,8 @@ async function load() {
     var dbRaw   = await storageGet('fin-db');
     var objRaw  = await storageGet('fin-obj');
     var metaRaw = await storageGet('fin-meta');
-    if (dbRaw)  db       = JSON.parse(dbRaw);  else { db = {}; MONTHS.forEach(function(m){ db[m] = SEED_BUDGET[m] ? JSON.parse(JSON.stringify(SEED_BUDGET[m])) : []; }); }
-    if (objRaw) objetivos = JSON.parse(objRaw); else objetivos = JSON.parse(JSON.stringify(SEED_OBJ));
+    if (dbRaw)  db        = JSON.parse(dbRaw);  else { db = {}; MONTHS.forEach(function(m){ db[m] = []; }); }
+    if (objRaw) objetivos = JSON.parse(objRaw); else objetivos = [];
     if (metaRaw) {
       var meta = JSON.parse(metaRaw);
       activeMonth = meta.month     || 'MAR';
