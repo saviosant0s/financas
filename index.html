@@ -6,6 +6,7 @@
 <title>Finanças</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root{--bg:#0b0f14;--surface:#131920;--surface2:#1a2230;--border:#1e2d3d;--border-hover:#2a4060;--green:#26d97f;--green-dim:#1a8f54;--gold:#f5c842;--red:#ff5f5f;--blue:#4da6ff;--text:#e8edf3;--text-muted:#5f7a94;--text-dim:#3a5068;--radius:14px;--radius-sm:8px}
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -198,6 +199,11 @@
   .chart-wrap-tall{position:relative;height:300px}
   @media(max-width:600px){.report-grid{grid-template-columns:1fr 1fr}.hamburger-btn{top:16px;right:16px}}
   footer{border-top:1px solid var(--border);padding:22px 0;text-align:center;font-size:11px;color:var(--text-dim);font-family:'JetBrains Mono',monospace}
+  .qr-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;padding:8px 0}
+  .qr-box{background:#fff;padding:16px;border-radius:var(--radius-sm);display:inline-block}
+  .qr-box canvas,.qr-box img{display:block}
+  .qr-hint{font-size:12px;color:var(--text-muted);text-align:center;line-height:1.6;max-width:280px}
+  .qr-size-warn{font-size:11px;color:var(--gold);text-align:center;font-family:'JetBrains Mono',monospace}
   @media(max-width:600px){.rule-grid{grid-template-columns:1fr}.summary-bar{grid-template-columns:1fr 1fr}.summary-bar .sum-card:last-child{grid-column:span 2}.form-row{grid-template-columns:1fr}.obj-grid{grid-template-columns:1fr}.header-name{font-size:24px}}
 </style>
 </head>
@@ -241,6 +247,7 @@
         <button class="obj-filter-btn" onclick="setObjFilter('todos',this)">Todos</button>
       </div>
     </div>
+    <div id="objSummary"></div>
     <div class="obj-grid" id="objGrid"></div>
   </div>
 
@@ -258,12 +265,78 @@
 <!-- DROPDOWN MENU -->
 <div class="hamburger-menu" id="hamburgerMenu">
   <button class="menu-item" onclick="openReport()"><span class="mi-icon">📊</span> Relatorio Anual</button>
+  <button class="menu-item" onclick="openSyncModal();closeMenu()"><span class="mi-icon">☁️</span> Sincronizar dados</button>
   <div class="menu-divider"></div>
   <button class="menu-item" onclick="exportData();closeMenu()"><span class="mi-icon">⬇</span> Exportar dados</button>
   <label class="menu-item"><span class="mi-icon">⬆</span> Importar dados<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
 </div>
 
-<!-- REPORT OVERLAY -->
+<!-- MODAL QR -->
+<div class="modal-overlay" id="modalQR">
+  <div class="modal" style="max-width:360px;text-align:center">
+    <div class="modal-title" style="justify-content:center;position:relative">
+      <span>QR Code de sincronizacao</span>
+      <button class="modal-close" onclick="closeQRModal()" style="position:absolute;right:0">x</button>
+    </div>
+    <div class="qr-wrap">
+      <div class="qr-box" id="qrCanvas"></div>
+      <p class="qr-hint">Escaneie com a camera do celular. Depois abra o site, va em <strong>Sincronizar</strong> e cole o codigo no campo de importacao.</p>
+      <p class="qr-size-warn" id="qrSizeWarn" style="display:none"></p>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SYNC -->
+<div class="modal-overlay" id="modalSync">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-title"><span>Sincronizar entre dispositivos</span><button class="modal-close" onclick="closeSyncModal()">x</button></div>
+
+    <!-- TABS -->
+    <div style="display:flex;gap:4px;background:var(--surface2);border-radius:var(--radius-sm);padding:4px;margin-bottom:20px">
+      <button id="syncTab1" onclick="switchSyncTab(1)" style="flex:1;padding:8px;background:var(--green);color:#000;border:none;border-radius:6px;font-family:Sora,sans-serif;font-weight:700;font-size:12px;cursor:pointer">Copiar / Colar</button>
+      <button id="syncTab2" onclick="switchSyncTab(2)" style="flex:1;padding:8px;background:transparent;color:var(--text-muted);border:none;border-radius:6px;font-family:Sora,sans-serif;font-size:12px;cursor:pointer">JSONBin (nuvem)</button>
+    </div>
+
+    <!-- TAB 1: copy-paste -->
+    <div id="syncPanel1">
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.6">Gere o QR Code no PC e escaneie com o celular, ou copie o codigo manualmente.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <button onclick="syncShowQR()" style="padding:11px;background:var(--green);color:#000;border:none;border-radius:var(--radius-sm);font-family:Sora,sans-serif;font-weight:700;font-size:13px;cursor:pointer">📷 Gerar QR Code</button>
+        <button onclick="syncGenerateCode()" style="padding:11px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:Sora,sans-serif;font-size:13px;cursor:pointer">Gerar codigo texto</button>
+      </div>
+      <div class="form-group" id="syncCodeGroup" style="display:none">
+        <label class="form-label">Codigo gerado</label>
+        <textarea id="syncCodeArea" style="width:100%;height:80px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:JetBrains Mono,monospace;font-size:11px;padding:10px;outline:none;resize:none" readonly></textarea>
+        <button onclick="syncCopyCode()" id="syncCopyBtn" style="margin-top:6px;width:100%;padding:9px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:Sora,sans-serif;font-size:12px;cursor:pointer">Copiar codigo</button>
+      </div>
+      <div class="form-divider" style="margin:14px 0"></div>
+      <div class="form-group">
+        <label class="form-label">Colar codigo de outro dispositivo</label>
+        <textarea id="syncPasteArea" style="width:100%;height:70px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:JetBrains Mono,monospace;font-size:11px;padding:10px;outline:none;resize:none" placeholder="Cole o codigo aqui..."></textarea>
+      </div>
+      <button onclick="syncImportCode()" style="width:100%;padding:11px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius-sm);font-family:Sora,sans-serif;font-weight:700;font-size:13px;cursor:pointer">Importar codigo</button>
+    </div>
+
+    <!-- TAB 2: JSONBin -->
+    <div id="syncPanel2" style="display:none">
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.6">Sync automatico via <strong style="color:var(--text)">jsonbin.io</strong> (gratuito). Configure uma vez, use em qualquer dispositivo.</p>
+      <div class="form-group">
+        <label class="form-label">X-Master-Key</label>
+        <input class="form-input" type="password" id="syncApiKey" placeholder="$2a$10$...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bin ID <span>- gerado no primeiro envio</span></label>
+        <input class="form-input" type="text" id="syncBinId" placeholder="67a1b2c3...">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+        <button onclick="syncPush()" style="padding:11px;background:var(--green);color:#000;border:none;border-radius:var(--radius-sm);font-family:Sora,sans-serif;font-weight:700;font-size:13px;cursor:pointer">Enviar dados</button>
+        <button onclick="syncPull()" style="padding:11px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:Sora,sans-serif;font-size:13px;cursor:pointer">Receber dados</button>
+      </div>
+    </div>
+
+    <div id="syncStatus" style="margin-top:12px;font-size:12px;font-family:JetBrains Mono,monospace;text-align:center;min-height:18px"></div>
+  </div>
+</div>
 <div class="report-overlay" id="reportOverlay">
   <div class="report-container">
     <div class="report-header">
@@ -684,12 +757,15 @@ function renderObjetivos() {
     ? objetivos.filter(function(o){ return o.meses && o.meses.indexOf(activeMonth) !== -1; })
     : objetivos;
   var grid = document.getElementById('objGrid');
+  var summary = document.getElementById('objSummary');
 
   if (!list.length && objetivos.length === 0) {
+    summary.innerHTML = '';
     grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">🎯</div><p>Nenhum objetivo cadastrado</p></div>';
     return;
   }
   if (!list.length) {
+    summary.innerHTML = '';
     grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:28px;color:var(--text-dim)">'
       + '<p style="font-size:13px;margin-bottom:12px">Nenhum objetivo em ' + activeMonth + '</p>'
       + '<button class="empty-start" onclick="setObjFilter(\'todos\',document.querySelectorAll(\'.obj-filter-btn\')[1])">Ver todos</button>'
@@ -706,6 +782,7 @@ function renderObjetivos() {
     + '<div class="sum-card"><div class="sum-lbl">Meta total</div><div class="sum-val gold">' + fmtR(totalObjetivos) + '</div></div>'
     + '<div class="sum-card"><div class="sum-lbl">Falta</div><div class="sum-val ' + (totalFalta > 0 ? 'red' : 'green') + '">' + fmtR(totalFalta) + '</div></div>'
     + '</div>';
+  document.getElementById('objSummary').innerHTML = summaryHtml;
 
   var cardsHtml = list.map(function(o) {
     var sc = slugStatus(o.status);
@@ -745,7 +822,7 @@ function renderObjetivos() {
       + '</div>';
   }).join('');
 
-  grid.innerHTML = summaryHtml + cardsHtml + '<button class="obj-add-btn" onclick="openObjModal()">+ Novo objetivo</button>';
+  grid.innerHTML = cardsHtml + '<button class="obj-add-btn" onclick="openObjModal()">+ Novo objetivo</button>';
 }
 
 // NAV
@@ -1017,11 +1094,13 @@ function showToast(msg, type) {
 
 // KEYBOARD
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { closeModal(); closeRendaModal(); closeObjModal(); closeReport(); closeMenu(); }
+  if (e.key === 'Escape') { closeModal(); closeRendaModal(); closeObjModal(); closeReport(); closeMenu(); closeSyncModal(); closeQRModal(); }
 });
 document.getElementById('modal').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeModal(); });
 document.getElementById('modalRenda').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeRendaModal(); });
 document.getElementById('modalObj').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeObjModal(); });
+document.getElementById('modalSync').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeSyncModal(); });
+document.getElementById('modalQR').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeQRModal(); });
 document.getElementById('fBanco').addEventListener('input', renderBancoSuggestions);
 
 // EXPORT / IMPORT
@@ -1159,6 +1238,169 @@ function renderReport() {
   chartInstances['chartSaldo'] = new Chart(document.getElementById('chartSaldo'), {
     type:'bar', data:{labels:labels,datasets:[{label:'Saldo',data:saldoData,backgroundColor:saldoData.map(function(v){ return v>=0?'rgba(38,217,127,.7)':'rgba(255,95,95,.7)'; }),borderColor:saldoData.map(function(v){ return v>=0?'#26d97f':'#ff5f5f'; }),borderWidth:1,borderRadius:4}]}, options:def
   });
+}
+
+// SYNC
+function openSyncModal() {
+  var key = localStorage.getItem('syncApiKey') || '';
+  var bin = localStorage.getItem('syncBinId') || '';
+  document.getElementById('syncApiKey').value = key;
+  document.getElementById('syncBinId').value = bin;
+  document.getElementById('syncStatus').textContent = '';
+  document.getElementById('syncCodeArea').value = '';
+  document.getElementById('syncPasteArea').value = '';
+  switchSyncTab(1);
+  document.getElementById('modalSync').classList.add('open');
+}
+function closeSyncModal() { document.getElementById('modalSync').classList.remove('open'); }
+
+function switchSyncTab(n) {
+  document.getElementById('syncPanel1').style.display = n === 1 ? 'block' : 'none';
+  document.getElementById('syncPanel2').style.display = n === 2 ? 'block' : 'none';
+  document.getElementById('syncTab1').style.background = n === 1 ? 'var(--green)' : 'transparent';
+  document.getElementById('syncTab1').style.color = n === 1 ? '#000' : 'var(--text-muted)';
+  document.getElementById('syncTab1').style.fontWeight = n === 1 ? '700' : '400';
+  document.getElementById('syncTab2').style.background = n === 2 ? 'var(--blue)' : 'transparent';
+  document.getElementById('syncTab2').style.color = n === 2 ? '#fff' : 'var(--text-muted)';
+  document.getElementById('syncTab2').style.fontWeight = n === 2 ? '700' : '400';
+  document.getElementById('syncStatus').textContent = '';
+}
+
+function setSyncStatus(msg, color) {
+  var el = document.getElementById('syncStatus');
+  el.textContent = msg;
+  el.style.color = color === 'green' ? 'var(--green)' : color === 'red' ? 'var(--red)' : 'var(--text-muted)';
+}
+
+function buildPayload() {
+  return { db: db, objetivos: objetivos, meta: { month: activeMonth, sortMode: sortMode, objFilter: objFilter, rendas: rendas, periodos: periodos } };
+}
+
+// COPY-PASTE SYNC
+function syncGenerateCode() {
+  var json = JSON.stringify(buildPayload());
+  var encoded = btoa(unescape(encodeURIComponent(json)));
+  document.getElementById('syncCodeArea').value = encoded;
+  document.getElementById('syncCodeGroup').style.display = 'block';
+  setSyncStatus('Codigo gerado!', 'green');
+}
+
+function syncShowQR() {
+  var json = JSON.stringify(buildPayload());
+  var encoded = btoa(unescape(encodeURIComponent(json)));
+  var MAX_QR = 2953; // QR v40 binary capacity
+  var box = document.getElementById('qrCanvas');
+  box.innerHTML = '';
+  var warn = document.getElementById('qrSizeWarn');
+  if (encoded.length > MAX_QR) {
+    // Data too large for one QR — show warning and truncation note
+    warn.style.display = 'block';
+    warn.textContent = 'Dados grandes (' + encoded.length + ' chars). Use o codigo texto se o QR nao escanear.';
+  } else {
+    warn.style.display = 'none';
+  }
+  try {
+    new QRCode(box, {
+      text: encoded,
+      width: 256,
+      height: 256,
+      correctLevel: QRCode.CorrectLevel.L
+    });
+  } catch(e) {
+    box.innerHTML = '<p style="color:var(--red);font-size:12px;padding:20px">Dados muito grandes para QR Code.<br>Use a opcao de codigo texto.</p>';
+  }
+  document.getElementById('modalQR').classList.add('open');
+}
+
+function closeQRModal() {
+  document.getElementById('modalQR').classList.remove('open');
+  document.getElementById('qrCanvas').innerHTML = '';
+}
+function syncCopyCode() {
+  var area = document.getElementById('syncCodeArea');
+  if (!area.value) { syncGenerateCode(); }
+  navigator.clipboard.writeText(area.value).then(function() {
+    var btn = document.getElementById('syncCopyBtn');
+    btn.textContent = 'Copiado!';
+    btn.style.borderColor = 'var(--green)';
+    btn.style.color = 'var(--green)';
+    setTimeout(function(){ btn.textContent = 'Copiar'; btn.style.borderColor = 'var(--border)'; btn.style.color = 'var(--text)'; }, 2000);
+  }).catch(function() {
+    area.select();
+    document.execCommand('copy');
+    setSyncStatus('Selecione o texto e copie manualmente (Ctrl+C)', 'muted');
+  });
+}
+function syncImportCode() {
+  var code = document.getElementById('syncPasteArea').value.trim();
+  if (!code) { setSyncStatus('Cole o codigo primeiro', 'red'); return; }
+  try {
+    var json = decodeURIComponent(escape(atob(code)));
+    var parsed = JSON.parse(json);
+    if (!parsed.db || !parsed.objetivos) { setSyncStatus('Codigo invalido', 'red'); return; }
+    db = parsed.db; objetivos = parsed.objetivos;
+    if (parsed.meta) {
+      activeMonth = parsed.meta.month     || activeMonth;
+      sortMode    = parsed.meta.sortMode  || sortMode;
+      objFilter   = parsed.meta.objFilter || objFilter;
+      rendas      = parsed.meta.rendas    || {};
+      periodos    = parsed.meta.periodos  || {};
+    }
+    save(); render();
+    setSyncStatus('Dados importados com sucesso!', 'green');
+  } catch(e) { setSyncStatus('Codigo invalido ou corrompido', 'red'); }
+}
+
+// JSONBIN SYNC
+function getSyncCreds() {
+  var key = document.getElementById('syncApiKey').value.trim();
+  var bin = document.getElementById('syncBinId').value.trim();
+  if (!key) { setSyncStatus('Informe a API Key', 'red'); return null; }
+  localStorage.setItem('syncApiKey', key);
+  if (bin) localStorage.setItem('syncBinId', bin);
+  return { key: key, bin: bin };
+}
+
+async function syncPush() {
+  var creds = getSyncCreds(); if (!creds) return;
+  setSyncStatus('Enviando...', 'muted');
+  try {
+    var payload = JSON.stringify(buildPayload());
+    var headers = { 'Content-Type': 'application/json', 'X-Master-Key': creds.key, 'X-Bin-Versioning': 'false' };
+    var url = creds.bin ? 'https://api.jsonbin.io/v3/b/' + creds.bin : 'https://api.jsonbin.io/v3/b';
+    var method = creds.bin ? 'PUT' : 'POST';
+    if (!creds.bin) { headers['X-Bin-Name'] = 'financas'; headers['X-Bin-Private'] = 'true'; }
+    var res = await fetch(url, { method: method, headers: headers, body: payload });
+    var data = await res.json();
+    if (!res.ok) { setSyncStatus('Erro ' + res.status + ': ' + (data.message || 'verifique sua API Key'), 'red'); return; }
+    var binId = (data.metadata && data.metadata.id) ? data.metadata.id : creds.bin;
+    document.getElementById('syncBinId').value = binId;
+    localStorage.setItem('syncBinId', binId);
+    setSyncStatus('Enviado! Bin ID: ' + binId, 'green');
+  } catch(e) { setSyncStatus('Erro de conexao. Tente a aba Copiar / Colar.', 'red'); }
+}
+
+async function syncPull() {
+  var creds = getSyncCreds(); if (!creds) return;
+  if (!creds.bin) { setSyncStatus('Informe o Bin ID', 'red'); return; }
+  setSyncStatus('Buscando...', 'muted');
+  try {
+    var res = await fetch('https://api.jsonbin.io/v3/b/' + creds.bin + '/latest', { headers: { 'X-Master-Key': creds.key } });
+    var data = await res.json();
+    if (!res.ok) { setSyncStatus('Erro ' + res.status + ': ' + (data.message || 'verifique suas credenciais'), 'red'); return; }
+    var rec = data.record;
+    if (!rec.db || !rec.objetivos) { setSyncStatus('Dados invalidos no bin', 'red'); return; }
+    db = rec.db; objetivos = rec.objetivos;
+    if (rec.meta) {
+      activeMonth = rec.meta.month     || activeMonth;
+      sortMode    = rec.meta.sortMode  || sortMode;
+      objFilter   = rec.meta.objFilter || objFilter;
+      rendas      = rec.meta.rendas    || {};
+      periodos    = rec.meta.periodos  || {};
+    }
+    save(); render();
+    setSyncStatus('Dados recebidos!', 'green');
+  } catch(e) { setSyncStatus('Erro de conexao. Tente a aba Copiar / Colar.', 'red'); }
 }
 
 // INIT
