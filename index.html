@@ -761,6 +761,26 @@
   </div>
 </div>
 
+<!-- MODAL QUICK GASTO -->
+<div class="modal-overlay" id="modalQuickGasto">
+  <div class="modal" style="max-width:340px">
+    <div class="modal-title">
+      <span id="quickGastoTitle">Adicionar gasto</span>
+      <button class="modal-close" onclick="closeQuickGasto()">×</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label" id="quickGastoLabel">Valor (R$)</label>
+      <input class="form-input" type="number" id="quickGastoVal" placeholder="0,00" step="0.01" min="0"
+        style="font-size:22px;font-weight:700;text-align:center;padding:14px"
+        onkeydown="if(event.key==='Enter') confirmQuickGasto()">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button onclick="closeQuickGasto()" style="flex:1;padding:11px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;color:var(--text-2)">Cancelar</button>
+      <button id="quickGastoConfirmBtn" onclick="confirmQuickGasto()" style="flex:1;padding:11px;border:none;border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-weight:700;font-size:13px;cursor:pointer;color:#fff">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL RENDA -->
 <div class="modal-overlay" id="modalRenda">
   <div class="modal">
@@ -1248,14 +1268,41 @@ function openAdd(m) {
   renderBancoSuggestions();
   setTimeout(function(){ document.getElementById('fCat').focus(); }, 150);
 }
+var _quickGastoState = null;
+
 function quickGasto(m, id, direction) {
-  var row = (db[m] || []).find(function(r){ return r.id === id; });
-  if (!row) return;
-  var val = parseFloat(prompt(direction > 0 ? 'Adicionar ao gasto (R$):' : 'Remover do gasto (R$):'));
-  if (isNaN(val) || val <= 0) return;
-  var current = row.gasto || 0;
-  row.gasto = Math.max(0, current + direction * val);
-  save(); renderPanels();
+  _quickGastoState = { m: m, id: id, dir: direction };
+  var isAdd = direction > 0;
+  document.getElementById('quickGastoTitle').textContent = isAdd ? 'Adicionar gasto' : 'Remover gasto';
+  document.getElementById('quickGastoLabel').textContent = isAdd ? 'Quanto gastar? (R$)' : 'Quanto remover? (R$)';
+  var btn = document.getElementById('quickGastoConfirmBtn');
+  btn.style.background = isAdd ? 'var(--c-save)' : 'var(--c-neg)';
+  btn.textContent = isAdd ? '+ Adicionar' : '− Remover';
+  document.getElementById('quickGastoVal').value = '';
+  document.getElementById('modalQuickGasto').classList.add('open');
+  setTimeout(function(){ document.getElementById('quickGastoVal').focus(); }, 120);
+}
+
+function confirmQuickGasto() {
+  if (!_quickGastoState) return;
+  var val = parseFloat(document.getElementById('quickGastoVal').value);
+  if (isNaN(val) || val <= 0) {
+    document.getElementById('quickGastoVal').style.borderColor = 'var(--c-neg)';
+    return;
+  }
+  var s = _quickGastoState;
+  var row = (db[s.m] || []).find(function(r){ return r.id === s.id; });
+  if (row) {
+    row.gasto = Math.max(0, (row.gasto || 0) + s.dir * val);
+    save(); renderPanels();
+  }
+  closeQuickGasto();
+}
+
+function closeQuickGasto() {
+  document.getElementById('modalQuickGasto').classList.remove('open');
+  document.getElementById('quickGastoVal').style.borderColor = '';
+  _quickGastoState = null;
 }
 
 function openEdit(m, id) {
@@ -1458,10 +1505,11 @@ function showToast(msg, type) {
 
 // KEYBOARD
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { closeModal(); closeRendaModal(); closeObjModal(); closeReport(); closeMenu(); }
+  if (e.key === 'Escape') { closeModal(); closeRendaModal(); closeObjModal(); closeReport(); closeMenu(); closeQuickGasto(); }
 });
 document.getElementById('modal').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeModal(); });
 document.getElementById('modalRenda').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeRendaModal(); });
+document.getElementById('modalQuickGasto').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeQuickGasto(); });
 document.getElementById('modalObj').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeObjModal(); });
 document.getElementById('fBanco').addEventListener('input', renderBancoSuggestions);
 
