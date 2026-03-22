@@ -641,6 +641,15 @@
 <!-- LOGIN SCREEN -->
 <div id="loginScreen">
   <div class="login-box">
+    <!-- Logo -->
+    <div style="margin-bottom:24px;display:flex;justify-content:center">
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="52" height="52" rx="14" fill="#16473A"/>
+        <rect x="14" y="30" width="6" height="12" rx="2" fill="white" fill-opacity="0.35"/>
+        <rect x="23" y="22" width="6" height="20" rx="2" fill="white" fill-opacity="0.65"/>
+        <rect x="32" y="14" width="6" height="28" rx="2" fill="white"/>
+      </svg>
+    </div>
     <div class="login-title">Controle <span>Financeiro</span></div>
     <p class="login-sub">A maneira mais simples de organizar o seu dinheiro.</p>
     <button class="login-btn" onclick="startGoogleLogin()">
@@ -652,7 +661,7 @@
       </svg>
       Entrar com Google
     </button>
-    <div style="margin-top:18px;font-size:12px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;letter-spacing:.5px">@savio.rocha_</div>
+    <div style="margin-top:20px;font-size:11px;color:var(--text-3);font-family:'Inter',sans-serif">Built by <span style="color:var(--accent);font-weight:600">@savio.rocha_</span></div>
   </div>
 </div>
 
@@ -670,7 +679,7 @@
     </div>
   </header>
 
-  <div class="sec-title">Regra 50/30/20 <span style="font-size:10px;font-weight:400;color:var(--text-3);letter-spacing:0;text-transform:none;cursor:pointer;margin-left:4px" onclick="openRuleModal()">✏️ editar</span></div>
+  <div class="sec-title">Regra 50/30/20</div>
   <div class="rule-grid" style="margin-bottom:32px">
     <div class="rule-item" style="cursor:pointer" onclick="openRuleModal()"><div class="rule-pct green" id="rulePctN">50%</div><div class="rule-lbl">Necessidades</div><div class="rule-val" id="rule50">-</div></div>
     <div class="rule-item" style="cursor:pointer" onclick="openRuleModal()"><div class="rule-pct gold" id="rulePctD">30%</div><div class="rule-lbl">Desejos</div><div class="rule-val" id="rule30">-</div></div>
