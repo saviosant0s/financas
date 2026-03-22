@@ -1139,26 +1139,13 @@ function renderPanel(m) {
         diffHtml = '<span class="' + dcls + '">' + (d >= 0 ? '+' : '') + fmt(d) + '</span>';
       }
       var fillClass = 'progress-fill ' + (r.done ? 'ok' : fc);
-      var subcatsHtml = '';
-      if (r.subcats && r.subcats.length) {
-        subcatsHtml = '<div style="margin-top:8px;display:flex;flex-direction:column;gap:3px;border-left:2px solid var(--border);padding-left:10px">';
-        r.subcats.forEach(function(s) {
-          if (!s.desc && !s.val) return;
-          subcatsHtml += '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-2)">'
-            + '<span>' + (s.desc || '—') + '</span>'
-            + '<span style="font-weight:600;color:var(--text)">' + (s.val ? fmtR(parseFloat(s.val)) : '') + '</span>'
-            + '</div>';
-        });
-        subcatsHtml += '</div>';
-      }
       html += '<div class="' + rowClass + '">'
         + '<div class="row-top">' + dotHtml + '<span class="row-cat">' + r.cat + '</span>' + editBtn + '</div>'
         + tagsHtml
         + '<div class="row-nums"><span class="num-plan">' + fmt(r.plan) + '</span><span class="num-arrow">→</span>'
         + '<span class="num-gasto">' + (r.gasto != null ? fmt(r.gasto) : '-') + '</span>' + diffHtml
         + '<span style="margin-left:auto;display:flex;gap:4px">' + subBtn + addBtn + '</span></div>'
-        + subcatsHtml
-        + '<div class="progress-bar" style="margin-top:8px"><div class="' + fillClass + '" style="width:' + pct + '%"></div></div>'
+        + '<div class="progress-bar"><div class="' + fillClass + '" style="width:' + pct + '%"></div></div>'
         + '</div>';
     });
   }
