@@ -801,7 +801,7 @@
     <div class="form-group"><label class="form-label">Categoria</label><input class="form-input" type="text" id="fCat" placeholder="Ex: Alimentacao"></div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Planejado (R$)</label><input class="form-input" type="number" id="fPlan" placeholder="0.00" step="0.01" min="0"></div>
-      <div class="form-group"><label class="form-label">Gasto (R$)</label><input class="form-input" type="number" id="fGasto" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="form-group"><label class="form-label">Gasto (R$)</label><input class="form-input" type="number" id="fGasto" placeholder="0.00" step="0.01" min="0" oninput="syncSubcatTotal()"></div>
     </div>
     <div class="form-group">
       <label class="form-label">Banco <span>- opcional</span></label>
@@ -817,6 +817,21 @@
         <option value="P">Poupanca (20%)</option>
       </select>
     </div>
+    <div class="form-divider"></div>
+
+    <!-- SUBCATEGORIAS -->
+    <div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span class="form-label" style="margin:0">Detalhes do gasto <span>- opcional</span></span>
+        <button onclick="addSubcat()" style="padding:4px 12px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:20px;color:var(--accent);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer">+ item</button>
+      </div>
+      <div id="subcatList" style="display:flex;flex-direction:column;gap:6px"></div>
+      <div id="subcatTotal" style="display:none;margin-top:8px;padding:8px 12px;background:var(--bg-subtle);border-radius:var(--radius-xs);font-size:12px;color:var(--text-2);display:flex;justify-content:space-between">
+        <span>Total detalhado</span>
+        <span id="subcatTotalVal" style="font-weight:700;color:var(--text)">R$0</span>
+      </div>
+    </div>
+
     <div class="form-divider"></div>
     <div class="form-group">
       <div class="form-check-group">
@@ -1124,13 +1139,26 @@ function renderPanel(m) {
         diffHtml = '<span class="' + dcls + '">' + (d >= 0 ? '+' : '') + fmt(d) + '</span>';
       }
       var fillClass = 'progress-fill ' + (r.done ? 'ok' : fc);
+      var subcatsHtml = '';
+      if (r.subcats && r.subcats.length) {
+        subcatsHtml = '<div style="margin-top:8px;display:flex;flex-direction:column;gap:3px;border-left:2px solid var(--border);padding-left:10px">';
+        r.subcats.forEach(function(s) {
+          if (!s.desc && !s.val) return;
+          subcatsHtml += '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-2)">'
+            + '<span>' + (s.desc || '—') + '</span>'
+            + '<span style="font-weight:600;color:var(--text)">' + (s.val ? fmtR(parseFloat(s.val)) : '') + '</span>'
+            + '</div>';
+        });
+        subcatsHtml += '</div>';
+      }
       html += '<div class="' + rowClass + '">'
         + '<div class="row-top">' + dotHtml + '<span class="row-cat">' + r.cat + '</span>' + editBtn + '</div>'
         + tagsHtml
         + '<div class="row-nums"><span class="num-plan">' + fmt(r.plan) + '</span><span class="num-arrow">→</span>'
         + '<span class="num-gasto">' + (r.gasto != null ? fmt(r.gasto) : '-') + '</span>' + diffHtml
         + '<span style="margin-left:auto;display:flex;gap:4px">' + subBtn + addBtn + '</span></div>'
-        + '<div class="progress-bar"><div class="' + fillClass + '" style="width:' + pct + '%"></div></div>'
+        + subcatsHtml
+        + '<div class="progress-bar" style="margin-top:8px"><div class="' + fillClass + '" style="width:' + pct + '%"></div></div>'
         + '</div>';
     });
   }
@@ -1278,11 +1306,103 @@ function openAdd(m) {
   document.getElementById('fTipo').value = '';
   document.getElementById('fDone').checked = false;
   document.getElementById('deleteBtn').style.display = 'none';
+  renderSubcats([]);
   document.getElementById('modal').classList.add('open');
   renderBancoSuggestions();
   setTimeout(function(){ document.getElementById('fCat').focus(); }, 150);
 }
-var _quickGastoState = null;
+
+// SUBCATEGORIAS
+function renderSubcats(subcats) {
+  var list = document.getElementById('subcatList');
+  var totalEl = document.getElementById('subcatTotal');
+  var totalVal = document.getElementById('subcatTotalVal');
+  list.innerHTML = (subcats || []).map(function(s, i) {
+    return '<div style="display:flex;gap:6px;align-items:center">'
+      + '<input class="form-input" type="text" placeholder="Ex: Mercado" value="' + (s.desc||'') + '" oninput="updateSubcat(' + i + ',\'desc\',this.value)" style="flex:1;font-size:13px;padding:8px 10px">'
+      + '<input class="form-input" type="number" placeholder="0,00" value="' + (s.val||'') + '" oninput="updateSubcat(' + i + ',\'val\',this.value)" style="width:90px;font-size:13px;padding:8px 10px" step="0.01" min="0">'
+      + '<button onclick="removeSubcat(' + i + ')" style="background:transparent;border:none;color:var(--text-3);cursor:pointer;font-size:16px;padding:4px;line-height:1;flex-shrink:0">×</button>'
+      + '</div>';
+  }).join('');
+  updateSubcatTotal();
+}
+
+var _subcats = [];
+function addSubcat() {
+  _subcats.push({desc:'', val:''});
+  renderSubcats(_subcats);
+}
+function removeSubcat(i) {
+  _subcats.splice(i, 1);
+  renderSubcats(_subcats);
+}
+function updateSubcat(i, field, val) {
+  if (_subcats[i]) _subcats[i][field] = field === 'val' ? val : val;
+  updateSubcatTotal();
+}
+function updateSubcatTotal() {
+  var total = _subcats.reduce(function(a,s){ return a + (parseFloat(s.val)||0); }, 0);
+  var totalEl = document.getElementById('subcatTotal');
+  var totalVal = document.getElementById('subcatTotalVal');
+  if (_subcats.length > 0) {
+    totalEl.style.display = 'flex';
+    totalVal.textContent = fmtR(total);
+    // Auto-fill gasto field if empty
+    var gastoInput = document.getElementById('fGasto');
+    if (!gastoInput.value && total > 0) gastoInput.value = total.toFixed(2);
+  } else {
+    totalEl.style.display = 'none';
+  }
+}
+function syncSubcatTotal() {
+  // If user manually edits gasto, don't override
+}
+
+function openEdit(m, id) {
+  var row = (db[m]||[]).filter(function(r){ return r.id === id; })[0];
+  if (!row) return;
+  editingId = id; editingMonth = m;
+  document.getElementById('modalTitle').textContent = 'Editar categoria';
+  document.getElementById('fCat').value = row.cat;
+  document.getElementById('fPlan').value = row.plan != null ? row.plan : '';
+  document.getElementById('fGasto').value = row.gasto != null ? row.gasto : '';
+  document.getElementById('fBanco').value = row.banco || '';
+  document.getElementById('fTipo').value = row.tipo || '';
+  document.getElementById('fDone').checked = row.done;
+  document.getElementById('deleteBtn').style.display = 'block';
+  _subcats = (row.subcats || []).map(function(s){ return {desc:s.desc,val:s.val}; });
+  renderSubcats(_subcats);
+  document.getElementById('modal').classList.add('open');
+  renderBancoSuggestions();
+  setTimeout(function(){ document.getElementById('fCat').focus(); }, 150);
+}
+function saveRow() {
+  var cat = document.getElementById('fCat').value.trim();
+  if (!cat) { showToast('Nome da categoria obrigatorio', 'error'); return; }
+  var planVal = document.getElementById('fPlan').value;
+  var gastoVal = document.getElementById('fGasto').value;
+  var plan = planVal !== '' ? parseFloat(planVal) : null;
+  var gasto = gastoVal !== '' ? parseFloat(gastoVal) : null;
+  var banco = document.getElementById('fBanco').value.trim();
+  var tipo = document.getElementById('fTipo').value;
+  var done = document.getElementById('fDone').checked;
+  var subcats = _subcats.filter(function(s){ return s.desc || s.val; });
+  if (!db[editingMonth]) db[editingMonth] = [];
+  if (editingId === null) {
+    nextId++;
+    db[editingMonth].push({id:nextId,cat:cat,plan:plan,gasto:gasto,banco:banco,tipo:tipo,done:done,subcats:subcats});
+    showToast('Categoria adicionada', 'success');
+  } else {
+    for (var i = 0; i < db[editingMonth].length; i++) {
+      if (db[editingMonth][i].id === editingId) {
+        db[editingMonth][i] = {id:editingId,cat:cat,plan:plan,gasto:gasto,banco:banco,tipo:tipo,done:done,subcats:subcats};
+        break;
+      }
+    }
+    showToast('Salvo', 'success');
+  }
+  closeModal(); save(); renderTabs(); renderPanel(editingMonth);
+}
 
 function quickGasto(m, id, direction) {
   _quickGastoState = { m: m, id: id, dir: direction };
