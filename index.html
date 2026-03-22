@@ -679,14 +679,6 @@
 
   <div class="sec-title">Orçamento Mensal</div>
   <div class="months-wrap"><div class="month-tabs" id="monthTabs"></div></div>
-  <div class="sort-bar">
-    <span class="sort-label">Ordenar:</span>
-    <button class="sort-btn active" onclick="setSort('default',this)">Padrão</button>
-    <button class="sort-btn" onclick="setSort('gasto_desc',this)">↓ Valor</button>
-    <button class="sort-btn" onclick="setSort('pending_first',this)">⚠ Pendentes</button>
-    <button class="sort-btn" onclick="setSort('diff_worst',this)">📉 Prejuízo</button>
-    <button class="sort-btn" onclick="setSort('tipo',this)">N/D/P</button>
-  </div>
   <div id="panels"></div>
 
   <div style="margin-top:36px">
@@ -1008,8 +1000,6 @@ function sortedRows(rows) {
 }
 function setSort(mode, btn) {
   sortMode = mode;
-  document.querySelectorAll('.sort-btn').forEach(function(b){ b.classList.remove('active'); });
-  btn.classList.add('active');
   save();
   renderPanel(activeMonth);
 }
@@ -1101,6 +1091,12 @@ function renderPanel(m) {
     + '<div class="tipo-chip N"><span class="tipo-chip-lbl">Necessidade</span><span class="tipo-chip-val">' + fmt(planN) + '</span></div>'
     + '<div class="tipo-chip D"><span class="tipo-chip-lbl">Desejo</span><span class="tipo-chip-val">' + fmt(planD) + '</span></div>'
     + '<div class="tipo-chip P"><span class="tipo-chip-lbl">Poupança</span><span class="tipo-chip-val">' + fmt(planP) + '</span></div>'
+    + '</div>'
+    + '<div class="sort-bar"><span class="sort-label">Ordenar:</span>'
+    + ['default','gasto_desc','pending_first','diff_worst','tipo'].reduce(function(h,mode,i){
+        var labels=['Padrão','Valor','Pendentes','Prejuízo','N/D/P'];
+        return h+'<button class="sort-btn'+(sortMode===mode?' active':'')+'" onclick="setSort(\''+mode+'\',this)">'+labels[i]+'</button>';
+      },'')
     + '</div>'
     + '<div class="rows-wrap">';
 
