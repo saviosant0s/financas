@@ -1306,7 +1306,6 @@ function openAdd(m) {
   document.getElementById('fTipo').value = '';
   document.getElementById('fDone').checked = false;
   document.getElementById('deleteBtn').style.display = 'none';
-  _subcats = [];
   renderSubcats([]);
   document.getElementById('modal').classList.add('open');
   renderBancoSuggestions();
@@ -1314,50 +1313,61 @@ function openAdd(m) {
 }
 
 // SUBCATEGORIAS
-function renderSubcats(subcats) {
-  var list = document.getElementById('subcatList');
-  var totalEl = document.getElementById('subcatTotal');
-  var totalVal = document.getElementById('subcatTotalVal');
-  list.innerHTML = (subcats || []).map(function(s, i) {
-    return '<div style="display:flex;gap:6px;align-items:center">'
-      + '<input class="form-input" type="text" placeholder="Ex: Mercado" value="' + (s.desc||'') + '" oninput="updateSubcat(' + i + ',\'desc\',this.value)" style="flex:1;font-size:13px;padding:8px 10px">'
-      + '<input class="form-input" type="number" placeholder="0,00" value="' + (s.val||'') + '" oninput="updateSubcat(' + i + ',\'val\',this.value)" style="width:90px;font-size:13px;padding:8px 10px" step="0.01" min="0">'
-      + '<button onclick="removeSubcat(' + i + ')" style="background:transparent;border:none;color:var(--text-3);cursor:pointer;font-size:16px;padding:4px;line-height:1;flex-shrink:0">×</button>'
-      + '</div>';
-  }).join('');
-  updateSubcatTotal();
+// SUBCATEGORIAS — DOM-driven, no global state
+function getSubcatsFromDOM() {
+  var rows = document.querySelectorAll('#subcatList .subcat-row');
+  var result = [];
+  rows.forEach(function(row) {
+    var desc = row.querySelector('.subcat-desc').value.trim();
+    var val  = row.querySelector('.subcat-val').value;
+    if (desc || val) result.push({ desc: desc, val: val });
+  });
+  return result;
 }
 
-var _subcats = [];
+function renderSubcats(subcats) {
+  var list = document.getElementById('subcatList');
+  list.innerHTML = '';
+  (subcats || []).forEach(function(s, i) {
+    list.appendChild(makeSubcatRow(s.desc || '', s.val || ''));
+  });
+  refreshSubcatTotal();
+}
+
+function makeSubcatRow(desc, val) {
+  var row = document.createElement('div');
+  row.className = 'subcat-row';
+  row.style.cssText = 'display:flex;gap:6px;align-items:center';
+  row.innerHTML = '<input class="form-input subcat-desc" type="text" placeholder="Ex: Mercado" value="' + desc + '" style="flex:1;font-size:13px;padding:8px 10px">'
+    + '<input class="form-input subcat-val" type="number" placeholder="0,00" value="' + val + '" style="width:90px;font-size:13px;padding:8px 10px" step="0.01" min="0">'
+    + '<button type="button" style="background:transparent;border:none;color:var(--text-3);cursor:pointer;font-size:18px;padding:4px;line-height:1;flex-shrink:0">×</button>';
+  row.querySelector('button').onclick = function() { row.remove(); refreshSubcatTotal(); };
+  row.querySelector('.subcat-val').oninput = refreshSubcatTotal;
+  return row;
+}
+
 function addSubcat() {
-  _subcats.push({desc:'', val:''});
-  renderSubcats(_subcats);
+  document.getElementById('subcatList').appendChild(makeSubcatRow('', ''));
+  refreshSubcatTotal();
 }
-function removeSubcat(i) {
-  _subcats.splice(i, 1);
-  renderSubcats(_subcats);
-}
-function updateSubcat(i, field, val) {
-  if (_subcats[i]) _subcats[i][field] = field === 'val' ? val : val;
-  updateSubcatTotal();
-}
-function updateSubcatTotal() {
-  var total = _subcats.reduce(function(a,s){ return a + (parseFloat(s.val)||0); }, 0);
+
+function refreshSubcatTotal() {
+  var rows = document.querySelectorAll('#subcatList .subcat-row');
+  var total = 0;
+  rows.forEach(function(row) { total += parseFloat(row.querySelector('.subcat-val').value) || 0; });
   var totalEl = document.getElementById('subcatTotal');
   var totalVal = document.getElementById('subcatTotalVal');
-  if (_subcats.length > 0) {
+  if (rows.length > 0) {
     totalEl.style.display = 'flex';
     totalVal.textContent = fmtR(total);
-    // Auto-fill gasto field if empty
     var gastoInput = document.getElementById('fGasto');
     if (!gastoInput.value && total > 0) gastoInput.value = total.toFixed(2);
   } else {
     totalEl.style.display = 'none';
   }
 }
-function syncSubcatTotal() {
-  // If user manually edits gasto, don't override
-}
+
+function syncSubcatTotal() {} // kept for compatibility
 
 function openEdit(m, id) {
   var row = (db[m]||[]).filter(function(r){ return r.id === id; })[0];
@@ -1371,8 +1381,7 @@ function openEdit(m, id) {
   document.getElementById('fTipo').value = row.tipo || '';
   document.getElementById('fDone').checked = row.done;
   document.getElementById('deleteBtn').style.display = 'block';
-  _subcats = (row.subcats || []).map(function(s){ return {desc:s.desc,val:s.val}; });
-  renderSubcats(_subcats);
+  renderSubcats(row.subcats || []);
   document.getElementById('modal').classList.add('open');
   renderBancoSuggestions();
   setTimeout(function(){ document.getElementById('fCat').focus(); }, 150);
@@ -1387,7 +1396,7 @@ function saveRow() {
   var banco = document.getElementById('fBanco').value.trim();
   var tipo = document.getElementById('fTipo').value;
   var done = document.getElementById('fDone').checked;
-  var subcats = _subcats.filter(function(s){ return s.desc || s.val; });
+  var subcats = getSubcatsFromDOM();
   if (!db[editingMonth]) db[editingMonth] = [];
   if (editingId === null) {
     nextId++;
@@ -1456,7 +1465,11 @@ function openEdit(m, id) {
   renderBancoSuggestions();
   setTimeout(function(){ document.getElementById('fCat').focus(); }, 150);
 }
-function closeModal() { document.getElementById('modal').classList.remove('open'); _subcats = []; }
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.getElementById('subcatList').innerHTML = '';
+  document.getElementById('subcatTotal').style.display = 'none';
+}
 function saveRow() {
   var cat = document.getElementById('fCat').value.trim();
   if (!cat) { showToast('Nome da categoria obrigatorio', 'error'); return; }
