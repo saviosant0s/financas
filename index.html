@@ -1470,32 +1470,6 @@ function closeModal() {
   document.getElementById('subcatList').innerHTML = '';
   document.getElementById('subcatTotal').style.display = 'none';
 }
-function saveRow() {
-  var cat = document.getElementById('fCat').value.trim();
-  if (!cat) { showToast('Nome da categoria obrigatorio', 'error'); return; }
-  var planVal = document.getElementById('fPlan').value;
-  var gastoVal = document.getElementById('fGasto').value;
-  var plan = planVal !== '' ? parseFloat(planVal) : null;
-  var gasto = gastoVal !== '' ? parseFloat(gastoVal) : null;
-  var banco = document.getElementById('fBanco').value.trim();
-  var tipo = document.getElementById('fTipo').value;
-  var done = document.getElementById('fDone').checked;
-  if (!db[editingMonth]) db[editingMonth] = [];
-  if (editingId === null) {
-    nextId++;
-    db[editingMonth].push({id:nextId,cat:cat,plan:plan,gasto:gasto,banco:banco,tipo:tipo,done:done});
-    showToast('Categoria adicionada', 'success');
-  } else {
-    for (var i = 0; i < db[editingMonth].length; i++) {
-      if (db[editingMonth][i].id === editingId) {
-        db[editingMonth][i] = {id:editingId,cat:cat,plan:plan,gasto:gasto,banco:banco,tipo:tipo,done:done};
-        break;
-      }
-    }
-    showToast('Salvo', 'success');
-  }
-  closeModal(); save(); renderTabs(); renderPanel(editingMonth);
-}
 function deleteRow() {
   if (editingId === null) return;
   db[editingMonth] = (db[editingMonth]||[]).filter(function(r){ return r.id !== editingId; });
