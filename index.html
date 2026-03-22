@@ -1308,7 +1308,7 @@ function getSubcatsFromDOM() {
   var result = [];
   rows.forEach(function(row) {
     var desc = row.querySelector('.subcat-desc').value.trim();
-    var val  = row.querySelector('.subcat-val').value;
+    var val  = parseFloat(row.querySelector('.subcat-val').value) || 0;
     if (desc || val) result.push({ desc: desc, val: val });
   });
   return result;
@@ -1377,7 +1377,7 @@ function openEdit(m, id) {
   renderBancoSuggestions();
   setTimeout(function(){ document.getElementById('fCat').focus(); }, 150);
 }
-function saveRow() {
+async function saveRow() {
   var cat = document.getElementById('fCat').value.trim();
   if (!cat) { showToast('Nome da categoria obrigatorio', 'error'); return; }
   var planVal = document.getElementById('fPlan').value;
@@ -1406,9 +1406,9 @@ function saveRow() {
     }
     showToast('Salvo', 'success');
   }
-  // Now close and render
+  // Close modal, then persist and re-render
   document.getElementById('modal').classList.remove('open');
-  save();
+  await save();
   renderTabs();
   renderPanel(m);
 }
@@ -1448,22 +1448,6 @@ function closeQuickGasto() {
   _quickGastoState = null;
 }
 
-function openEdit(m, id) {
-  var row = (db[m]||[]).filter(function(r){ return r.id === id; })[0];
-  if (!row) return;
-  editingId = id; editingMonth = m;
-  document.getElementById('modalTitle').textContent = 'Editar categoria';
-  document.getElementById('fCat').value = row.cat;
-  document.getElementById('fPlan').value = row.plan != null ? row.plan : '';
-  document.getElementById('fGasto').value = row.gasto != null ? row.gasto : '';
-  document.getElementById('fBanco').value = row.banco || '';
-  document.getElementById('fTipo').value = row.tipo || '';
-  document.getElementById('fDone').checked = row.done;
-  document.getElementById('deleteBtn').style.display = 'block';
-  document.getElementById('modal').classList.add('open');
-  renderBancoSuggestions();
-  setTimeout(function(){ document.getElementById('fCat').focus(); }, 150);
-}
 function closeModal() {
   document.getElementById('modal').classList.remove('open');
 }
