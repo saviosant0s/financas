@@ -1306,6 +1306,7 @@ function openAdd(m) {
   document.getElementById('fTipo').value = '';
   document.getElementById('fDone').checked = false;
   document.getElementById('deleteBtn').style.display = 'none';
+  _subcats = [];
   renderSubcats([]);
   document.getElementById('modal').classList.add('open');
   renderBancoSuggestions();
@@ -1455,7 +1456,7 @@ function openEdit(m, id) {
   renderBancoSuggestions();
   setTimeout(function(){ document.getElementById('fCat').focus(); }, 150);
 }
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function closeModal() { document.getElementById('modal').classList.remove('open'); _subcats = []; }
 function saveRow() {
   var cat = document.getElementById('fCat').value.trim();
   if (!cat) { showToast('Nome da categoria obrigatorio', 'error'); return; }
