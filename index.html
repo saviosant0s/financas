@@ -670,11 +670,11 @@
     </div>
   </header>
 
-  <div class="sec-title">Regra 50/30/20</div>
+  <div class="sec-title">Regra 50/30/20 <span style="font-size:10px;font-weight:400;color:var(--text-3);letter-spacing:0;text-transform:none;cursor:pointer;margin-left:4px" onclick="openRuleModal()">✏️ editar</span></div>
   <div class="rule-grid" style="margin-bottom:32px">
-    <div class="rule-item"><div class="rule-pct green">50%</div><div class="rule-lbl">Necessidades</div><div class="rule-val" id="rule50">R$575</div></div>
-    <div class="rule-item"><div class="rule-pct gold">30%</div><div class="rule-lbl">Desejos</div><div class="rule-val" id="rule30">R$345</div></div>
-    <div class="rule-item"><div class="rule-pct blue">20%</div><div class="rule-lbl">Poupança</div><div class="rule-val" id="rule20">R$230</div></div>
+    <div class="rule-item" style="cursor:pointer" onclick="openRuleModal()"><div class="rule-pct green" id="rulePctN">50%</div><div class="rule-lbl">Necessidades</div><div class="rule-val" id="rule50">-</div></div>
+    <div class="rule-item" style="cursor:pointer" onclick="openRuleModal()"><div class="rule-pct gold" id="rulePctD">30%</div><div class="rule-lbl">Desejos</div><div class="rule-val" id="rule30">-</div></div>
+    <div class="rule-item" style="cursor:pointer" onclick="openRuleModal()"><div class="rule-pct blue" id="rulePctP">20%</div><div class="rule-lbl">Poupança</div><div class="rule-val" id="rule20">-</div></div>
   </div>
 
   <div class="sec-title">Orçamento Mensal</div>
@@ -775,6 +775,22 @@
   </div>
 </div>
 
+<!-- MODAL REGRA -->
+<div class="modal-overlay" id="modalRegra">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-title"><span>Editar regra de distribuição</span><button class="modal-close" onclick="closeRuleModal()">×</button></div>
+    <p style="font-size:12px;color:var(--text-2);margin-bottom:18px;line-height:1.6">Os valores devem somar 100%. Padrão: 50/30/20.</p>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label" style="color:var(--c-need)">Necessidades (%)</label><input class="form-input" type="number" id="ruleInputN" min="0" max="100" step="1" value="50" oninput="updateRuleSumWarning()"></div>
+      <div class="form-group"><label class="form-label" style="color:var(--c-want)">Desejos (%)</label><input class="form-input" type="number" id="ruleInputD" min="0" max="100" step="1" value="30" oninput="updateRuleSumWarning()"></div>
+    </div>
+    <div class="form-group"><label class="form-label" style="color:var(--c-save)">Poupança (%)</label><input class="form-input" type="number" id="ruleInputP" min="0" max="100" step="1" value="20" oninput="updateRuleSumWarning()"></div>
+    <div id="ruleSumWarning" style="font-size:12px;font-weight:600;text-align:center;padding:8px;border-radius:var(--radius-xs);margin-bottom:12px;display:none"></div>
+    <button onclick="saveRuleModal()" class="btn-primary">Salvar</button>
+    <button onclick="resetRuleModal()" style="width:100%;margin-top:8px;padding:9px;background:transparent;border:1px solid var(--border-2);border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-size:12px;color:var(--text-2);cursor:pointer">Restaurar padrão (50/30/20)</button>
+  </div>
+</div>
+
 <!-- MODAL RENDA -->
 <div class="modal-overlay" id="modalRenda">
   <div class="modal">
@@ -786,9 +802,9 @@
     </div>
     <div class="form-label" style="margin-bottom:8px">Preview - Regra 50/30/20</div>
     <div class="rule-preview">
-      <div class="rule-preview-item"><div class="rule-preview-pct green">50%</div><div class="rule-preview-lbl">Necessidades</div><div class="rule-preview-val" id="prev50">-</div></div>
-      <div class="rule-preview-item"><div class="rule-preview-pct gold">30%</div><div class="rule-preview-lbl">Desejos</div><div class="rule-preview-val" id="prev30">-</div></div>
-      <div class="rule-preview-item"><div class="rule-preview-pct blue">20%</div><div class="rule-preview-lbl">Poupanca</div><div class="rule-preview-val" id="prev20">-</div></div>
+      <div class="rule-preview-item"><div class="rule-preview-pct green" id="prevPctN">50%</div><div class="rule-preview-lbl">Necessidades</div><div class="rule-preview-val" id="prev50">-</div></div>
+      <div class="rule-preview-item"><div class="rule-preview-pct gold" id="prevPctD">30%</div><div class="rule-preview-lbl">Desejos</div><div class="rule-preview-val" id="prev30">-</div></div>
+      <div class="rule-preview-item"><div class="rule-preview-pct blue" id="prevPctP">20%</div><div class="rule-preview-lbl">Poupança</div><div class="rule-preview-val" id="prev20">-</div></div>
     </div>
     <button class="btn-primary" onclick="saveRenda()">Salvar</button>
   </div>
@@ -905,6 +921,7 @@ var objFilter = 'mes';
 var sortMode = 'default';
 var rendas = {};    // { JAN: 0, FEV: 1150, MAR: 1150, ... }
 var periodos = {};  // { MAR: {inicio:'16/03', fim:'16/04'}, ... }
+var rulePcts = { N: 50, D: 30, P: 20 };  // percentages 50/30/20
 var editingId = null;
 var editingMonth = null;
 var editingObjId = null;
@@ -969,6 +986,7 @@ async function load() {
       objFilter   = meta.objFilter || 'mes';
       rendas  = meta.rendas  || {};
       periodos= meta.periodos|| {};
+      if (meta.rulePcts) rulePcts = meta.rulePcts;
       // migrate old single renda
       if (meta.renda && !rendas[activeMonth]) rendas[activeMonth] = meta.renda;
     } else {
@@ -980,7 +998,7 @@ async function load() {
 async function save() {
   await storageSet('fin-db',  JSON.stringify(db));
   await storageSet('fin-obj', JSON.stringify(objetivos));
-  await storageSet('fin-meta', JSON.stringify({month:activeMonth,sortMode:sortMode,objFilter:objFilter,rendas:rendas,periodos:periodos}));
+  await storageSet('fin-meta', JSON.stringify({month:activeMonth,sortMode:sortMode,objFilter:objFilter,rendas:rendas,periodos:periodos,rulePcts:rulePcts}));
 }
 function seed() {
   db = {};
@@ -1065,9 +1083,13 @@ function renderHeader() {
 }
 function renderRule() {
   var r = getMesRenda(activeMonth);
-  document.getElementById('rule50').textContent = r ? fmtR(r * 0.5) : '-';
-  document.getElementById('rule30').textContent = r ? fmtR(r * 0.3) : '-';
-  document.getElementById('rule20').textContent = r ? fmtR(r * 0.2) : '-';
+  var pN = rulePcts.N / 100, pD = rulePcts.D / 100, pP = rulePcts.P / 100;
+  document.getElementById('rule50').textContent = r ? fmtR(r * pN) : '-';
+  document.getElementById('rule30').textContent = r ? fmtR(r * pD) : '-';
+  document.getElementById('rule20').textContent = r ? fmtR(r * pP) : '-';
+  document.getElementById('rulePctN').textContent = rulePcts.N + '%';
+  document.getElementById('rulePctD').textContent = rulePcts.D + '%';
+  document.getElementById('rulePctP').textContent = rulePcts.P + '%';
 }
 function renderTabs() {
   document.getElementById('monthTabs').innerHTML = MONTHS.map(function(m) {
@@ -1256,9 +1278,12 @@ function openRendaModal() {
 function closeRendaModal() { document.getElementById('modalRenda').classList.remove('open'); }
 function updateRulePreview() {
   var v = parseFloat(document.getElementById('fRenda').value) || 0;
-  document.getElementById('prev50').textContent = v ? fmtR(v * 0.5) : '-';
-  document.getElementById('prev30').textContent = v ? fmtR(v * 0.3) : '-';
-  document.getElementById('prev20').textContent = v ? fmtR(v * 0.2) : '-';
+  document.getElementById('prevPctN').textContent = rulePcts.N + '%';
+  document.getElementById('prevPctD').textContent = rulePcts.D + '%';
+  document.getElementById('prevPctP').textContent = rulePcts.P + '%';
+  document.getElementById('prev50').textContent = v ? fmtR(v * rulePcts.N / 100) : '-';
+  document.getElementById('prev30').textContent = v ? fmtR(v * rulePcts.D / 100) : '-';
+  document.getElementById('prev20').textContent = v ? fmtR(v * rulePcts.P / 100) : '-';
 }
 function saveRenda() {
   var v = parseFloat(document.getElementById('fRenda').value);
@@ -1600,6 +1625,49 @@ function deleteObj() {
   showToast('Objetivo excluido', 'success');
 }
 
+// RULE MODAL
+function openRuleModal() {
+  document.getElementById('ruleInputN').value = rulePcts.N;
+  document.getElementById('ruleInputD').value = rulePcts.D;
+  document.getElementById('ruleInputP').value = rulePcts.P;
+  updateRuleSumWarning();
+  document.getElementById('modalRegra').classList.add('open');
+}
+function closeRuleModal() { document.getElementById('modalRegra').classList.remove('open'); }
+function updateRuleSumWarning() {
+  var n = parseInt(document.getElementById('ruleInputN').value) || 0;
+  var d = parseInt(document.getElementById('ruleInputD').value) || 0;
+  var p = parseInt(document.getElementById('ruleInputP').value) || 0;
+  var sum = n + d + p;
+  var warn = document.getElementById('ruleSumWarning');
+  if (sum === 100) {
+    warn.style.display = 'none';
+  } else {
+    warn.style.display = 'block';
+    warn.style.background = sum > 100 ? 'var(--c-spend-bg)' : 'var(--c-want-bg)';
+    warn.style.color = sum > 100 ? 'var(--c-neg)' : 'var(--c-want)';
+    warn.textContent = 'Total: ' + sum + '% (precisa ser 100%)';
+  }
+}
+async function saveRuleModal() {
+  var n = parseInt(document.getElementById('ruleInputN').value) || 0;
+  var d = parseInt(document.getElementById('ruleInputD').value) || 0;
+  var p = parseInt(document.getElementById('ruleInputP').value) || 0;
+  if (n + d + p !== 100) {
+    updateRuleSumWarning(); return;
+  }
+  rulePcts = { N: n, D: d, P: p };
+  closeRuleModal();
+  await save();
+  renderRule();
+}
+function resetRuleModal() {
+  document.getElementById('ruleInputN').value = 50;
+  document.getElementById('ruleInputD').value = 30;
+  document.getElementById('ruleInputP').value = 20;
+  updateRuleSumWarning();
+}
+
 // TOAST
 var _tt;
 function showToast(msg, type) {
@@ -1613,12 +1681,13 @@ function showToast(msg, type) {
 
 // KEYBOARD
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { closeModal(); closeRendaModal(); closeObjModal(); closeReport(); closeMenu(); closeQuickGasto(); }
+  if (e.key === 'Escape') { closeModal(); closeRendaModal(); closeObjModal(); closeReport(); closeMenu(); closeQuickGasto(); closeRuleModal(); }
 });
 document.getElementById('modal').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeModal(); });
 document.getElementById('modalRenda').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeRendaModal(); });
 document.getElementById('modalQuickGasto').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeQuickGasto(); });
 document.getElementById('modalObj').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeObjModal(); });
+document.getElementById('modalRegra').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeRuleModal(); });
 document.getElementById('fBanco').addEventListener('input', renderBancoSuggestions);
 
 // EXPORT / IMPORT
@@ -1987,6 +2056,7 @@ async function syncFromCloud() {
         objFilter   = d.meta.objFilter || 'mes';
         rendas      = d.meta.rendas    || {};
         periodos    = d.meta.periodos  || {};
+        if (d.meta.rulePcts) rulePcts = d.meta.rulePcts;
       }
       // Ensure all months exist
       MONTHS.forEach(function(m){ if (!db[m]) db[m] = []; });
@@ -2009,7 +2079,7 @@ async function fbSaveData() {
   setAuthSyncStatus('salvando...');
   try {
     await fsSet({ db:db, objetivos:objetivos,
-      meta:{ month:activeMonth, sortMode:sortMode, objFilter:objFilter, rendas:rendas, periodos:periodos } });
+      meta:{ month:activeMonth, sortMode:sortMode, objFilter:objFilter, rendas:rendas, periodos:periodos, rulePcts:rulePcts } });
     setAuthSyncStatus('salvo ✓');
   } catch(e) { setAuthSyncStatus('erro ao salvar'); }
 }
