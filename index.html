@@ -1484,9 +1484,14 @@ function renderParcelasTable() {
   var tbl = document.getElementById('parcelasTable');
   var totalRow = document.getElementById('parcelaTotalRow');
   if (!months.length) { tbl.innerHTML = ''; totalRow.style.display = 'none'; return; }
+  // Capture existing values BEFORE rebuilding DOM
+  var saved = {};
+  months.forEach(function(m) {
+    var el = document.getElementById('parcela-' + m);
+    if (el) saved[m] = el.value;
+  });
   tbl.innerHTML = months.map(function(m) {
-    var existing = document.getElementById('parcela-' + m);
-    var val = existing ? existing.value : '';
+    var val = saved[m] != null ? saved[m] : '';
     return '<div class="parcela-row">'
       + '<div class="parcela-mes">' + m + '</div>'
       + '<input class="parcela-input" id="parcela-' + m + '" type="number" placeholder="Valor em ' + m + '" step="0.01" min="0" value="' + val + '" oninput="updateParcelasTotal()">'
@@ -1560,7 +1565,7 @@ function openEditObj(id) {
   setTimeout(function(){ document.getElementById('oNome').focus(); }, 150);
 }
 function closeObjModal() { document.getElementById('modalObj').classList.remove('open'); }
-function saveObj() {
+async function saveObj() {
   var nome = document.getElementById('oNome').value.trim();
   if (!nome) { showToast('Nome obrigatorio', 'error'); return; }
   var total = parseFloat(document.getElementById('oTotal').value) || 0;
@@ -1586,7 +1591,7 @@ function saveObj() {
     }
     showToast('Objetivo salvo', 'success');
   }
-  closeObjModal(); save(); renderObjetivos();
+  closeObjModal(); await save(); renderObjetivos();
 }
 function deleteObj() {
   if (editingObjId === null) return;
