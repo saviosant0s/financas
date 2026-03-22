@@ -681,9 +681,11 @@
   <div class="months-wrap"><div class="month-tabs" id="monthTabs"></div></div>
   <div class="sort-bar">
     <span class="sort-label">Ordenar:</span>
-    <button class="sort-btn active" onclick="setSort('default',this)">Padrao</button>
-    <button class="sort-btn" onclick="setSort('plan_desc',this)">Maior planejado</button>
-    <button class="sort-btn" onclick="setSort('gasto_desc',this)">Maior gasto</button>
+    <button class="sort-btn active" onclick="setSort('default',this)">Padrão</button>
+    <button class="sort-btn" onclick="setSort('gasto_desc',this)">↓ Valor</button>
+    <button class="sort-btn" onclick="setSort('pending_first',this)">⚠ Pendentes</button>
+    <button class="sort-btn" onclick="setSort('diff_worst',this)">📉 Prejuízo</button>
+    <button class="sort-btn" onclick="setSort('tipo',this)">N/D/P</button>
   </div>
   <div id="panels"></div>
 
@@ -984,8 +986,24 @@ function seed() {
 // SORT
 function sortedRows(rows) {
   var r = rows.slice();
-  if (sortMode === 'plan_desc') r.sort(function(a,b){ return (b.plan||0)-(a.plan||0); });
-  else if (sortMode === 'gasto_desc') r.sort(function(a,b){ return (b.gasto||0)-(a.gasto||0); });
+  if (sortMode === 'gasto_desc') {
+    // Valor descendente: maior gasto primeiro
+    r.sort(function(a,b){ return (b.gasto||0)-(a.gasto||0); });
+  } else if (sortMode === 'pending_first') {
+    // Pendentes primeiro, depois os ok
+    r.sort(function(a,b){ return (a.done===b.done) ? 0 : a.done ? 1 : -1; });
+  } else if (sortMode === 'diff_worst') {
+    // Prejuízo: onde gasto superou o planejado (diferença mais negativa primeiro)
+    r.sort(function(a,b){
+      var dA = (a.plan!=null&&a.gasto!=null) ? a.plan-a.gasto : Infinity;
+      var dB = (b.plan!=null&&b.gasto!=null) ? b.plan-b.gasto : Infinity;
+      return dA - dB; // menor (mais negativo) primeiro
+    });
+  } else if (sortMode === 'tipo') {
+    // Agrupa por N → D → P → sem tipo
+    var order = {N:0, D:1, P:2, '':3};
+    r.sort(function(a,b){ return (order[a.tipo||'']||3)-(order[b.tipo||'']||3); });
+  }
   return r;
 }
 function setSort(mode, btn) {
