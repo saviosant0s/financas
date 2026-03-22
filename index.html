@@ -1293,6 +1293,8 @@ function openAdd(m) {
   document.getElementById('fTipo').value = '';
   document.getElementById('fDone').checked = false;
   document.getElementById('deleteBtn').style.display = 'none';
+  document.getElementById('subcatList').innerHTML = '';
+  document.getElementById('subcatTotal').style.display = 'none';
   renderSubcats([]);
   document.getElementById('modal').classList.add('open');
   renderBancoSuggestions();
@@ -1368,6 +1370,8 @@ function openEdit(m, id) {
   document.getElementById('fTipo').value = row.tipo || '';
   document.getElementById('fDone').checked = row.done;
   document.getElementById('deleteBtn').style.display = 'block';
+  document.getElementById('subcatList').innerHTML = '';
+  document.getElementById('subcatTotal').style.display = 'none';
   renderSubcats(row.subcats || []);
   document.getElementById('modal').classList.add('open');
   renderBancoSuggestions();
@@ -1383,22 +1387,30 @@ function saveRow() {
   var banco = document.getElementById('fBanco').value.trim();
   var tipo = document.getElementById('fTipo').value;
   var done = document.getElementById('fDone').checked;
+  // Read subcats from DOM BEFORE closing modal
   var subcats = getSubcatsFromDOM();
-  if (!db[editingMonth]) db[editingMonth] = [];
-  if (editingId === null) {
+  var m = editingMonth;
+  var eid = editingId;
+  // Update db
+  if (!db[m]) db[m] = [];
+  if (eid === null) {
     nextId++;
-    db[editingMonth].push({id:nextId,cat:cat,plan:plan,gasto:gasto,banco:banco,tipo:tipo,done:done,subcats:subcats});
+    db[m].push({id:nextId, cat:cat, plan:plan, gasto:gasto, banco:banco, tipo:tipo, done:done, subcats:subcats});
     showToast('Categoria adicionada', 'success');
   } else {
-    for (var i = 0; i < db[editingMonth].length; i++) {
-      if (db[editingMonth][i].id === editingId) {
-        db[editingMonth][i] = {id:editingId,cat:cat,plan:plan,gasto:gasto,banco:banco,tipo:tipo,done:done,subcats:subcats};
+    for (var i = 0; i < db[m].length; i++) {
+      if (db[m][i].id === eid) {
+        db[m][i] = {id:eid, cat:cat, plan:plan, gasto:gasto, banco:banco, tipo:tipo, done:done, subcats:subcats};
         break;
       }
     }
     showToast('Salvo', 'success');
   }
-  closeModal(); save(); renderTabs(); renderPanel(editingMonth);
+  // Now close and render
+  document.getElementById('modal').classList.remove('open');
+  save();
+  renderTabs();
+  renderPanel(m);
 }
 
 function quickGasto(m, id, direction) {
@@ -1454,8 +1466,6 @@ function openEdit(m, id) {
 }
 function closeModal() {
   document.getElementById('modal').classList.remove('open');
-  document.getElementById('subcatList').innerHTML = '';
-  document.getElementById('subcatTotal').style.display = 'none';
 }
 function deleteRow() {
   if (editingId === null) return;
