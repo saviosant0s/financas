@@ -315,6 +315,10 @@
     font-size:13px; transition:background .15s; line-height:1;
   }
   .btn-icon:hover { background:var(--surface-2) }
+  .gasto-add { font-size:14px; font-weight:700; color:var(--c-save); border:1px solid var(--accent-border) !important; padding:2px 9px !important; }
+  .gasto-add:hover { background:var(--c-save-bg) !important; }
+  .gasto-sub { font-size:14px; font-weight:700; color:var(--c-neg); border:1px solid rgba(220,38,38,0.2) !important; padding:2px 9px !important; }
+  .gasto-sub:hover { background:var(--c-spend-bg) !important; }
 
   .add-row-btn {
     display:flex; align-items:center; gap:8px;
@@ -1077,7 +1081,9 @@ function renderPanel(m) {
       var tipoHtml = tipoLabel ? '<span class="tipo-tag ' + r.tipo + '">' + tipoLabel + '</span>' : '';
       var badgeHtml = '<span class="badge ' + (r.done ? 'ok' : 'pend') + '">' + (r.done ? 'ok' : 'pendente') + '</span>';
       var tagsHtml = (tipoHtml || bancoHtml || badgeHtml) ? '<div class="row-tags">' + tipoHtml + bancoHtml + badgeHtml + '</div>' : '';
-      var editBtn = '<button class="btn-icon" style="margin-left:auto;flex-shrink:0" onclick="openEdit(\'' + m + '\',' + r.id + ')">✏️</button>';
+      var editBtn = '<button class="btn-icon" style="margin-left:auto;flex-shrink:0" title="Editar" onclick="openEdit(\'' + m + '\',' + r.id + ')">✏️</button>';
+      var addBtn  = '<button class="btn-icon gasto-add" style="flex-shrink:0" title="Adicionar gasto" onclick="quickGasto(\'' + m + '\',' + r.id + ',1)">+</button>';
+      var subBtn  = '<button class="btn-icon gasto-sub" style="flex-shrink:0" title="Remover gasto" onclick="quickGasto(\'' + m + '\',' + r.id + ',-1)">−</button>';
       var diffHtml = '';
       if (d !== null) {
         var dcls = d >= 0 ? 'num-diff-pos' : 'num-diff-neg';
@@ -1088,7 +1094,8 @@ function renderPanel(m) {
         + '<div class="row-top">' + dotHtml + '<span class="row-cat">' + r.cat + '</span>' + editBtn + '</div>'
         + tagsHtml
         + '<div class="row-nums"><span class="num-plan">' + fmt(r.plan) + '</span><span class="num-arrow">→</span>'
-        + '<span class="num-gasto">' + (r.gasto != null ? fmt(r.gasto) : '-') + '</span>' + diffHtml + '</div>'
+        + '<span class="num-gasto">' + (r.gasto != null ? fmt(r.gasto) : '-') + '</span>' + diffHtml
+        + '<span style="margin-left:auto;display:flex;gap:4px">' + subBtn + addBtn + '</span></div>'
         + '<div class="progress-bar"><div class="' + fillClass + '" style="width:' + pct + '%"></div></div>'
         + '</div>';
     });
@@ -1241,6 +1248,16 @@ function openAdd(m) {
   renderBancoSuggestions();
   setTimeout(function(){ document.getElementById('fCat').focus(); }, 150);
 }
+function quickGasto(m, id, direction) {
+  var row = (db[m] || []).find(function(r){ return r.id === id; });
+  if (!row) return;
+  var val = parseFloat(prompt(direction > 0 ? 'Adicionar ao gasto (R$):' : 'Remover do gasto (R$):'));
+  if (isNaN(val) || val <= 0) return;
+  var current = row.gasto || 0;
+  row.gasto = Math.max(0, current + direction * val);
+  save(); renderPanels();
+}
+
 function openEdit(m, id) {
   var row = (db[m]||[]).filter(function(r){ return r.id === id; })[0];
   if (!row) return;
