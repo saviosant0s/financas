@@ -460,62 +460,6 @@
   .form-divider { height:1px; background:var(--border); margin:4px 0 16px }
   .form-section-label { font-size:10px; font-weight:700; color:var(--text-3); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:10px }
 
-  /* ── RENDA AJUSTE INLINE — within edit modal ── */
-  .renda-adjust-block {
-    background:var(--bg-subtle);
-    border:1px solid var(--border);
-    border-radius:var(--radius-sm);
-    padding:14px 16px;
-    margin-bottom:16px;
-  }
-  .renda-adjust-title {
-    font-size:10px; font-weight:700; color:var(--text-3);
-    text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;
-    display:flex; align-items:center; gap:6px;
-  }
-  .renda-adjust-title::after { content:''; flex:1; height:1px; background:var(--border) }
-  .renda-adjust-row {
-    display:flex; align-items:center; gap:8px;
-  }
-  .renda-adjust-display {
-    flex:1;
-    font-size:18px; font-weight:800; color:var(--c-gold);
-    letter-spacing:-0.5px;
-  }
-  .renda-adjust-sub-label {
-    font-size:10px; color:var(--text-3); font-weight:400; margin-top:1px;
-  }
-  .renda-adj-btn {
-    display:flex; align-items:center; gap:5px;
-    padding:8px 14px;
-    border-radius:var(--radius-xs);
-    font-family:'Inter',sans-serif; font-size:13px; font-weight:700;
-    cursor:pointer; border:1px solid; transition:all .15s; white-space:nowrap;
-  }
-  .renda-adj-btn.add {
-    background:var(--c-save-bg);
-    border-color:var(--accent-border);
-    color:var(--c-save);
-  }
-  .renda-adj-btn.add:hover { background:rgba(22,71,58,0.14); }
-  .renda-adj-btn.sub {
-    background:var(--c-spend-bg);
-    border-color:rgba(220,38,38,0.22);
-    color:var(--c-neg);
-  }
-  .renda-adj-btn.sub:hover { background:rgba(220,38,38,0.14); }
-
-  /* ── MODAL RENDA AJUSTE (quick) ── */
-  .renda-quick-type-badge {
-    display:inline-block;
-    font-size:10px; font-weight:700;
-    padding:3px 10px; border-radius:20px;
-    margin-bottom:14px;
-    text-transform:uppercase; letter-spacing:0.5px;
-  }
-  .renda-quick-type-badge.add { background:var(--c-save-bg); color:var(--c-save); border:1px solid var(--accent-border) }
-  .renda-quick-type-badge.sub { background:var(--c-spend-bg); color:var(--c-neg); border:1px solid rgba(220,38,38,0.22) }
-
   .parcelas-table { border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden }
   .parcela-row { display:grid; grid-template-columns:56px 1fr; align-items:center; border-bottom:1px solid var(--border) }
   .parcela-row:last-child { border-bottom:none }
@@ -690,7 +634,6 @@
     .report-grid { grid-template-columns:1fr 1fr }
     .tipo-breakdown { flex-direction:column }
     header { padding:20px 0 18px }
-    .renda-adjust-row { flex-wrap:wrap }
   }
 </style>
 </head>
@@ -698,6 +641,7 @@
 <!-- LOGIN SCREEN -->
 <div id="loginScreen">
   <div class="login-box">
+    <!-- Logo -->
     <div style="margin-bottom:24px;display:flex;justify-content:center">
       <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect width="52" height="52" rx="14" fill="#16473A"/>
@@ -728,7 +672,7 @@
       <div class="header-name">Controle <span>Financeiro</span></div>
     </div>
     <div class="renda-card" onclick="openRendaModal()">
-      <div class="renda-edit-hint">✏️ editar</div>
+      <div class="renda-edit-hint">pencil editar</div>
       <div class="renda-label">Renda mensal</div>
       <div class="renda-value" id="rendaDisplay">R$1.150</div>
       <div class="renda-period" id="periodoDisplay">16/03 -> 16/04</div>
@@ -761,9 +705,11 @@
   <footer>© 2026 &nbsp;·&nbsp; @savio.rocha_ &nbsp;·&nbsp; Todos os direitos reservados</footer>
 </div>
 
+<!-- HAMBURGER BUTTON -->
 <!-- AUTH BAR -->
 <div id="authBar" style="position:fixed;top:0;left:0;right:0;background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:none;align-items:center;justify-content:space-between;z-index:70;gap:12px;height:48px;box-shadow:var(--shadow-sm)">
   <div style="display:flex;align-items:center;gap:8px">
+    <!-- Hamburger inside nav -->
     <button onclick="toggleMenu()" id="hamburgerBtn" style="background:transparent;border:none;cursor:pointer;padding:8px;display:flex;flex-direction:column;gap:4px;border-radius:var(--radius-sm);transition:background .2s" onmouseover="this.style.background='var(--glass-hover)'" onmouseout="this.style.background='transparent'">
       <span style="display:block;width:18px;height:2px;background:rgba(237,246,249,.6);border-radius:2px"></span>
       <span style="display:block;width:18px;height:2px;background:rgba(237,246,249,.6);border-radius:2px"></span>
@@ -775,14 +721,13 @@
     <span id="authName" style="font-size:12px;color:var(--text-2);font-family:'Inter',sans-serif;font-weight:500"></span>
     <span id="authSyncStatus" style="font-size:10px;color:var(--text-3);font-family:'Inter',sans-serif"></span>
     <div class="theme-toggle" onclick="toggleTheme()" title="Alternar modo escuro">
-      <span class="toggle-icon">☀️</span>
+      <span class="toggle-icon">&#9728;&#65039;</span>
       <div class="toggle-track"><div class="toggle-thumb"></div></div>
-      <span class="toggle-icon">🌙</span>
+      <span class="toggle-icon">&#127769;</span>
     </div>
     <button id="authActionBtn" onclick="handleAuthAction()" style="padding:5px 12px;background:transparent;border:1px solid var(--border-2);border-radius:20px;color:var(--text-2);font-family:'Inter',sans-serif;font-size:10px;font-weight:600;cursor:pointer;transition:all .15s"></button>
   </div>
 </div>
-
 <!-- DROPDOWN MENU -->
 <div class="hamburger-menu" id="hamburgerMenu">
   <button class="menu-item" onclick="openReport();closeMenu()"><span class="mi-icon">📊</span> Relatório Anual</button>
@@ -839,32 +784,6 @@
   </div>
 </div>
 
-<!-- MODAL QUICK RENDA AJUSTE -->
-<div class="modal-overlay" id="modalRendaAjuste">
-  <div class="modal" style="max-width:340px">
-    <div class="modal-title">
-      <span id="rendaAjusteTitle">Ajustar renda</span>
-      <button class="modal-close" onclick="closeRendaAjuste()">×</button>
-    </div>
-    <div style="text-align:center;margin-bottom:4px">
-      <span class="renda-quick-type-badge" id="rendaAjusteBadge">+ adicionar</span>
-    </div>
-    <div class="form-group">
-      <label class="form-label" id="rendaAjusteLabel">Valor (R$)</label>
-      <input class="form-input" type="number" id="rendaAjusteVal" placeholder="0,00" step="0.01" min="0"
-        style="font-size:22px;font-weight:700;text-align:center;padding:14px"
-        onkeydown="if(event.key==='Enter') confirmRendaAjuste()">
-      <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--text-3)">
-        Renda atual: <strong id="rendaAjusteAtual" style="color:var(--c-gold)">-</strong>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:4px">
-      <button onclick="closeRendaAjuste()" style="flex:1;padding:11px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;color:var(--text-2)">Cancelar</button>
-      <button id="rendaAjusteConfirmBtn" onclick="confirmRendaAjuste()" style="flex:1;padding:11px;border:none;border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-weight:700;font-size:13px;cursor:pointer;color:#fff">Confirmar</button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL REGRA -->
 <div class="modal-overlay" id="modalRegra">
   <div class="modal" style="max-width:360px">
@@ -904,22 +823,6 @@
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <div class="modal-title"><span id="modalTitle">Adicionar gasto</span><button class="modal-close" onclick="closeModal()">x</button></div>
-
-    <!-- BLOCO RENDA (só aparece ao editar categoria existente) -->
-    <div id="rendaAdjustBlock" class="renda-adjust-block" style="display:none">
-      <div class="renda-adjust-title">Renda do mês</div>
-      <div class="renda-adjust-row">
-        <div>
-          <div class="renda-adjust-display" id="rendaAdjDisplay">-</div>
-          <div class="renda-adjust-sub-label" id="rendaAdjPeriodo">-</div>
-        </div>
-        <div style="display:flex;gap:6px;margin-left:auto">
-          <button class="renda-adj-btn sub" onclick="openRendaAjuste(-1)" title="Diminuir renda">− Diminuir</button>
-          <button class="renda-adj-btn add" onclick="openRendaAjuste(1)" title="Adicionar renda">+ Adicionar</button>
-        </div>
-      </div>
-    </div>
-
     <div class="form-group"><label class="form-label">Categoria</label><input class="form-input" type="text" id="fCat" placeholder="Ex: Alimentacao"></div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Planejado (R$)</label><input class="form-input" type="number" id="fPlan" placeholder="0.00" step="0.01" min="0"></div>
@@ -1022,22 +925,17 @@ var BANCO_DEFAULTS = ['Nubank','Inter','Bradesco','Itau','BB','Caixa','C6','PicP
 
 var db = {};
 var objetivos = [];
-// ── Mês corrente baseado na data real ──
-var _nowMonth = new Date().getMonth(); // 0-based
-var activeMonth = MONTHS[_nowMonth];
-
+var activeMonth = 'MAR';
 var objFilter = 'mes';
 var sortMode = 'default';
 var rendas = {};    // { JAN: 0, FEV: 1150, MAR: 1150, ... }
 var periodos = {};  // { MAR: {inicio:'16/03', fim:'16/04'}, ... }
-var rulePcts = { N: 50, D: 30, P: 20 };
+var rulePcts = { N: 50, D: 30, P: 20 };  // percentages 50/30/20
 var editingId = null;
 var editingMonth = null;
 var editingObjId = null;
 var nextId = 200;
 var nextObjId = 100;
-var _quickGastoState = null;
-var _rendaAjusteState = null; // { dir: 1 | -1 }
 
 function getMesRenda(m) { return rendas[m] || 0; }
 function getMesPeriodo(m) { return periodos[m] || {inicio:'', fim:''}; }
@@ -1070,6 +968,7 @@ function objGastoMes(o, mes) {
 
 // STORAGE
 async function storageGet(key) {
+  // Try window.storage (Claude artifact), fall back to localStorage
   if (window.storage) {
     try { var r = await window.storage.get(key); return (r && r.value) ? r.value : null; } catch(e) {}
   }
@@ -1091,8 +990,7 @@ async function load() {
     if (objRaw) objetivos = JSON.parse(objRaw); else objetivos = [];
     if (metaRaw) {
       var meta = JSON.parse(metaRaw);
-      // ── Ignora o mês salvo; sempre usa o mês atual ──
-      // activeMonth já definido no topo como mês corrente
+      activeMonth = meta.month     || 'MAR';
       sortMode    = meta.sortMode  || 'default';
       objFilter   = meta.objFilter || 'mes';
       rendas  = meta.rendas  || {};
@@ -1102,7 +1000,7 @@ async function load() {
       if (meta.renda && !rendas[activeMonth]) rendas[activeMonth] = meta.renda;
     } else {
       rendas[activeMonth] = 1150;
-      periodos[activeMonth] = { inicio: '', fim: '' };
+      periodos[activeMonth] = {inicio:'16/03', fim:'16/04'};
     }
   } catch(e) { seed(); }
 }
@@ -1123,16 +1021,20 @@ function seed() {
 function sortedRows(rows) {
   var r = rows.slice();
   if (sortMode === 'gasto_desc') {
+    // Valor descendente: maior gasto primeiro
     r.sort(function(a,b){ return (b.gasto||0)-(a.gasto||0); });
   } else if (sortMode === 'pending_first') {
+    // Pendentes primeiro, depois os ok
     r.sort(function(a,b){ return (a.done===b.done) ? 0 : a.done ? 1 : -1; });
   } else if (sortMode === 'diff_worst') {
+    // Prejuízo: onde gasto superou o planejado (diferença mais negativa primeiro)
     r.sort(function(a,b){
       var dA = (a.plan!=null&&a.gasto!=null) ? a.plan-a.gasto : Infinity;
       var dB = (b.plan!=null&&b.gasto!=null) ? b.plan-b.gasto : Infinity;
-      return dA - dB;
+      return dA - dB; // menor (mais negativo) primeiro
     });
   } else if (sortMode === 'tipo') {
+    // Agrupa por N → D → P → sem tipo
     var order = {N:0, D:1, P:2, '':3};
     r.sort(function(a,b){ return (order[a.tipo||'']||3)-(order[b.tipo||'']||3); });
   }
@@ -1186,7 +1088,7 @@ function renderHeader() {
   var r = getMesRenda(activeMonth);
   var p = getMesPeriodo(activeMonth);
   document.getElementById('rendaDisplay').textContent = r ? fmtR(r) : 'definir';
-  document.getElementById('periodoDisplay').textContent = (p.inicio && p.fim) ? p.inicio + ' -> ' + p.fim : activeMonth + '/2026';
+  document.getElementById('periodoDisplay').textContent = (p.inicio && p.fim) ? p.inicio + ' -> ' + p.fim : activeMonth + '/2025';
 }
 function renderRule() {
   var r = getMesRenda(activeMonth);
@@ -1414,71 +1316,6 @@ function saveRenda() {
   showToast('Renda de ' + activeMonth + ' atualizada', 'success');
 }
 
-// ── RENDA AJUSTE (chamado de dentro do modal de edição) ──
-function updateRendaAdjustBlock() {
-  var r = getMesRenda(editingMonth || activeMonth);
-  var p = getMesPeriodo(editingMonth || activeMonth);
-  document.getElementById('rendaAdjDisplay').textContent = r ? fmtR(r) : 'Não definida';
-  document.getElementById('rendaAdjPeriodo').textContent =
-    (p.inicio && p.fim) ? p.inicio + ' → ' + p.fim : (editingMonth || activeMonth) + '/2026';
-}
-
-function openRendaAjuste(dir) {
-  _rendaAjusteState = { dir: dir };
-  var isAdd = dir > 0;
-  var m = editingMonth || activeMonth;
-  var r = getMesRenda(m);
-
-  document.getElementById('rendaAjusteTitle').textContent = isAdd ? 'Adicionar na renda' : 'Diminuir da renda';
-  document.getElementById('rendaAjusteBadge').textContent = isAdd ? '+ adicionar' : '− diminuir';
-  document.getElementById('rendaAjusteBadge').className = 'renda-quick-type-badge ' + (isAdd ? 'add' : 'sub');
-  document.getElementById('rendaAjusteLabel').textContent = isAdd ? 'Quanto adicionar? (R$)' : 'Quanto diminuir? (R$)';
-  document.getElementById('rendaAjusteAtual').textContent = r ? fmtR(r) : 'não definida';
-  document.getElementById('rendaAjusteConfirmBtn').style.background = isAdd ? 'var(--c-save)' : 'var(--c-neg)';
-  document.getElementById('rendaAjusteConfirmBtn').textContent = isAdd ? '+ Confirmar' : '− Confirmar';
-  document.getElementById('rendaAjusteVal').value = '';
-  document.getElementById('modalRendaAjuste').classList.add('open');
-  setTimeout(function(){ document.getElementById('rendaAjusteVal').focus(); }, 120);
-}
-
-function closeRendaAjuste() {
-  document.getElementById('modalRendaAjuste').classList.remove('open');
-  document.getElementById('rendaAjusteVal').style.borderColor = '';
-  _rendaAjusteState = null;
-}
-
-async function confirmRendaAjuste() {
-  if (!_rendaAjusteState) return;
-  var val = parseFloat(document.getElementById('rendaAjusteVal').value);
-  if (isNaN(val) || val <= 0) {
-    document.getElementById('rendaAjusteVal').style.borderColor = 'var(--c-neg)';
-    return;
-  }
-  var m = editingMonth || activeMonth;
-  var current = getMesRenda(m);
-  var next = _rendaAjusteState.dir > 0
-    ? current + val
-    : Math.max(0, current - val);
-  rendas[m] = next;
-  closeRendaAjuste();
-  // Atualiza o bloco dentro do modal de edição
-  updateRendaAdjustBlock();
-  // Atualiza header e regra
-  if (m === activeMonth) {
-    renderHeader();
-    renderRule();
-    ['rule50','rule30','rule20'].forEach(function(id) {
-      var e = document.getElementById(id);
-      e.classList.remove('flash');
-      void e.offsetWidth;
-      e.classList.add('flash');
-    });
-  }
-  await save();
-  showToast(_rendaAjusteState ? '' : (next > current ? 'Renda aumentada' : 'Renda diminuída'), 'success');
-  showToast(next > current ? 'Renda aumentada → ' + fmtR(next) : 'Renda diminuída → ' + fmtR(next), 'success');
-}
-
 // GASTO MODAL
 function openAdd(m) {
   editingId = null; editingMonth = m;
@@ -1492,8 +1329,6 @@ function openAdd(m) {
   document.getElementById('deleteBtn').style.display = 'none';
   document.getElementById('subcatList').innerHTML = '';
   document.getElementById('subcatTotal').style.display = 'none';
-  // Esconde bloco de renda no modo "adicionar"
-  document.getElementById('rendaAdjustBlock').style.display = 'none';
   renderSubcats([]);
   document.getElementById('modal').classList.add('open');
   renderBancoSuggestions();
@@ -1501,6 +1336,7 @@ function openAdd(m) {
 }
 
 // SUBCATEGORIAS
+// SUBCATEGORIAS — DOM-driven, no global state
 function getSubcatsFromDOM() {
   var rows = document.querySelectorAll('#subcatList .subcat-row');
   var result = [];
@@ -1515,7 +1351,7 @@ function getSubcatsFromDOM() {
 function renderSubcats(subcats) {
   var list = document.getElementById('subcatList');
   list.innerHTML = '';
-  (subcats || []).forEach(function(s) {
+  (subcats || []).forEach(function(s, i) {
     list.appendChild(makeSubcatRow(s.desc || '', s.val || ''));
   });
   refreshSubcatTotal();
@@ -1554,7 +1390,7 @@ function refreshSubcatTotal() {
   }
 }
 
-function syncSubcatTotal() {}
+function syncSubcatTotal() {} // kept for compatibility
 
 function openEdit(m, id) {
   var row = (db[m]||[]).filter(function(r){ return r.id === id; })[0];
@@ -1571,14 +1407,10 @@ function openEdit(m, id) {
   document.getElementById('subcatList').innerHTML = '';
   document.getElementById('subcatTotal').style.display = 'none';
   renderSubcats(row.subcats || []);
-  // Mostra bloco de renda ao editar categoria existente
-  document.getElementById('rendaAdjustBlock').style.display = 'block';
-  updateRendaAdjustBlock();
   document.getElementById('modal').classList.add('open');
   renderBancoSuggestions();
   setTimeout(function(){ document.getElementById('fCat').focus(); }, 150);
 }
-
 async function saveRow() {
   var cat = document.getElementById('fCat').value.trim();
   if (!cat) { showToast('Nome da categoria obrigatorio', 'error'); return; }
@@ -1589,9 +1421,11 @@ async function saveRow() {
   var banco = document.getElementById('fBanco').value.trim();
   var tipo = document.getElementById('fTipo').value;
   var done = document.getElementById('fDone').checked;
+  // Read subcats from DOM BEFORE closing modal
   var subcats = getSubcatsFromDOM();
   var m = editingMonth;
   var eid = editingId;
+  // Update db
   if (!db[m]) db[m] = [];
   if (eid === null) {
     nextId++;
@@ -1606,6 +1440,7 @@ async function saveRow() {
     }
     showToast('Salvo', 'success');
   }
+  // Close modal, then persist and re-render
   document.getElementById('modal').classList.remove('open');
   await save();
   renderTabs();
@@ -1683,6 +1518,7 @@ function renderParcelasTable() {
   var tbl = document.getElementById('parcelasTable');
   var totalRow = document.getElementById('parcelaTotalRow');
   if (!months.length) { tbl.innerHTML = ''; totalRow.style.display = 'none'; return; }
+  // Capture existing values BEFORE rebuilding DOM
   var saved = {};
   months.forEach(function(m) {
     var el = document.getElementById('parcela-' + m);
@@ -1854,18 +1690,11 @@ function showToast(msg, type) {
 
 // KEYBOARD
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    // Se o modal de ajuste de renda está aberto, fecha ele primeiro (não fecha o modal pai)
-    if (document.getElementById('modalRendaAjuste').classList.contains('open')) {
-      closeRendaAjuste(); return;
-    }
-    closeModal(); closeRendaModal(); closeObjModal(); closeReport(); closeMenu(); closeQuickGasto(); closeRuleModal();
-  }
+  if (e.key === 'Escape') { closeModal(); closeRendaModal(); closeObjModal(); closeReport(); closeMenu(); closeQuickGasto(); closeRuleModal(); }
 });
 document.getElementById('modal').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeModal(); });
 document.getElementById('modalRenda').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeRendaModal(); });
 document.getElementById('modalQuickGasto').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeQuickGasto(); });
-document.getElementById('modalRendaAjuste').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeRendaAjuste(); });
 document.getElementById('modalObj').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeObjModal(); });
 document.getElementById('modalRegra').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeRuleModal(); });
 document.getElementById('fBanco').addEventListener('input', renderBancoSuggestions);
@@ -1891,11 +1720,12 @@ function importData(event) {
       db = parsed.db;
       objetivos = parsed.objetivos;
       if (parsed.meta) {
-        // Mantém o mês atual, não restaura o salvo
+        activeMonth = parsed.meta.month     || activeMonth;
         sortMode    = parsed.meta.sortMode  || sortMode;
         objFilter   = parsed.meta.objFilter || objFilter;
         rendas  = parsed.meta.rendas  || {};
         periodos= parsed.meta.periodos|| {};
+        // migrate old format
         if (parsed.meta.renda && !rendas[activeMonth]) rendas[activeMonth] = parsed.meta.renda;
       }
       save(); render();
@@ -1917,7 +1747,7 @@ function closeMenu() {
 document.addEventListener('click', function(e) {
   var btn = document.getElementById('hamburgerBtn');
   var menu = document.getElementById('hamburgerMenu');
-  if (btn && !btn.contains(e.target) && !menu.contains(e.target)) closeMenu();
+  if (!btn.contains(e.target) && !menu.contains(e.target)) closeMenu();
 });
 
 // ANNUAL REPORT
@@ -1952,6 +1782,7 @@ function renderReport() {
   var saldo = totalPlan - totalGasto;
   var avgRenda = mesesComRenda ? totalRenda / mesesComRenda : 0;
 
+  // Summary cards
   document.getElementById('reportSummary').innerHTML =
     '<div class="report-card"><div class="report-card-lbl">Total Planejado</div><div class="report-card-val gold">' + fmtR(totalPlan) + '</div></div>' +
     '<div class="report-card"><div class="report-card-lbl">Total Gasto</div><div class="report-card-val ' + (totalGasto>totalPlan?'red':'green') + '">' + fmtR(totalGasto) + '</div></div>' +
@@ -1969,6 +1800,7 @@ function renderReport() {
 
   var def = {responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:'#5f7a94',font:{family:'JetBrains Mono',size:11}}},tooltip:{callbacks:{label:function(ctx){ return ' '+fmtR(ctx.raw||0); }}}}, scales:{x:{ticks:{color:'#5f7a94',font:{family:'JetBrains Mono',size:10}},grid:{color:'#1e2d3d'}},y:{ticks:{color:'#5f7a94',font:{family:'JetBrains Mono',size:10},callback:function(v){ return 'R$'+v; }},grid:{color:'#1e2d3d'}}}};
 
+  // Chart 1: plan vs gasto
   destroyChart('chartPlanGasto');
   chartInstances['chartPlanGasto'] = new Chart(document.getElementById('chartPlanGasto'), {
     type:'bar', data:{labels:labels,datasets:[
@@ -1977,6 +1809,7 @@ function renderReport() {
     ]}, options:def
   });
 
+  // Chart 2: tipo stacked
   var def2 = JSON.parse(JSON.stringify(def));
   def2.scales.x.stacked = true; def2.scales.y.stacked = true;
   destroyChart('chartTipo');
@@ -1988,6 +1821,7 @@ function renderReport() {
     ]}, options:def2
   });
 
+  // Chart 3: renda line
   var def3 = JSON.parse(JSON.stringify(def));
   def3.scales.y.ticks.callback = function(v){ return 'R$'+v; };
   destroyChart('chartRenda');
@@ -1995,18 +1829,20 @@ function renderReport() {
     type:'line', data:{labels:labels,datasets:[{label:'Renda',data:rendaData,borderColor:'#FBBF24',backgroundColor:'rgba(251,191,36,.1)',pointBackgroundColor:'#FBBF24',pointRadius:5,tension:0.3,fill:true,spanGaps:true}]}, options:def3
   });
 
+  // Chart 4: saldo bar
   destroyChart('chartSaldo');
   chartInstances['chartSaldo'] = new Chart(document.getElementById('chartSaldo'), {
     type:'bar', data:{labels:labels,datasets:[{label:'Saldo',data:saldoData,backgroundColor:saldoData.map(function(v){ return v>=0?'rgba(38,217,127,.7)':'rgba(255,95,95,.7)'; }),borderColor:saldoData.map(function(v){ return v>=0?'#26d97f':'#ff5f5f'; }),borderWidth:1,borderRadius:4}]}, options:def
   });
 }
 
-// FIREBASE REST API
-var fbUser   = null;
-var fbIdToken = null;
+// FIREBASE REST API (no SDK needed - uses fetch + Google Identity Services)
+var fbUser   = null;   // { uid, displayName, email, photoURL }
+var fbIdToken = null;  // Firebase ID token
 var fbReady  = false;
 
 function getFbConfig() {
+  // Credentials embedded — no manual setup needed on any device
   var embedded = {
     apiKey:    'AIzaSyCHGFMDVlowr-ppnsnhVbDBCtsV29V4ry8',
     projectId: 'financas-867c5',
@@ -2018,6 +1854,7 @@ function getFbConfig() {
   } catch(e) { return embedded; }
 }
 
+// Convert JS -> Firestore document fields
 function toFS(obj) {
   var f = {};
   Object.keys(obj).forEach(function(k){ f[k] = fsVal(obj[k]); });
@@ -2066,6 +1903,7 @@ async function fsGet() {
 async function fsSet(payload) {
   var body = JSON.stringify({ fields: toFS(payload) });
   var headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + fbIdToken };
+  // Try POST (create), fall back to PATCH (update)
   var res = await fetch(fsUrl() + '?currentDocument.exists=false', { method: 'POST', headers: headers, body: body });
   if (res.status === 409 || res.status === 400) {
     res = await fetch(fsUrl(), { method: 'PATCH', headers: headers, body: body });
@@ -2073,6 +1911,7 @@ async function fsSet(payload) {
   if (!res.ok) { var e = await res.json(); console.error('fsSet', e); }
 }
 
+// Auth bar
 function updateAuthBar() {
   var bar      = document.getElementById('authBar');
   var btn      = document.getElementById('authActionBtn');
@@ -2082,6 +1921,7 @@ function updateAuthBar() {
   var appCont  = document.getElementById('appContainer');
 
   if (fbUser) {
+    // Logged in — show app, hide login screen
     if (loginScr) loginScr.style.display = 'none';
     if (appCont)  appCont.style.display = 'block';
     bar.style.display = 'flex';
@@ -2093,6 +1933,7 @@ function updateAuthBar() {
     btn.style.borderColor = 'rgba(255,95,95,.3)';
     btn.style.color = 'var(--red)';
   } else {
+    // Not logged in — show login screen, hide app
     if (loginScr) loginScr.style.display = 'flex';
     if (appCont)  appCont.style.display = 'none';
     bar.style.display = 'none';
@@ -2157,6 +1998,7 @@ async function onGoogleCredential(response) {
     if (!res.ok) throw new Error(data.error && data.error.message || 'auth failed');
     fbIdToken = data.idToken;
     fbUser = { uid: data.localId, displayName: data.displayName, email: data.email, photoURL: data.photoUrl };
+    // Store refresh token and expiry
     var exp = Date.now() + 55 * 60 * 1000;
     localStorage.setItem('fbSession', JSON.stringify({ t: fbIdToken, u: fbUser, exp: exp, rt: data.refreshToken }));
     scheduleTokenRefresh(exp);
@@ -2169,10 +2011,11 @@ async function onGoogleCredential(response) {
   }
 }
 
+// Auto-refresh token before it expires
 var _refreshTimer = null;
 function scheduleTokenRefresh(expMs) {
   if (_refreshTimer) clearTimeout(_refreshTimer);
-  var msUntilRefresh = expMs - Date.now() - 2 * 60 * 1000;
+  var msUntilRefresh = expMs - Date.now() - 2 * 60 * 1000; // refresh 2 min before expiry
   if (msUntilRefresh < 0) msUntilRefresh = 0;
   _refreshTimer = setTimeout(doTokenRefresh, msUntilRefresh);
 }
@@ -2180,7 +2023,7 @@ function scheduleTokenRefresh(expMs) {
 async function doTokenRefresh() {
   try {
     var s = JSON.parse(localStorage.getItem('fbSession') || 'null');
-    if (!s || !s.rt) return;
+    if (!s || !s.rt) return; // no refresh token — user must re-login
     var cfg = getFbConfig();
     var res = await fetch('https://securetoken.googleapis.com/v1/token?key=' + cfg.apiKey, {
       method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'},
@@ -2195,6 +2038,7 @@ async function doTokenRefresh() {
     scheduleTokenRefresh(exp);
     setAuthSyncStatus('sessão renovada ✓');
   } catch(e) {
+    // Refresh failed — clear session and ask user to re-login
     console.warn('Token refresh failed:', e.message);
     fbIdToken = null;
     localStorage.removeItem('fbSession');
@@ -2211,23 +2055,27 @@ async function syncFromCloud() {
   try {
     var doc = await fsGet();
     if (doc && doc.fields) {
+      // Cloud has data — load it, overwrite local completely
       var d = fromFS(doc.fields);
       db        = d.db        || {};
       objetivos = d.objetivos || [];
       if (d.meta) {
-        // Mantém o mês atual ao sincronizar da nuvem
+        activeMonth = d.meta.month     || 'MAR';
         sortMode    = d.meta.sortMode  || 'default';
         objFilter   = d.meta.objFilter || 'mes';
         rendas      = d.meta.rendas    || {};
         periodos    = d.meta.periodos  || {};
         if (d.meta.rulePcts) rulePcts = d.meta.rulePcts;
       }
+      // Ensure all months exist
       MONTHS.forEach(function(m){ if (!db[m]) db[m] = []; });
       save(); render();
       setAuthSyncStatus('sincronizado ✓');
     } else {
+      // No data in cloud for this account — start completely empty
       db = {}; MONTHS.forEach(function(m){ db[m] = []; });
       objetivos = []; rendas = {}; periodos = {};
+      activeMonth = 'MAR';
       save(); render();
       await fbSaveData();
       setAuthSyncStatus('conta criada ✓');
@@ -2258,6 +2106,7 @@ function tryRestoreSession() {
       updateAuthBar();
       syncFromCloud();
     } else if (s && s.rt) {
+      // Token expired but we have a refresh token — refresh immediately
       fbUser = s.u;
       doTokenRefresh().then(function() {
         if (fbIdToken) { updateAuthBar(); syncFromCloud(); }
@@ -2265,6 +2114,7 @@ function tryRestoreSession() {
     }
   } catch(e) {}
 }
+
 
 // DARK MODE
 function toggleTheme() {
@@ -2287,6 +2137,7 @@ applyTheme();
   render();
   tryRestoreSession();
 
+  // Wrap save() to also push to Firestore when logged in
   var _origSaveFn = save;
   save = async function() {
     await _origSaveFn();
