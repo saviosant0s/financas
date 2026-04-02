@@ -1086,7 +1086,7 @@ var BANCO_DEFAULTS = ['Nubank','Inter','Bradesco','Itau','BB','Caixa','C6','PicP
 
 var db = {};
 var objetivos = [];
-var activeMonth = 'MAR';
+var activeMonth = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'][new Date().getMonth()];
 var objFilter = 'mes';
 var sortMode = 'default';
 var rendas = {};    // { JAN: 0, FEV: 1150, MAR: 1150, ... }
@@ -1169,7 +1169,7 @@ async function load() {
     if (objRaw) objetivos = JSON.parse(objRaw); else objetivos = [];
     if (metaRaw) {
       var meta = JSON.parse(metaRaw);
-      activeMonth = meta.month     || 'MAR';
+      activeMonth = meta.month     || ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'][new Date().getMonth()];
       sortMode    = meta.sortMode  || 'default';
       objFilter   = meta.objFilter || 'mes';
       rendas  = meta.rendas  || {};
@@ -1178,8 +1178,7 @@ async function load() {
       // migrate: old single renda number → income array
       if (meta.renda && !rendas[activeMonth]) rendas[activeMonth] = meta.renda;
     } else {
-      rendas[activeMonth] = 1150;
-      periodos[activeMonth] = {inicio:'16/03', fim:'16/04'};
+      // new account — start empty, no pre-filled renda
     }
     // Migrate data model: subcats → transactions, gasto → transaction
     MONTHS.forEach(function(m) {
@@ -2405,7 +2404,7 @@ async function syncFromCloud() {
       // No data in cloud for this account — start completely empty
       db = {}; MONTHS.forEach(function(m){ db[m] = []; });
       objetivos = []; rendas = {}; periodos = {};
-      activeMonth = 'MAR';
+      activeMonth = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'][new Date().getMonth()];
       save(); render();
       await fbSaveData();
       setAuthSyncStatus('conta criada ✓');
