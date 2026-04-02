@@ -635,6 +635,104 @@
     .tipo-breakdown { flex-direction:column }
     header { padding:20px 0 18px }
   }
+
+  /* ── WCAG / UX REFINEMENTS ── */
+
+  /* No text selection on interactive elements */
+  button, label, .tab-btn, .sort-btn, .obj-filter-btn, .menu-item,
+  .rule-item, .renda-card, .month-chk-label, .banco-chip,
+  .empty-start, .add-row-btn, .obj-add-btn, .btn-icon,
+  .gasto-add, .gasto-sub, .login-btn, .theme-toggle {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Visible focus ring (WCAG 2.4.7) */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  button:focus:not(:focus-visible),
+  input:focus:not(:focus-visible),
+  select:focus:not(:focus-visible) { outline: none; }
+
+  /* Min 44px touch targets on mobile (WCAG 2.5.5) */
+  @media (pointer: coarse) {
+    .tab-btn { min-height: 44px; padding: 10px 16px; }
+    .sort-btn, .obj-filter-btn { min-height: 44px; padding: 10px 14px; }
+    .btn-icon { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+    .gasto-add, .gasto-sub { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+    .menu-item { min-height: 44px; }
+    .month-chk-label { min-height: 44px; }
+  }
+
+  /* Extra whitespace around rule 50/30/20 */
+  .rule-grid { margin-top: 8px; margin-bottom: 36px; }
+  .rule-item { padding: 24px 20px; }
+
+  /* Modal animation (micro-interaction) */
+  .modal-overlay { transition: opacity .22s cubic-bezier(.4,0,.2,1); }
+  .modal {
+    transition: transform .25s cubic-bezier(.34,1.28,.64,1), opacity .22s ease;
+    opacity: 0;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); opacity: 1; }
+  .modal-overlay:not(.open) .modal { transform: translateY(16px); opacity: 0; }
+
+  /* Progress bar row complete micro-animation */
+  .budget-row.done { transition: all .3s ease; }
+  .budget-row.done .row-dot { transition: background .3s ease, box-shadow .3s ease; }
+
+  /* ── PREMIUM / PIX MODAL ── */
+  .upsell-modal .modal { max-width: 400px; text-align: center; }
+  .upsell-icon { font-size: 40px; margin-bottom: 12px; }
+  .upsell-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+  .upsell-sub { font-size: 13px; color: var(--text-2); line-height: 1.6; margin-bottom: 24px; }
+  .upsell-features { text-align: left; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 20px; }
+  .upsell-feature { display: flex; align-items: center; gap: 10px; font-size: 13px; padding: 5px 0; color: var(--text-2); }
+  .upsell-feature span:first-child { color: var(--accent); font-size: 15px; }
+  .btn-premium { width: 100%; padding: 13px; background: linear-gradient(135deg, #16473A, #1D5C4C); color: #fff; border: none; border-radius: var(--radius-sm); font-family: 'Inter', sans-serif; font-weight: 800; font-size: 15px; cursor: pointer; transition: all .2s; box-shadow: 0 4px 16px rgba(22,71,58,.35); display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn-premium:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(22,71,58,.45); }
+  .btn-not-now { margin-top: 10px; background: transparent; border: none; color: var(--text-3); font-size: 12px; cursor: pointer; width: 100%; padding: 6px; }
+  .premium-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: linear-gradient(135deg, #f5c842, #e8a020); border-radius: 20px; font-size: 10px; font-weight: 700; color: #000; vertical-align: middle; margin-left: 6px; }
+
+  /* ── INCOME ENTRIES & TRANSACTION LIST ── */
+  .income-entry {
+    display: flex; align-items: center; gap: 6px;
+    animation: fadeIn .18s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(-4px) } to { opacity:1; transform:translateY(0) } }
+  .income-entry .income-desc { flex:1; font-size:13px; padding:8px 10px; }
+  .income-entry .income-val  { width:100px; font-size:13px; padding:8px 10px; font-weight:700; }
+  .income-entry .income-del  { background:transparent; border:none; color:var(--text-3); cursor:pointer; font-size:17px; padding:4px 6px; border-radius:4px; line-height:1; flex-shrink:0; transition:color .15s; }
+  .income-entry .income-del:hover { color:var(--c-neg); }
+
+  /* Inline transaction list in budget row */
+  .tx-list { margin-top:8px; display:flex; flex-direction:column; gap:3px; }
+  .tx-item {
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:11px; padding:4px 8px; border-radius:5px;
+    background:var(--bg-subtle); border:1px solid var(--border);
+    gap:6px;
+  }
+  .tx-item-desc { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-2); }
+  .tx-item-val  { font-weight:700; color:var(--text); white-space:nowrap; font-family:Inter,monospace; }
+  .tx-item-del  { background:transparent; border:none; color:var(--text-3); cursor:pointer; font-size:13px; padding:1px 4px; line-height:1; border-radius:3px; flex-shrink:0; }
+  .tx-item-del:hover { color:var(--c-neg); background:var(--c-spend-bg); }
+
+  /* Transaction modal list items */
+  .tx-modal-item {
+    display:flex; align-items:center; gap:8px; padding:8px 10px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-sm); font-size:12px;
+  }
+  .tx-modal-item-desc { flex:1; color:var(--text-2); }
+  .tx-modal-item-val  { font-weight:700; color:var(--text); font-family:Inter,monospace; }
+  .tx-modal-item-del  { background:transparent; border:none; color:var(--text-3); cursor:pointer; font-size:15px; padding:2px 5px; border-radius:3px; }
+  .tx-modal-item-del:hover { color:var(--c-neg); }
+
+  /* renda-card with count badge */
+  .renda-count { font-size:9px; font-weight:600; padding:2px 6px; background:var(--accent-bg); border:1px solid var(--accent-border); border-radius:10px; color:var(--accent); margin-left:6px; }
 </style>
 </head>
 <body><div class="blob3"></div>
@@ -679,15 +777,20 @@
     </div>
   </header>
 
-  <div class="sec-title">Regra 50/30/20</div>
-  <div class="rule-grid" style="margin-bottom:32px">
+  <div class="sec-title" style="cursor:pointer" onclick="toggleRule()" aria-expanded="true" id="ruleTitleBtn">
+    Regra 50/30/20
+    <span id="ruleToggleIcon" style="margin-left:auto;font-size:12px;color:var(--text-3);font-weight:400;text-transform:none;letter-spacing:0;transition:transform .2s">▾</span>
+  </div>
+  <div id="ruleSection" style="margin-bottom:32px">
+  <div class="rule-grid">
     <div class="rule-item" style="cursor:pointer" onclick="openRuleModal()"><div class="rule-pct green" id="rulePctN">50%</div><div class="rule-lbl">Necessidades</div><div class="rule-val" id="rule50">-</div></div>
     <div class="rule-item" style="cursor:pointer" onclick="openRuleModal()"><div class="rule-pct gold" id="rulePctD">30%</div><div class="rule-lbl">Desejos</div><div class="rule-val" id="rule30">-</div></div>
     <div class="rule-item" style="cursor:pointer" onclick="openRuleModal()"><div class="rule-pct blue" id="rulePctP">20%</div><div class="rule-lbl">Poupança</div><div class="rule-val" id="rule20">-</div></div>
   </div>
+  </div>
 
-  <div class="sec-title">Orçamento Mensal</div>
-  <div class="months-wrap"><div class="month-tabs" id="monthTabs"></div></div>
+  <div class="months-wrap" style="margin-bottom:6px"><div class="month-tabs" id="monthTabs"></div></div>
+  <div class="sec-title" style="margin-top:8px">Orçamento Mensal</div>
   <div id="panels"></div>
 
   <div style="margin-top:36px">
@@ -730,12 +833,15 @@
 </div>
 <!-- DROPDOWN MENU -->
 <div class="hamburger-menu" id="hamburgerMenu">
-  <button class="menu-item" onclick="openReport();closeMenu()"><span class="mi-icon">📊</span> Relatório Anual</button>
+  <button class="menu-item" onclick="openReport();closeMenu()" aria-label="Relatório Anual"><span class="mi-icon">📊</span> Relatório Anual <span class="premium-badge">💎</span></button>
   <div class="menu-divider"></div>
-  <button class="menu-item" onclick="window.open('https://wa.me/5575988926392?text=Oi%20S%C3%A1vio%2C%20tenho%20um%20feedback%20sobre%20o%20app%20de%20finan%C3%A7as!','_blank');closeMenu()"><span class="mi-icon">💬</span> Enviar feedback</button>
+  <button class="menu-item" onclick="window.open('https://wa.me/5575988926392?text=Oi%20S%C3%A1vio%2C%20tenho%20um%20feedback%20sobre%20o%20app%20de%20finan%C3%A7as!','_blank');closeMenu()" aria-label="Enviar feedback pelo WhatsApp"><span class="mi-icon">💬</span> Enviar feedback</button>
   <div class="menu-divider"></div>
-  <button class="menu-item" onclick="exportData();closeMenu()"><span class="mi-icon">⬇</span> Exportar dados</button>
-  <label class="menu-item"><span class="mi-icon">⬆</span> Importar dados<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+  <button class="menu-item" onclick="exportData();closeMenu()" aria-label="Exportar dados"><span class="mi-icon">⬇</span> Exportar dados <span class="premium-badge">💎</span></button>
+  <label class="menu-item" aria-label="Importar dados"><span class="mi-icon">⬆</span> Importar dados<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+  <div class="menu-divider"></div>
+  <button class="menu-item" onclick="openPixModal();closeMenu()" aria-label="Apoiar o projeto via Pix"><span class="mi-icon">☕</span> Apoiar o projeto</button>
+  <button class="menu-item" onclick="goToPremium();closeMenu()" style="color:var(--accent);font-weight:600" aria-label="Ativar Premium Vitalício"><span class="mi-icon">💎</span> Ativar Premium</button>
 </div>
 
 <div class="report-overlay" id="reportOverlay">
@@ -764,28 +870,43 @@
   </div>
 </div>
 
-<!-- MODAL QUICK GASTO -->
-<div class="modal-overlay" id="modalQuickGasto">
-  <div class="modal" style="max-width:340px">
+<!-- MODAL ADD TRANSACTION -->
+<div class="modal-overlay" id="modalQuickGasto" role="dialog" aria-modal="true" aria-labelledby="quickGastoTitle">
+  <div class="modal" style="max-width:400px">
     <div class="modal-title">
-      <span id="quickGastoTitle">Adicionar gasto</span>
-      <button class="modal-close" onclick="closeQuickGasto()">×</button>
+      <span id="quickGastoTitle">Nova transação</span>
+      <button class="modal-close" onclick="closeQuickGasto()" aria-label="Fechar">×</button>
     </div>
-    <div class="form-group">
-      <label class="form-label" id="quickGastoLabel">Valor (R$)</label>
-      <input class="form-input" type="number" id="quickGastoVal" placeholder="0,00" step="0.01" min="0"
-        style="font-size:22px;font-weight:700;text-align:center;padding:14px"
+    <p id="quickGastoLabel" style="font-size:12px;color:var(--text-2);margin-bottom:16px"></p>
+
+    <!-- Existing transactions list -->
+    <div id="txListWrap" style="margin-bottom:14px;display:none">
+      <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Lançamentos registrados</div>
+      <div id="txList" style="display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto"></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0 0;border-top:1px solid var(--border);margin-top:6px;font-size:12px">
+        <span style="color:var(--text-2)">Total gasto</span>
+        <span id="txListTotal" style="font-weight:800;color:var(--text)">R$0</span>
+      </div>
+    </div>
+
+    <!-- Add new transaction -->
+    <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1px">Novo lançamento</div>
+      <input class="form-input" type="text" id="quickGastoDesc" placeholder="Ex: Mercado, Lanche, Conta de luz..." aria-label="Descrição do lançamento" style="font-size:13px">
+      <input class="form-input" type="number" id="quickGastoVal" placeholder="0,00" step="0.01" min="0" aria-label="Valor do lançamento"
+        style="font-size:20px;font-weight:700;text-align:center;padding:12px"
         onkeydown="if(event.key==='Enter') confirmQuickGasto()">
     </div>
-    <div style="display:flex;gap:8px;margin-top:4px">
-      <button onclick="closeQuickGasto()" style="flex:1;padding:11px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;color:var(--text-2)">Cancelar</button>
-      <button id="quickGastoConfirmBtn" onclick="confirmQuickGasto()" style="flex:1;padding:11px;border:none;border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-weight:700;font-size:13px;cursor:pointer;color:#fff">Confirmar</button>
+
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button onclick="closeQuickGasto()" style="flex:1;padding:11px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius-sm);font-family:Inter,sans-serif;font-weight:600;font-size:13px;cursor:pointer;color:var(--text-2)">Fechar</button>
+      <button id="quickGastoConfirmBtn" onclick="confirmQuickGasto()" style="flex:2;padding:11px;background:var(--accent);border:none;border-radius:var(--radius-sm);font-family:Inter,sans-serif;font-weight:700;font-size:13px;cursor:pointer;color:#fff">+ Adicionar</button>
     </div>
   </div>
 </div>
 
 <!-- MODAL REGRA -->
-<div class="modal-overlay" id="modalRegra">
+<div class="modal-overlay" id="modalRegra" role="dialog" aria-modal="true">
   <div class="modal" style="max-width:360px">
     <div class="modal-title"><span>Editar regra de distribuição</span><button class="modal-close" onclick="closeRuleModal()">×</button></div>
     <p style="font-size:12px;color:var(--text-2);margin-bottom:18px;line-height:1.6">Os valores devem somar 100%. Padrão: 50/30/20.</p>
@@ -800,34 +921,49 @@
   </div>
 </div>
 
-<!-- MODAL RENDA -->
-<div class="modal-overlay" id="modalRenda">
-  <div class="modal">
-    <div class="modal-title"><span id="rendaModalTitle">Editar Renda</span><button class="modal-close" onclick="closeRendaModal()">x</button></div>
-    <div class="form-group"><label class="form-label">Renda mensal (R$)</label><input class="form-input" type="number" id="fRenda" placeholder="1150" step="0.01" min="0" oninput="updateRulePreview()"></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Inicio</label><input class="form-input" type="text" id="fPeriodoInicio" placeholder="16/03"></div>
-      <div class="form-group"><label class="form-label">Fim</label><input class="form-input" type="text" id="fPeriodoFim" placeholder="16/04"></div>
+<!-- MODAL RENDA — multiple income entries -->
+<div class="modal-overlay" id="modalRenda" role="dialog" aria-modal="true" aria-labelledby="rendaModalTitle">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-title">
+      <span id="rendaModalTitle">Entradas de <span id="rendaMesTitle">MAR</span></span>
+      <button class="modal-close" onclick="closeRendaModal()" aria-label="Fechar">×</button>
     </div>
-    <div class="form-label" style="margin-bottom:8px">Preview - Regra 50/30/20</div>
+    <p style="font-size:12px;color:var(--text-2);margin-bottom:16px;line-height:1.6">Registre todas as suas fontes de renda neste mês. O total forma a base da Regra 50/30/20.</p>
+
+    <!-- Income entries list -->
+    <div id="incomeList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+    <button onclick="addIncomeEntry()" style="width:100%;padding:9px;background:transparent;border:1px dashed var(--border-2);border-radius:var(--radius-sm);color:var(--accent);font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--accent-bg)'" onmouseout="this.style.background='transparent'">+ Adicionar entrada</button>
+
+    <!-- Total -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 18px;padding:12px 14px;background:var(--bg-subtle);border-radius:var(--radius-sm);border:1px solid var(--border)">
+      <span style="font-size:12px;font-weight:600;color:var(--text-2)">Total do mês</span>
+      <span id="incomeTotalVal" style="font-size:18px;font-weight:800;color:var(--text)">R$0</span>
+    </div>
+
+    <!-- Period -->
+    <div class="form-divider"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Período início</label><input class="form-input" type="text" id="fPeriodoInicio" placeholder="16/03" aria-label="Data de início do período"></div>
+      <div class="form-group"><label class="form-label">Período fim</label><input class="form-input" type="text" id="fPeriodoFim" placeholder="16/04" aria-label="Data de fim do período"></div>
+    </div>
+
+    <!-- 50/30/20 preview -->
+    <div class="rule-label" style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Distribuição estimada</div>
     <div class="rule-preview">
       <div class="rule-preview-item"><div class="rule-preview-pct green" id="prevPctN">50%</div><div class="rule-preview-lbl">Necessidades</div><div class="rule-preview-val" id="prev50">-</div></div>
       <div class="rule-preview-item"><div class="rule-preview-pct gold" id="prevPctD">30%</div><div class="rule-preview-lbl">Desejos</div><div class="rule-preview-val" id="prev30">-</div></div>
       <div class="rule-preview-item"><div class="rule-preview-pct blue" id="prevPctP">20%</div><div class="rule-preview-lbl">Poupança</div><div class="rule-preview-val" id="prev20">-</div></div>
     </div>
-    <button class="btn-primary" onclick="saveRenda()">Salvar</button>
+    <button class="btn-primary" onclick="saveRenda()" style="margin-top:4px">Salvar</button>
   </div>
 </div>
 
 <!-- MODAL GASTO -->
-<div class="modal-overlay" id="modal">
+<div class="modal-overlay" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="modal">
     <div class="modal-title"><span id="modalTitle">Adicionar gasto</span><button class="modal-close" onclick="closeModal()">x</button></div>
-    <div class="form-group"><label class="form-label">Categoria</label><input class="form-input" type="text" id="fCat" placeholder="Ex: Alimentacao"></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Planejado (R$)</label><input class="form-input" type="number" id="fPlan" placeholder="0.00" step="0.01" min="0"></div>
-      <div class="form-group"><label class="form-label">Gasto (R$)</label><input class="form-input" type="number" id="fGasto" placeholder="0.00" step="0.01" min="0" oninput="syncSubcatTotal()"></div>
-    </div>
+    <div class="form-group"><label class="form-label">Categoria</label><input class="form-input" type="text" id="fCat" placeholder="Ex: Alimentação" aria-label="Nome da categoria" aria-required="true"></div>
+    <div class="form-group"><label class="form-label">Orçamento planejado (R$)</label><input class="form-input" type="number" id="fPlan" placeholder="0.00" step="0.01" min="0" aria-label="Valor planejado em reais"></div>
     <div class="form-group">
       <label class="form-label">Banco <span>- opcional</span></label>
       <input class="form-input" type="text" id="fBanco" placeholder="Ex: Nubank, Inter...">
@@ -836,32 +972,17 @@
     <div class="form-group">
       <label class="form-label">Tipo</label>
       <select class="form-input" id="fTipo">
-        <option value="">-- nao definido --</option>
+        <option value="">-- não definido --</option>
         <option value="N">Necessidade (50%)</option>
         <option value="D">Desejo (30%)</option>
-        <option value="P">Poupanca (20%)</option>
+        <option value="P">Poupança (20%)</option>
       </select>
     </div>
-    <div class="form-divider"></div>
-
-    <!-- SUBCATEGORIAS -->
-    <div style="margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <span class="form-label" style="margin:0">Detalhes do gasto <span>- opcional</span></span>
-        <button onclick="addSubcat()" style="padding:4px 12px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:20px;color:var(--accent);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer">+ item</button>
-      </div>
-      <div id="subcatList" style="display:flex;flex-direction:column;gap:6px"></div>
-      <div id="subcatTotal" style="display:none;margin-top:8px;padding:8px 12px;background:var(--bg-subtle);border-radius:var(--radius-xs);font-size:12px;color:var(--text-2);display:flex;justify-content:space-between">
-        <span>Total detalhado</span>
-        <span id="subcatTotalVal" style="font-weight:700;color:var(--text)">R$0</span>
-      </div>
-    </div>
-
     <div class="form-divider"></div>
     <div class="form-group">
       <div class="form-check-group">
         <input class="form-check" type="checkbox" id="fDone">
-        <label for="fDone" style="font-size:13px;cursor:pointer;color:var(--text-muted)">Marcar como concluido (ok)</label>
+        <label for="fDone" style="font-size:13px;cursor:pointer">Marcar como concluído (ok)</label>
       </div>
     </div>
     <button class="btn-primary" onclick="saveRow()">Salvar</button>
@@ -870,7 +991,7 @@
 </div>
 
 <!-- MODAL OBJETIVO -->
-<div class="modal-overlay" id="modalObj">
+<div class="modal-overlay" id="modalObj" role="dialog" aria-modal="true" aria-labelledby="objModalTitle">
   <div class="modal">
     <div class="modal-title"><span id="objModalTitle">Novo objetivo</span><button class="modal-close" onclick="closeObjModal()">x</button></div>
     <div class="form-group"><label class="form-label">Nome do objetivo</label><input class="form-input" type="text" id="oNome" placeholder="Ex: Notebook, Viagem..."></div>
@@ -917,7 +1038,47 @@
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- MODAL UPSELL PREMIUM -->
+<div class="modal-overlay upsell-modal" id="modalUpsell" role="dialog" aria-modal="true" aria-labelledby="upsellTitle">
+  <div class="modal">
+    <div class="upsell-icon">💎</div>
+    <div class="upsell-title" id="upsellTitle">Recurso Premium</div>
+    <p class="upsell-sub" id="upsellSub">Este recurso é exclusivo para usuários Premium.</p>
+    <div class="upsell-features">
+      <div class="upsell-feature"><span>✓</span> Relatório Anual Detalhado</div>
+      <div class="upsell-feature"><span>✓</span> Exportação de dados (backup)</div>
+      <div class="upsell-feature"><span>✓</span> Objetivos ilimitados</div>
+      <div class="upsell-feature"><span>✓</span> Acesso vitalício — pague uma vez</div>
+    </div>
+    <button class="btn-premium" onclick="goToPremium()">💎 Ativar Premium Vitalício</button>
+    <button class="btn-not-now" onclick="closeUpsell()">Agora não</button>
+  </div>
+</div>
+
+<!-- MODAL PIX APOIO -->
+<div class="modal-overlay" id="modalPix" role="dialog" aria-modal="true" aria-labelledby="pixTitle">
+  <div class="modal" style="max-width:400px;text-align:center">
+    <div class="modal-title" style="justify-content:center;position:relative">
+      <span id="pixTitle">☕ Apoie o Projeto</span>
+      <button class="modal-close" onclick="closePixModal()" style="position:absolute;right:0" aria-label="Fechar">×</button>
+    </div>
+    <p style="font-size:13px;color:var(--text-2);line-height:1.7;margin-bottom:20px">Esse app é mantido de forma independente. Se ele te ajuda a economizar, considere me pagar um café através do Pix! ☕</p>
+    <!-- QR Code placeholder -->
+    <div style="width:160px;height:160px;margin:0 auto 16px;background:var(--bg-subtle);border:2px dashed var(--border-2);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:11px;font-weight:500">
+      QR Code Pix<br><span style="font-size:9px;opacity:.6">(adicione sua imagem)</span>
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Chave Pix</div>
+      <div style="background:var(--bg-subtle);border:1px solid var(--border-2);border-radius:var(--radius-sm);padding:10px 12px;font-family:'Inter',monospace;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span id="pixKeyText" style="color:var(--text);word-break:break-all">75988926392</span>
+        <button onclick="copyPixKey()" style="flex-shrink:0;padding:5px 12px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--radius-xs);color:var(--accent);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer" aria-label="Copiar chave Pix">Copiar</button>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--text-3)">Qualquer valor é muito bem-vindo 💚</p>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 var MONTHS = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
@@ -931,13 +1092,31 @@ var sortMode = 'default';
 var rendas = {};    // { JAN: 0, FEV: 1150, MAR: 1150, ... }
 var periodos = {};  // { MAR: {inicio:'16/03', fim:'16/04'}, ... }
 var rulePcts = { N: 50, D: 30, P: 20 };  // percentages 50/30/20
+var isPremium = false;  // set true after Firestore verification
 var editingId = null;
 var editingMonth = null;
 var editingObjId = null;
 var nextId = 200;
 var nextObjId = 100;
 
-function getMesRenda(m) { return rendas[m] || 0; }
+// Income helpers
+function getMesRendaEntries(m) {
+  var r = rendas[m];
+  if (!r) return [];
+  if (typeof r === 'number') return [{id:1, desc:'Renda', val:r}]; // migration
+  return Array.isArray(r) ? r : [];
+}
+function getMesRenda(m) {
+  return getMesRendaEntries(m).reduce(function(a,e){ return a+(e.val||0); }, 0);
+}
+// Transaction helpers
+function getCatGasto(row) {
+  return (row.transactions||[]).reduce(function(a,t){ return a+(t.val||0); }, 0);
+}
+function nextTxId(row) {
+  var txs = row.transactions||[];
+  return txs.length ? Math.max.apply(null, txs.map(function(t){ return t.id||0; })) + 1 : 1;
+}
 function getMesPeriodo(m) { return periodos[m] || {inicio:'', fim:''}; }
 
 function fmt(v) {
@@ -996,12 +1175,29 @@ async function load() {
       rendas  = meta.rendas  || {};
       periodos= meta.periodos|| {};
       if (meta.rulePcts) rulePcts = meta.rulePcts;
-      // migrate old single renda
+      // migrate: old single renda number → income array
       if (meta.renda && !rendas[activeMonth]) rendas[activeMonth] = meta.renda;
     } else {
       rendas[activeMonth] = 1150;
       periodos[activeMonth] = {inicio:'16/03', fim:'16/04'};
     }
+    // Migrate data model: subcats → transactions, gasto → transaction
+    MONTHS.forEach(function(m) {
+      (db[m]||[]).forEach(function(row) {
+        // rename subcats → transactions
+        if (!row.transactions && row.subcats && row.subcats.length) {
+          row.transactions = row.subcats.map(function(s,i){ return {id:i+1, desc:s.desc||'', val:parseFloat(s.val)||0}; });
+          delete row.subcats;
+        }
+        if (!row.transactions) row.transactions = [];
+        // if had manual gasto but no transactions, create one transaction from gasto
+        if (row.gasto && row.gasto > 0 && row.transactions.length === 0) {
+          row.transactions = [{id:1, desc:'Gasto registrado', val:row.gasto}];
+        }
+        // gasto is now computed — remove stored value
+        delete row.gasto;
+      });
+    });
   } catch(e) { seed(); }
 }
 async function save() {
@@ -1021,20 +1217,16 @@ function seed() {
 function sortedRows(rows) {
   var r = rows.slice();
   if (sortMode === 'gasto_desc') {
-    // Valor descendente: maior gasto primeiro
-    r.sort(function(a,b){ return (b.gasto||0)-(a.gasto||0); });
+    r.sort(function(a,b){ return getCatGasto(b)-getCatGasto(a); });
   } else if (sortMode === 'pending_first') {
-    // Pendentes primeiro, depois os ok
     r.sort(function(a,b){ return (a.done===b.done) ? 0 : a.done ? 1 : -1; });
   } else if (sortMode === 'diff_worst') {
-    // Prejuízo: onde gasto superou o planejado (diferença mais negativa primeiro)
     r.sort(function(a,b){
-      var dA = (a.plan!=null&&a.gasto!=null) ? a.plan-a.gasto : Infinity;
-      var dB = (b.plan!=null&&b.gasto!=null) ? b.plan-b.gasto : Infinity;
-      return dA - dB; // menor (mais negativo) primeiro
+      var dA = a.plan!=null ? a.plan-getCatGasto(a) : Infinity;
+      var dB = b.plan!=null ? b.plan-getCatGasto(b) : Infinity;
+      return dA - dB;
     });
   } else if (sortMode === 'tipo') {
-    // Agrupa por N → D → P → sem tipo
     var order = {N:0, D:1, P:2, '':3};
     r.sort(function(a,b){ return (order[a.tipo||'']||3)-(order[b.tipo||'']||3); });
   }
@@ -1043,6 +1235,10 @@ function sortedRows(rows) {
 function setSort(mode, btn) {
   sortMode = mode;
   save();
+  renderPanel(activeMonth);
+}
+function toggleShowStatus() {
+  showStatus = !showStatus;
   renderPanel(activeMonth);
 }
 
@@ -1085,10 +1281,13 @@ function setBanco(b) {
 function render() { renderHeader(); renderRule(); renderTabs(); renderPanels(); renderObjetivos(); }
 
 function renderHeader() {
-  var r = getMesRenda(activeMonth);
+  var entries = getMesRendaEntries(activeMonth);
+  var total   = getMesRenda(activeMonth);
   var p = getMesPeriodo(activeMonth);
-  document.getElementById('rendaDisplay').textContent = r ? fmtR(r) : 'definir';
-  document.getElementById('periodoDisplay').textContent = (p.inicio && p.fim) ? p.inicio + ' -> ' + p.fim : activeMonth + '/2025';
+  var display = total ? fmtR(total) : 'definir';
+  var countBadge = entries.length > 0 ? '<span class="renda-count">' + entries.length + ' entrada' + (entries.length>1?'s':'') + '</span>' : '';
+  document.getElementById('rendaDisplay').innerHTML = display + countBadge;
+  document.getElementById('periodoDisplay').textContent = (p.inicio && p.fim) ? p.inicio + ' → ' + p.fim : activeMonth + '/2025';
 }
 function renderRule() {
   var r = getMesRenda(activeMonth);
@@ -1118,15 +1317,20 @@ function renderPanel(m) {
   var el = document.getElementById('panel-' + m);
   if (!el) return;
   var rows = db[m] || [];
-  var planTotal = rows.reduce(function(a,r){ return a+(r.plan||0); }, 0);
-  var gastoTotal = rows.reduce(function(a,r){ return a+(r.gasto||0); }, 0);
-  var diff = planTotal - gastoTotal;
+  var renda = getMesRenda(m);
+  var planTotal  = rows.reduce(function(a,r){ return a+(r.plan||0); }, 0);
+  var gastoTotal = rows.reduce(function(a,r){ return a+getCatGasto(r); }, 0);
+  var saldo = renda - gastoTotal;
+  var diff  = planTotal - gastoTotal;
   var gastoClass = gastoTotal > planTotal ? 'red' : 'green';
-  var diffClass = diff >= 0 ? 'green' : 'red';
-  var diffStr = (diff >= 0 ? '+' : '') + fmt(diff);
+  var diffClass  = diff >= 0 ? 'green' : 'red';
+  var diffStr    = (diff >= 0 ? '+' : '') + fmt(diff);
   var planN = rows.reduce(function(a,r){ return r.tipo==='N'?a+(r.plan||0):a; }, 0);
   var planD = rows.reduce(function(a,r){ return r.tipo==='D'?a+(r.plan||0):a; }, 0);
   var planP = rows.reduce(function(a,r){ return r.tipo==='P'?a+(r.plan||0):a; }, 0);
+  var gastN = rows.reduce(function(a,r){ return r.tipo==='N'?a+getCatGasto(r):a; }, 0);
+  var gastD = rows.reduce(function(a,r){ return r.tipo==='D'?a+getCatGasto(r):a; }, 0);
+  var gastP = rows.reduce(function(a,r){ return r.tipo==='P'?a+getCatGasto(r):a; }, 0);
 
   var html = '<div class="summary-bar">'
     + '<div class="sum-card"><div class="sum-lbl">Planejado</div><div class="sum-val gold">' + fmt(planTotal) + '</div></div>'
@@ -1143,6 +1347,7 @@ function renderPanel(m) {
         var labels=['Padrão','Valor','Pendentes','Prejuízo','N/D/P'];
         return h+'<button class="sort-btn'+(sortMode===mode?' active':'')+'" onclick="setSort(\''+mode+'\',this)">'+labels[i]+'</button>';
       },'')
+    + '<button onclick="toggleShowStatus()" style="margin-left:auto;padding:5px 10px;background:'+(showStatus?'var(--accent-bg)':'transparent')+';border:1px solid '+(showStatus?'var(--accent-border)':'var(--border-2)')+';border-radius:20px;font-size:10px;font-weight:600;color:'+(showStatus?'var(--accent)':'var(--text-3)')+';cursor:pointer;transition:all .15s;white-space:nowrap" title="Mostrar/ocultar status">Status</button>'
     + '</div>'
     + '<div class="rows-wrap">';
 
@@ -1151,32 +1356,48 @@ function renderPanel(m) {
       + '<button class="empty-start" onclick="openAdd(\'' + m + '\')">+ Adicionar primeiro gasto</button></div>';
   } else {
     sortedRows(rows).forEach(function(r) {
-      var pct = r.plan ? Math.min((r.gasto||0)/r.plan*100,100) : 0;
-      var fc = pct === 0 ? '' : pct < 100 ? 'partial' : 'ok';
-      var d = (r.plan != null && r.gasto != null) ? (r.plan - r.gasto) : null;
+      var gasto  = getCatGasto(r);
+      var pct    = r.plan ? Math.min(gasto/r.plan*100,100) : 0;
+      var fc     = pct === 0 ? '' : pct < 100 ? 'partial' : 'ok';
+      var diff   = (r.plan != null) ? (r.plan - gasto) : null;
       var rowClass = 'budget-row' + (r.done ? ' done' : '');
       var dotHtml = '<span class="row-dot"></span>';
       var bancoHtml = r.banco ? '<span class="banco-tag">🏦 ' + r.banco + '</span>' : '';
       var tipoLabel = r.tipo === 'N' ? 'Necessidade' : r.tipo === 'D' ? 'Desejo' : r.tipo === 'P' ? 'Poupança' : '';
       var tipoHtml = tipoLabel ? '<span class="tipo-tag ' + r.tipo + '">' + tipoLabel + '</span>' : '';
-      var badgeHtml = '<span class="badge ' + (r.done ? 'ok' : 'pend') + '">' + (r.done ? 'ok' : 'pendente') + '</span>';
+      var txCount  = (r.transactions||[]).length;
+      var txBadge  = txCount ? '<span style="font-size:9px;font-weight:600;padding:1px 6px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;color:var(--text-3);margin-left:2px">' + txCount + ' lançamento' + (txCount>1?'s':'') + '</span>' : '';
+      var badgeHtml = showStatus ? '<span class="badge ' + (r.done ? 'ok' : 'pend') + '">' + (r.done ? 'ok' : 'pendente') + '</span>' : '';
       var tagsHtml = (tipoHtml || bancoHtml || badgeHtml) ? '<div class="row-tags">' + tipoHtml + bancoHtml + badgeHtml + '</div>' : '';
-      var editBtn = '<button class="btn-icon" style="margin-left:auto;flex-shrink:0" title="Editar" onclick="openEdit(\'' + m + '\',' + r.id + ')">✏️</button>';
-      var addBtn  = '<button class="btn-icon gasto-add" style="flex-shrink:0" title="Adicionar gasto" onclick="quickGasto(\'' + m + '\',' + r.id + ',1)">+</button>';
-      var subBtn  = '<button class="btn-icon gasto-sub" style="flex-shrink:0" title="Remover gasto" onclick="quickGasto(\'' + m + '\',' + r.id + ',-1)">−</button>';
+      var editBtn  = '<button class="btn-icon" style="margin-left:auto;flex-shrink:0" title="Editar categoria" aria-label="Editar categoria" onclick="openEdit(\'' + m + '\',' + r.id + ')">✏️</button>';
+      var addBtn   = '<button class="btn-icon gasto-add" style="flex-shrink:0" title="Adicionar lançamento" aria-label="Adicionar lançamento" onclick="quickGasto(\'' + m + '\',' + r.id + ')">+</button>';
       var diffHtml = '';
-      if (d !== null) {
-        var dcls = d >= 0 ? 'num-diff-pos' : 'num-diff-neg';
-        diffHtml = '<span class="' + dcls + '">' + (d >= 0 ? '+' : '') + fmt(d) + '</span>';
+      if (diff !== null) {
+        var dcls = diff >= 0 ? 'num-diff-pos' : 'num-diff-neg';
+        diffHtml = '<span class="' + dcls + '">' + (diff >= 0 ? '+' : '') + fmt(diff) + '</span>';
       }
       var fillClass = 'progress-fill ' + (r.done ? 'ok' : fc);
+      // Build inline transaction list
+      var txHtml = '';
+      if (txCount > 0) {
+        txHtml = '<div class="tx-list">';
+        (r.transactions||[]).forEach(function(tx) {
+          txHtml += '<div class="tx-item">'
+            + '<span class="tx-item-desc">' + (tx.desc||'—') + '</span>'
+            + '<span class="tx-item-val">' + fmtR(tx.val||0) + '</span>'
+            + '<button class="tx-item-del" title="Remover lançamento" aria-label="Remover lançamento" onclick="deleteTx(\'' + m + '\',' + r.id + ',' + tx.id + ')">×</button>'
+            + '</div>';
+        });
+        txHtml += '</div>';
+      }
       html += '<div class="' + rowClass + '">'
-        + '<div class="row-top">' + dotHtml + '<span class="row-cat">' + r.cat + '</span>' + editBtn + '</div>'
+        + '<div class="row-top">' + dotHtml + '<span class="row-cat">' + r.cat + '</span>' + txBadge + editBtn + '</div>'
         + tagsHtml
-        + '<div class="row-nums"><span class="num-plan">' + fmt(r.plan) + '</span><span class="num-arrow">→</span>'
-        + '<span class="num-gasto">' + (r.gasto != null ? fmt(r.gasto) : '-') + '</span>' + diffHtml
-        + '<span style="margin-left:auto;display:flex;gap:4px">' + subBtn + addBtn + '</span></div>'
-        + '<div class="progress-bar"><div class="' + fillClass + '" style="width:' + pct + '%"></div></div>'
+        + '<div class="row-nums"><span class="num-plan" title="Orçamento">' + fmt(r.plan) + '</span><span class="num-arrow">→</span>'
+        + '<span class="num-gasto" title="Total gasto">' + (txCount ? fmtR(gasto) : '—') + '</span>' + diffHtml
+        + '<span style="margin-left:auto;display:flex;gap:4px">' + addBtn + '</span></div>'
+        + txHtml
+        + '<div class="progress-bar" style="margin-top:8px"><div class="' + fillClass + '" style="width:' + pct + '%"></div></div>'
         + '</div>';
     });
   }
@@ -1273,20 +1494,76 @@ function switchMonth(m) {
 }
 
 // RENDA MODAL
+// ── INCOME MODAL (multiple entries) ─────────────────────────────────────────
+var _nextIncomeId = 100;
+
 function openRendaModal() {
-  document.getElementById('rendaModalTitle').textContent = 'Renda de ' + activeMonth;
-  var r = getMesRenda(activeMonth);
-  var p = getMesPeriodo(activeMonth);
-  document.getElementById('fRenda').value = r || '';
+  var m = activeMonth;
+  document.getElementById('rendaMesTitle').textContent = m;
+  var entries = getMesRendaEntries(m);
+  // clone to working array so cancel doesn't mutate
+  var p = getMesPeriodo(m);
   document.getElementById('fPeriodoInicio').value = p.inicio || '';
   document.getElementById('fPeriodoFim').value = p.fim || '';
+  renderIncomeList(entries);
+  updateIncomeTotal();
   updateRulePreview();
   document.getElementById('modalRenda').classList.add('open');
-  setTimeout(function(){ document.getElementById('fRenda').focus(); }, 150);
 }
 function closeRendaModal() { document.getElementById('modalRenda').classList.remove('open'); }
+
+function renderIncomeList(entries) {
+  var list = document.getElementById('incomeList');
+  list.innerHTML = '';
+  (entries || []).forEach(function(e) {
+    list.appendChild(makeIncomeRow(e.id, e.desc||'', e.val||0));
+  });
+}
+
+function makeIncomeRow(id, desc, val) {
+  var row = document.createElement('div');
+  row.className = 'income-entry';
+  row.dataset.incomeId = id;
+  row.innerHTML =
+    '<input class="form-input income-desc" type="text" placeholder="Ex: Bolsa do estágio" value="' + desc + '" aria-label="Descrição da entrada">'
+    + '<input class="form-input income-val" type="number" placeholder="0,00" value="' + (val||'') + '" step="0.01" min="0" aria-label="Valor da entrada">'
+    + '<button class="income-del" title="Remover entrada" aria-label="Remover entrada">×</button>';
+  row.querySelector('.income-del').onclick = function() { row.remove(); updateIncomeTotal(); };
+  row.querySelector('.income-val').oninput = function() { updateIncomeTotal(); updateRulePreview(); };
+  return row;
+}
+
+function addIncomeEntry() {
+  _nextIncomeId++;
+  var row = makeIncomeRow(_nextIncomeId, '', '');
+  document.getElementById('incomeList').appendChild(row);
+  row.querySelector('.income-desc').focus();
+  updateIncomeTotal();
+}
+
+function getIncomeEntriesFromDOM() {
+  var rows = document.querySelectorAll('#incomeList .income-entry');
+  var result = [];
+  rows.forEach(function(row) {
+    var desc = row.querySelector('.income-desc').value.trim();
+    var val  = parseFloat(row.querySelector('.income-val').value) || 0;
+    var id   = parseInt(row.dataset.incomeId) || (_nextIncomeId++);
+    if (desc || val) result.push({id:id, desc:desc, val:val});
+  });
+  return result;
+}
+
+function updateIncomeTotal() {
+  var rows = document.querySelectorAll('#incomeList .income-entry');
+  var total = 0;
+  rows.forEach(function(row) { total += parseFloat(row.querySelector('.income-val').value) || 0; });
+  document.getElementById('incomeTotalVal').textContent = fmtR(total);
+}
+
 function updateRulePreview() {
-  var v = parseFloat(document.getElementById('fRenda').value) || 0;
+  var rows = document.querySelectorAll('#incomeList .income-entry');
+  var v = 0;
+  rows.forEach(function(row) { v += parseFloat(row.querySelector('.income-val').value) || 0; });
   document.getElementById('prevPctN').textContent = rulePcts.N + '%';
   document.getElementById('prevPctD').textContent = rulePcts.D + '%';
   document.getElementById('prevPctP').textContent = rulePcts.P + '%';
@@ -1294,103 +1571,33 @@ function updateRulePreview() {
   document.getElementById('prev30').textContent = v ? fmtR(v * rulePcts.D / 100) : '-';
   document.getElementById('prev20').textContent = v ? fmtR(v * rulePcts.P / 100) : '-';
 }
-function saveRenda() {
-  var v = parseFloat(document.getElementById('fRenda').value);
-  if (!v || v <= 0) { showToast('Informe uma renda valida', 'error'); return; }
-  rendas[activeMonth] = v;
+
+async function saveRenda() {
+  var entries = getIncomeEntriesFromDOM();
   var pi = document.getElementById('fPeriodoInicio').value.trim();
   var pf = document.getElementById('fPeriodoFim').value.trim();
-  if (!periodos[activeMonth]) periodos[activeMonth] = {};
-  if (pi) periodos[activeMonth].inicio = pi;
-  if (pf) periodos[activeMonth].fim = pf;
+  rendas[activeMonth] = entries;
+  periodos[activeMonth] = {inicio:pi, fim:pf};
   closeRendaModal();
-  ['rule50','rule30','rule20'].forEach(function(id) {
-    var e = document.getElementById(id);
-    e.classList.remove('flash');
-    void e.offsetWidth;
-    e.classList.add('flash');
-  });
+  await save();
   renderHeader();
   renderRule();
-  save();
-  showToast('Renda de ' + activeMonth + ' atualizada', 'success');
+  showToast('Entradas de ' + activeMonth + ' atualizadas', 'success');
 }
-
-// GASTO MODAL
+// ── CATEGORY MODAL (add/edit) ────────────────────────────────────────────────
 function openAdd(m) {
   editingId = null; editingMonth = m;
-  document.getElementById('modalTitle').textContent = 'Adicionar em ' + m;
+  document.getElementById('modalTitle').textContent = 'Nova categoria em ' + m;
   document.getElementById('fCat').value = '';
   document.getElementById('fPlan').value = '';
-  document.getElementById('fGasto').value = '';
   document.getElementById('fBanco').value = '';
   document.getElementById('fTipo').value = '';
   document.getElementById('fDone').checked = false;
   document.getElementById('deleteBtn').style.display = 'none';
-  document.getElementById('subcatList').innerHTML = '';
-  document.getElementById('subcatTotal').style.display = 'none';
-  renderSubcats([]);
   document.getElementById('modal').classList.add('open');
   renderBancoSuggestions();
   setTimeout(function(){ document.getElementById('fCat').focus(); }, 150);
 }
-
-// SUBCATEGORIAS
-// SUBCATEGORIAS — DOM-driven, no global state
-function getSubcatsFromDOM() {
-  var rows = document.querySelectorAll('#subcatList .subcat-row');
-  var result = [];
-  rows.forEach(function(row) {
-    var desc = row.querySelector('.subcat-desc').value.trim();
-    var val  = parseFloat(row.querySelector('.subcat-val').value) || 0;
-    if (desc || val) result.push({ desc: desc, val: val });
-  });
-  return result;
-}
-
-function renderSubcats(subcats) {
-  var list = document.getElementById('subcatList');
-  list.innerHTML = '';
-  (subcats || []).forEach(function(s, i) {
-    list.appendChild(makeSubcatRow(s.desc || '', s.val || ''));
-  });
-  refreshSubcatTotal();
-}
-
-function makeSubcatRow(desc, val) {
-  var row = document.createElement('div');
-  row.className = 'subcat-row';
-  row.style.cssText = 'display:flex;gap:6px;align-items:center';
-  row.innerHTML = '<input class="form-input subcat-desc" type="text" placeholder="Ex: Mercado" value="' + desc + '" style="flex:1;font-size:13px;padding:8px 10px">'
-    + '<input class="form-input subcat-val" type="number" placeholder="0,00" value="' + val + '" style="width:90px;font-size:13px;padding:8px 10px" step="0.01" min="0">'
-    + '<button type="button" style="background:transparent;border:none;color:var(--text-3);cursor:pointer;font-size:18px;padding:4px;line-height:1;flex-shrink:0">×</button>';
-  row.querySelector('button').onclick = function() { row.remove(); refreshSubcatTotal(); };
-  row.querySelector('.subcat-val').oninput = refreshSubcatTotal;
-  return row;
-}
-
-function addSubcat() {
-  document.getElementById('subcatList').appendChild(makeSubcatRow('', ''));
-  refreshSubcatTotal();
-}
-
-function refreshSubcatTotal() {
-  var rows = document.querySelectorAll('#subcatList .subcat-row');
-  var total = 0;
-  rows.forEach(function(row) { total += parseFloat(row.querySelector('.subcat-val').value) || 0; });
-  var totalEl = document.getElementById('subcatTotal');
-  var totalVal = document.getElementById('subcatTotalVal');
-  if (rows.length > 0) {
-    totalEl.style.display = 'flex';
-    totalVal.textContent = fmtR(total);
-    var gastoInput = document.getElementById('fGasto');
-    if (!gastoInput.value && total > 0) gastoInput.value = total.toFixed(2);
-  } else {
-    totalEl.style.display = 'none';
-  }
-}
-
-function syncSubcatTotal() {} // kept for compatibility
 
 function openEdit(m, id) {
   var row = (db[m]||[]).filter(function(r){ return r.id === id; })[0];
@@ -1399,81 +1606,126 @@ function openEdit(m, id) {
   document.getElementById('modalTitle').textContent = 'Editar categoria';
   document.getElementById('fCat').value = row.cat;
   document.getElementById('fPlan').value = row.plan != null ? row.plan : '';
-  document.getElementById('fGasto').value = row.gasto != null ? row.gasto : '';
   document.getElementById('fBanco').value = row.banco || '';
   document.getElementById('fTipo').value = row.tipo || '';
   document.getElementById('fDone').checked = row.done;
   document.getElementById('deleteBtn').style.display = 'block';
-  document.getElementById('subcatList').innerHTML = '';
-  document.getElementById('subcatTotal').style.display = 'none';
-  renderSubcats(row.subcats || []);
   document.getElementById('modal').classList.add('open');
   renderBancoSuggestions();
   setTimeout(function(){ document.getElementById('fCat').focus(); }, 150);
 }
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
 async function saveRow() {
   var cat = document.getElementById('fCat').value.trim();
-  if (!cat) { showToast('Nome da categoria obrigatorio', 'error'); return; }
+  if (!cat) { showToast('Nome da categoria obrigatório', 'error'); return; }
   var planVal = document.getElementById('fPlan').value;
-  var gastoVal = document.getElementById('fGasto').value;
-  var plan = planVal !== '' ? parseFloat(planVal) : null;
-  var gasto = gastoVal !== '' ? parseFloat(gastoVal) : null;
+  var plan  = planVal !== '' ? parseFloat(planVal) : null;
   var banco = document.getElementById('fBanco').value.trim();
-  var tipo = document.getElementById('fTipo').value;
-  var done = document.getElementById('fDone').checked;
-  // Read subcats from DOM BEFORE closing modal
-  var subcats = getSubcatsFromDOM();
-  var m = editingMonth;
-  var eid = editingId;
-  // Update db
+  var tipo  = document.getElementById('fTipo').value;
+  var done  = document.getElementById('fDone').checked;
+  var m     = editingMonth;
+  var eid   = editingId;
   if (!db[m]) db[m] = [];
   if (eid === null) {
     nextId++;
-    db[m].push({id:nextId, cat:cat, plan:plan, gasto:gasto, banco:banco, tipo:tipo, done:done, subcats:subcats});
+    db[m].push({id:nextId, cat:cat, plan:plan, banco:banco, tipo:tipo, done:done, transactions:[]});
     showToast('Categoria adicionada', 'success');
   } else {
     for (var i = 0; i < db[m].length; i++) {
       if (db[m][i].id === eid) {
-        db[m][i] = {id:eid, cat:cat, plan:plan, gasto:gasto, banco:banco, tipo:tipo, done:done, subcats:subcats};
+        // preserve existing transactions
+        var existingTx = db[m][i].transactions || [];
+        db[m][i] = {id:eid, cat:cat, plan:plan, banco:banco, tipo:tipo, done:done, transactions:existingTx};
         break;
       }
     }
     showToast('Salvo', 'success');
   }
-  // Close modal, then persist and re-render
   document.getElementById('modal').classList.remove('open');
   await save();
   renderTabs();
   renderPanel(m);
 }
 
-function quickGasto(m, id, direction) {
-  _quickGastoState = { m: m, id: id, dir: direction };
-  var isAdd = direction > 0;
-  document.getElementById('quickGastoTitle').textContent = isAdd ? 'Adicionar gasto' : 'Remover gasto';
-  document.getElementById('quickGastoLabel').textContent = isAdd ? 'Quanto gastar? (R$)' : 'Quanto remover? (R$)';
-  var btn = document.getElementById('quickGastoConfirmBtn');
-  btn.style.background = isAdd ? 'var(--c-save)' : 'var(--c-neg)';
-  btn.textContent = isAdd ? '+ Adicionar' : '− Remover';
-  document.getElementById('quickGastoVal').value = '';
-  document.getElementById('modalQuickGasto').classList.add('open');
-  setTimeout(function(){ document.getElementById('quickGastoVal').focus(); }, 120);
+function deleteRow() {
+  if (editingId === null) return;
+  db[editingMonth] = (db[editingMonth]||[]).filter(function(r){ return r.id !== editingId; });
+  closeModal(); save(); renderTabs(); renderPanel(editingMonth);
+  showToast('Categoria excluída', 'success');
 }
 
-function confirmQuickGasto() {
+// ── TRANSACTION MODAL ─────────────────────────────────────────────────────────
+var _quickGastoState = null;
+
+function quickGasto(m, id) {
+  var row = (db[m]||[]).find(function(r){ return r.id === id; });
+  if (!row) return;
+  _quickGastoState = { m:m, id:id };
+  document.getElementById('quickGastoTitle').textContent = 'Lançamentos — ' + row.cat;
+  document.getElementById('quickGastoLabel').textContent = 'Orçamento: ' + (row.plan ? fmtR(row.plan) : 'não definido');
+  document.getElementById('quickGastoDesc').value = '';
+  document.getElementById('quickGastoVal').value = '';
+  renderTxList(row.transactions||[]);
+  document.getElementById('modalQuickGasto').classList.add('open');
+  setTimeout(function(){ document.getElementById('quickGastoDesc').focus(); }, 120);
+}
+
+function renderTxList(transactions) {
+  var wrap = document.getElementById('txListWrap');
+  var list = document.getElementById('txList');
+  var totalEl = document.getElementById('txListTotal');
+  if (!transactions.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  list.innerHTML = '';
+  var total = 0;
+  transactions.forEach(function(tx) {
+    total += tx.val || 0;
+    var item = document.createElement('div');
+    item.className = 'tx-modal-item';
+    item.innerHTML = '<span class="tx-modal-item-desc">' + (tx.desc||'—') + '</span>'
+      + '<span class="tx-modal-item-val">' + fmtR(tx.val||0) + '</span>'
+      + '<button class="tx-modal-item-del" title="Remover" aria-label="Remover lançamento">×</button>';
+    item.querySelector('button').onclick = function() {
+      if (!_quickGastoState) return;
+      var s = _quickGastoState;
+      var row = (db[s.m]||[]).find(function(r){ return r.id===s.id; });
+      if (row) {
+        row.transactions = (row.transactions||[]).filter(function(t){ return t.id !== tx.id; });
+        save(); renderPanel(s.m);
+        renderTxList(row.transactions);
+      }
+    };
+    list.appendChild(item);
+  });
+  totalEl.textContent = fmtR(total);
+}
+
+async function confirmQuickGasto() {
   if (!_quickGastoState) return;
-  var val = parseFloat(document.getElementById('quickGastoVal').value);
+  var desc = document.getElementById('quickGastoDesc').value.trim();
+  var val  = parseFloat(document.getElementById('quickGastoVal').value);
   if (isNaN(val) || val <= 0) {
     document.getElementById('quickGastoVal').style.borderColor = 'var(--c-neg)';
     return;
   }
-  var s = _quickGastoState;
-  var row = (db[s.m] || []).find(function(r){ return r.id === s.id; });
+  var s   = _quickGastoState;
+  var row = (db[s.m]||[]).find(function(r){ return r.id===s.id; });
   if (row) {
-    row.gasto = Math.max(0, (row.gasto || 0) + s.dir * val);
-    save(); renderPanels();
+    if (!row.transactions) row.transactions = [];
+    var newId = nextTxId(row);
+    row.transactions.push({id:newId, desc:desc||'Lançamento', val:val});
+    await save();
+    renderPanel(s.m);
+    // refresh modal list without closing
+    document.getElementById('quickGastoDesc').value = '';
+    document.getElementById('quickGastoVal').value = '';
+    document.getElementById('quickGastoVal').style.borderColor = '';
+    renderTxList(row.transactions);
+    showToast('Lançamento adicionado', 'success');
+    setTimeout(function(){ document.getElementById('quickGastoDesc').focus(); }, 80);
   }
-  closeQuickGasto();
 }
 
 function closeQuickGasto() {
@@ -1482,14 +1734,12 @@ function closeQuickGasto() {
   _quickGastoState = null;
 }
 
-function closeModal() {
-  document.getElementById('modal').classList.remove('open');
-}
-function deleteRow() {
-  if (editingId === null) return;
-  db[editingMonth] = (db[editingMonth]||[]).filter(function(r){ return r.id !== editingId; });
-  closeModal(); save(); renderTabs(); renderPanel(editingMonth);
-  showToast('Categoria excluida', 'success');
+async function deleteTx(m, rowId, txId) {
+  var row = (db[m]||[]).find(function(r){ return r.id===rowId; });
+  if (!row) return;
+  row.transactions = (row.transactions||[]).filter(function(t){ return t.id!==txId; });
+  await save();
+  renderPanel(m);
 }
 
 // OBJETIVO MODAL
@@ -1553,6 +1803,7 @@ function getPagamentos() {
   return p;
 }
 function openObjModal() {
+  if (!isPremium && objetivos.length >= 5) { openUpsell('obj'); return; }
   editingObjId = null;
   document.getElementById('objModalTitle').textContent = 'Novo objetivo';
   document.getElementById('oNome').value = '';
@@ -1634,6 +1885,21 @@ function deleteObj() {
   showToast('Objetivo excluido', 'success');
 }
 
+// ── RULE SECTION TOGGLE ─────────────────────────────────────────────────────
+var ruleCollapsed = false;
+function toggleRule() {
+  ruleCollapsed = !ruleCollapsed;
+  var sec = document.getElementById('ruleSection');
+  var icon = document.getElementById('ruleToggleIcon');
+  var btn = document.getElementById('ruleTitleBtn');
+  sec.style.display = ruleCollapsed ? 'none' : 'block';
+  icon.style.transform = ruleCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+  btn.setAttribute('aria-expanded', !ruleCollapsed);
+}
+
+// ── STATUS BADGE TOGGLE ───────────────────────────────────────────────────────
+var showStatus = true;
+
 // RULE MODAL
 function openRuleModal() {
   document.getElementById('ruleInputN').value = rulePcts.N;
@@ -1677,6 +1943,65 @@ function resetRuleModal() {
   updateRuleSumWarning();
 }
 
+// ── PREMIUM & MONETIZAÇÃO ────────────────────────────────────────────────────
+
+// Check isPremium from Firestore (called after login)
+async function checkPremiumStatus() {
+  if (!fbIdToken || !fbUser) return;
+  try {
+    var cfg = getFbConfig();
+    var url = 'https://firestore.googleapis.com/v1/projects/' + cfg.projectId +
+              '/databases/(default)/documents/users/' + fbUser.uid;
+    var res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + fbIdToken } });
+    if (res.ok) {
+      var doc = await res.json();
+      if (doc.fields && doc.fields.isPremium && doc.fields.isPremium.booleanValue === true) {
+        isPremium = true;
+      }
+    } else {
+      // Document doesn't exist yet — create it with isPremium: false
+      await fetch(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + fbIdToken },
+        body: JSON.stringify({ fields: { isPremium: { booleanValue: false } } })
+      });
+    }
+  } catch(e) { console.warn('checkPremiumStatus error', e); }
+}
+
+// Upsell modal
+function openUpsell(reason) {
+  var msgs = {
+    report:  { title: 'Relatório Anual', sub: 'Veja gráficos completos e uma análise detalhada de todos os meses do ano.' },
+    export:  { title: 'Exportar Dados', sub: 'Faça backup dos seus dados financeiros em um arquivo JSON a qualquer momento.' },
+    obj:     { title: 'Objetivos Ilimitados', sub: 'Você atingiu o limite de 5 objetivos no plano gratuito.' }
+  };
+  var m = msgs[reason] || { title: 'Recurso Premium', sub: 'Este recurso é exclusivo para usuários Premium.' };
+  document.getElementById('upsellTitle').textContent = m.title;
+  document.getElementById('upsellSub').textContent = m.sub;
+  document.getElementById('modalUpsell').classList.add('open');
+}
+function closeUpsell() { document.getElementById('modalUpsell').classList.remove('open'); }
+function goToPremium() {
+  // Replace with your checkout URL (Mercado Pago, Stripe, etc.)
+  window.open('https://wa.me/5575988926392?text=Olá%20Sávio%2C%20quero%20ativar%20o%20Premium%20do%20app!', '_blank');
+  closeUpsell();
+}
+
+// Pix modal
+function openPixModal() { document.getElementById('modalPix').classList.add('open'); }
+function closePixModal() { document.getElementById('modalPix').classList.remove('open'); }
+function copyPixKey() {
+  var key = document.getElementById('pixKeyText').textContent;
+  navigator.clipboard.writeText(key).then(function() {
+    showToast('Chave Pix copiada!', 'success');
+  }).catch(function() {
+    showToast('Copie manualmente: ' + key, 'success');
+  });
+}
+
+// ── GATED FEATURES ───────────────────────────────────────────────────────────
+
 // TOAST
 var _tt;
 function showToast(msg, type) {
@@ -1690,17 +2015,20 @@ function showToast(msg, type) {
 
 // KEYBOARD
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { closeModal(); closeRendaModal(); closeObjModal(); closeReport(); closeMenu(); closeQuickGasto(); closeRuleModal(); }
+  if (e.key === 'Escape') { closeModal(); closeRendaModal(); closeObjModal(); closeReport(); closeMenu(); closeQuickGasto(); closeRuleModal(); closeUpsell(); closePixModal(); }
 });
 document.getElementById('modal').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeModal(); });
 document.getElementById('modalRenda').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeRendaModal(); });
 document.getElementById('modalQuickGasto').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeQuickGasto(); });
 document.getElementById('modalObj').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeObjModal(); });
 document.getElementById('modalRegra').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeRuleModal(); });
+document.getElementById('modalUpsell').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeUpsell(); });
+document.getElementById('modalPix').addEventListener('click', function(e) { if (e.target === e.currentTarget) closePixModal(); });
 document.getElementById('fBanco').addEventListener('input', renderBancoSuggestions);
 
 // EXPORT / IMPORT
 function exportData() {
+  if (!isPremium) { openUpsell('export'); return; }
   var payload = JSON.stringify({db:db, objetivos:objetivos, meta:{month:activeMonth,sortMode:sortMode,objFilter:objFilter,rendas:rendas,periodos:periodos}}, null, 2);
   var blob = new Blob([payload], {type:'application/json'});
   var url = URL.createObjectURL(blob);
@@ -1757,6 +2085,7 @@ function destroyChart(id) {
 }
 
 function openReport() {
+  if (!isPremium) { closeMenu(); openUpsell('report'); return; }
   closeMenu();
   document.getElementById('reportOverlay').classList.add('open');
   setTimeout(renderReport, 50);
@@ -1774,7 +2103,7 @@ function renderReport() {
   activeMths.forEach(function(m) {
     var rows = db[m] || [];
     totalPlan  += rows.reduce(function(a,r){ return a+(r.plan||0); },0);
-    totalGasto += rows.reduce(function(a,r){ return a+(r.gasto||0); },0);
+    totalGasto += rows.reduce(function(a,r){ return a+getCatGasto(r); },0);
     var r = getMesRenda(m);
     if (r) { totalRenda += r; mesesComRenda++; }
   });
@@ -1791,7 +2120,7 @@ function renderReport() {
 
   var labels = activeMths;
   var planData  = labels.map(function(m){ return (db[m]||[]).reduce(function(a,r){ return a+(r.plan||0); },0); });
-  var gastoData = labels.map(function(m){ return (db[m]||[]).reduce(function(a,r){ return a+(r.gasto||0); },0); });
+  var gastoData = labels.map(function(m){ return (db[m]||[]).reduce(function(a,r){ return a+getCatGasto(r); },0); });
   var rendaData = labels.map(function(m){ return getMesRenda(m) || null; });
   var saldoData = labels.map(function(m,i){ return planData[i] - gastoData[i]; });
   var tipoN = labels.map(function(m){ return (db[m]||[]).reduce(function(a,r){ return r.tipo==='N'?a+(r.plan||0):a; },0); });
@@ -2004,6 +2333,7 @@ async function onGoogleCredential(response) {
     scheduleTokenRefresh(exp);
     updateAuthBar();
     await syncFromCloud();
+    await checkPremiumStatus();
     showToast('Logado!', 'success');
   } catch(e) {
     setAuthSyncStatus('erro: ' + e.message);
@@ -2105,6 +2435,7 @@ function tryRestoreSession() {
       scheduleTokenRefresh(s.exp);
       updateAuthBar();
       syncFromCloud();
+      checkPremiumStatus();
     } else if (s && s.rt) {
       // Token expired but we have a refresh token — refresh immediately
       fbUser = s.u;
