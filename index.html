@@ -1240,6 +1240,17 @@ function toggleShowStatus() {
   showStatus = !showStatus;
   renderPanel(activeMonth);
 }
+function toggleTxList(id) {
+  var list = document.getElementById(id);
+  var icon = document.getElementById(id + '-icon');
+  var btn  = document.getElementById(id + '-btn');
+  if (!list) return;
+  var open = list.style.display === 'none';
+  list.style.display = open ? 'flex' : 'none';
+  list.style.flexDirection = 'column';
+  if (icon) icon.style.transform = open ? 'rotate(90deg)' : 'rotate(0deg)';
+  if (btn)  btn.setAttribute('aria-expanded', open);
+}
 
 // OBJ FILTER
 function setObjFilter(mode, btn) {
@@ -1376,10 +1387,16 @@ function renderPanel(m) {
         diffHtml = '<span class="' + dcls + '">' + (diff >= 0 ? '+' : '') + fmt(diff) + '</span>';
       }
       var fillClass = 'progress-fill ' + (r.done ? 'ok' : fc);
-      // Build inline transaction list
+      // Build inline transaction list — collapsed by default
+      var txId = 'tx-' + m + '-' + r.id;
       var txHtml = '';
       if (txCount > 0) {
-        txHtml = '<div class="tx-list">';
+        var txToggleLabel = txCount + ' lançamento' + (txCount>1?'s':'');
+        txHtml = '<div>'
+          + '<button onclick="toggleTxList(\'' + txId + '\')" style="margin-top:6px;background:transparent;border:none;font-size:10px;font-weight:600;color:var(--text-3);cursor:pointer;padding:2px 0;display:flex;align-items:center;gap:4px;letter-spacing:.3px" aria-expanded="false" id="' + txId + '-btn">'
+          + '<span id="' + txId + '-icon" style="transition:transform .15s;display:inline-block">▶</span> ' + txToggleLabel
+          + '</button>'
+          + '<div id="' + txId + '" class="tx-list" style="display:none">';
         (r.transactions||[]).forEach(function(tx) {
           txHtml += '<div class="tx-item">'
             + '<span class="tx-item-desc">' + (tx.desc||'—') + '</span>'
@@ -1387,7 +1404,7 @@ function renderPanel(m) {
             + '<button class="tx-item-del" title="Remover lançamento" aria-label="Remover lançamento" onclick="deleteTx(\'' + m + '\',' + r.id + ',' + tx.id + ')">×</button>'
             + '</div>';
         });
-        txHtml += '</div>';
+        txHtml += '</div></div>';
       }
       html += '<div class="' + rowClass + '">'
         + '<div class="row-top">' + dotHtml + '<span class="row-cat">' + r.cat + '</span>' + txBadge + editBtn + '</div>'
@@ -1897,7 +1914,7 @@ function toggleRule() {
 }
 
 // ── STATUS BADGE TOGGLE ───────────────────────────────────────────────────────
-var showStatus = true;
+var showStatus = false;
 
 // RULE MODAL
 function openRuleModal() {
