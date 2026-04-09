@@ -295,6 +295,8 @@
   .tipo-tag.N { background:var(--c-need-bg); color:var(--c-need); border:1px solid rgba(37,99,235,0.2) }
   .tipo-tag.D { background:var(--c-want-bg); color:var(--c-want); border:1px solid rgba(217,119,6,0.2) }
   .tipo-tag.P { background:var(--c-save-bg); color:var(--c-save); border:1px solid var(--accent-border) }
+  .tipo-tag.T { background:rgba(156,163,175,.08); color:var(--text-3); border:1px solid rgba(156,163,175,.2) }
+  .tipo-tag.E { background:rgba(156,163,175,.08); color:var(--text-3); border:1px solid rgba(156,163,175,.2) }
 
   .row-nums { display:flex; gap:10px; align-items:center; font-size:13px; flex-wrap:wrap; margin-bottom:10px }
   .num-plan  { color:var(--c-plan); font-weight:700 }
@@ -976,6 +978,8 @@
         <option value="N">Necessidade (50%)</option>
         <option value="D">Desejo (30%)</option>
         <option value="P">Poupança (20%)</option>
+        <option value="T">Transferência (não conta)</option>
+        <option value="E">Empréstimo (não conta)</option>
       </select>
     </div>
     <div class="form-divider"></div>
@@ -1110,8 +1114,14 @@ function getMesRenda(m) {
   return getMesRendaEntries(m).reduce(function(a,e){ return a+(e.val||0); }, 0);
 }
 // Transaction helpers
+function isNeutralTipo(tipo) { return tipo === 'T' || tipo === 'E'; }
 function getCatGasto(row) {
+  if (isNeutralTipo(row.tipo)) return 0;  // excluded from totals
   return (row.transactions||[]).reduce(function(a,t){ return a+(t.val||0); }, 0);
+}
+function getCatPlan(row) {
+  if (isNeutralTipo(row.tipo)) return 0;  // excluded from totals
+  return row.plan || 0;
 }
 function nextTxId(row) {
   var txs = row.transactions||[];
@@ -1328,16 +1338,16 @@ function renderPanel(m) {
   if (!el) return;
   var rows = db[m] || [];
   var renda = getMesRenda(m);
-  var planTotal  = rows.reduce(function(a,r){ return a+(r.plan||0); }, 0);
+  var planTotal  = rows.reduce(function(a,r){ return a+getCatPlan(r); }, 0);
   var gastoTotal = rows.reduce(function(a,r){ return a+getCatGasto(r); }, 0);
   var saldo = renda - gastoTotal;
   var diff  = planTotal - gastoTotal;
   var gastoClass = gastoTotal > planTotal ? 'red' : 'green';
   var diffClass  = diff >= 0 ? 'green' : 'red';
   var diffStr    = (diff >= 0 ? '+' : '') + fmt(diff);
-  var planN = rows.reduce(function(a,r){ return r.tipo==='N'?a+(r.plan||0):a; }, 0);
-  var planD = rows.reduce(function(a,r){ return r.tipo==='D'?a+(r.plan||0):a; }, 0);
-  var planP = rows.reduce(function(a,r){ return r.tipo==='P'?a+(r.plan||0):a; }, 0);
+  var planN = rows.reduce(function(a,r){ return r.tipo==='N'?a+getCatPlan(r):a; }, 0);
+  var planD = rows.reduce(function(a,r){ return r.tipo==='D'?a+getCatPlan(r):a; }, 0);
+  var planP = rows.reduce(function(a,r){ return r.tipo==='P'?a+getCatPlan(r):a; }, 0);
   var gastN = rows.reduce(function(a,r){ return r.tipo==='N'?a+getCatGasto(r):a; }, 0);
   var gastD = rows.reduce(function(a,r){ return r.tipo==='D'?a+getCatGasto(r):a; }, 0);
   var gastP = rows.reduce(function(a,r){ return r.tipo==='P'?a+getCatGasto(r):a; }, 0);
@@ -1373,7 +1383,7 @@ function renderPanel(m) {
       var rowClass = 'budget-row' + (r.done ? ' done' : '');
       var dotHtml = '<span class="row-dot"></span>';
       var bancoHtml = r.banco ? '<span class="banco-tag">🏦 ' + r.banco + '</span>' : '';
-      var tipoLabel = r.tipo === 'N' ? 'Necessidade' : r.tipo === 'D' ? 'Desejo' : r.tipo === 'P' ? 'Poupança' : '';
+      var tipoLabel = r.tipo === 'N' ? 'Necessidade' : r.tipo === 'D' ? 'Desejo' : r.tipo === 'P' ? 'Poupança' : r.tipo === 'T' ? 'Transferência' : r.tipo === 'E' ? 'Empréstimo' : '';
       var tipoHtml = tipoLabel ? '<span class="tipo-tag ' + r.tipo + '">' + tipoLabel + '</span>' : '';
       var txCount  = (r.transactions||[]).length;
       var txBadge  = txCount ? '<span style="font-size:9px;font-weight:600;padding:1px 6px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;color:var(--text-3);margin-left:2px">' + txCount + ' lançamento' + (txCount>1?'s':'') + '</span>' : '';
@@ -1410,7 +1420,8 @@ function renderPanel(m) {
         + '<div class="row-top">' + dotHtml + '<span class="row-cat">' + r.cat + '</span>' + txBadge + editBtn + '</div>'
         + tagsHtml
         + '<div class="row-nums"><span class="num-plan" title="Orçamento">' + fmt(r.plan) + '</span><span class="num-arrow">→</span>'
-        + '<span class="num-gasto" title="Total gasto">' + (txCount ? fmtR(gasto) : '—') + '</span>' + diffHtml
+        + '<span class="num-gasto" title="Total gasto">' + (txCount ? fmtR(getCatGasto(r) === 0 && txCount > 0 ? (r.transactions||[]).reduce(function(a,t){ return a+(t.val||0);},0) : gasto) : '—') + '</span>'
+        + (isNeutralTipo(r.tipo) ? '<span style="font-size:9px;color:var(--text-3);font-family:Inter,sans-serif;padding:1px 5px;border:1px solid var(--border);border-radius:4px;white-space:nowrap">não conta</span>' : diffHtml)
         + '<span style="margin-left:auto;display:flex;gap:4px">' + addBtn + '</span></div>'
         + txHtml
         + '<div class="progress-bar" style="margin-top:8px"><div class="' + fillClass + '" style="width:' + pct + '%"></div></div>'
@@ -2135,13 +2146,13 @@ function renderReport() {
     '<div class="report-card"><div class="report-card-lbl">Renda Media</div><div class="report-card-val blue">' + (avgRenda?fmtR(avgRenda):'-') + '</div></div>';
 
   var labels = activeMths;
-  var planData  = labels.map(function(m){ return (db[m]||[]).reduce(function(a,r){ return a+(r.plan||0); },0); });
+  var planData  = labels.map(function(m){ return (db[m]||[]).reduce(function(a,r){ return a+getCatPlan(r); },0); });
   var gastoData = labels.map(function(m){ return (db[m]||[]).reduce(function(a,r){ return a+getCatGasto(r); },0); });
   var rendaData = labels.map(function(m){ return getMesRenda(m) || null; });
   var saldoData = labels.map(function(m,i){ return planData[i] - gastoData[i]; });
-  var tipoN = labels.map(function(m){ return (db[m]||[]).reduce(function(a,r){ return r.tipo==='N'?a+(r.plan||0):a; },0); });
-  var tipoD = labels.map(function(m){ return (db[m]||[]).reduce(function(a,r){ return r.tipo==='D'?a+(r.plan||0):a; },0); });
-  var tipoP = labels.map(function(m){ return (db[m]||[]).reduce(function(a,r){ return r.tipo==='P'?a+(r.plan||0):a; },0); });
+  var tipoN = labels.map(function(m){ return (db[m]||[]).reduce(function(a,r){ return r.tipo==='N'?a+getCatPlan(r):a; },0); });
+  var tipoD = labels.map(function(m){ return (db[m]||[]).reduce(function(a,r){ return r.tipo==='D'?a+getCatPlan(r):a; },0); });
+  var tipoP = labels.map(function(m){ return (db[m]||[]).reduce(function(a,r){ return r.tipo==='P'?a+getCatPlan(r):a; },0); });
 
   var def = {responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:'#5f7a94',font:{family:'JetBrains Mono',size:11}}},tooltip:{callbacks:{label:function(ctx){ return ' '+fmtR(ctx.raw||0); }}}}, scales:{x:{ticks:{color:'#5f7a94',font:{family:'JetBrains Mono',size:10}},grid:{color:'#1e2d3d'}},y:{ticks:{color:'#5f7a94',font:{family:'JetBrains Mono',size:10},callback:function(v){ return 'R$'+v; }},grid:{color:'#1e2d3d'}}}};
 
