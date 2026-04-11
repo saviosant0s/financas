@@ -1208,6 +1208,12 @@ async function load() {
       });
     });
   } catch(e) { seed(); }
+  // Sync nextId to avoid ID collisions with existing rows
+  MONTHS.forEach(function(m) {
+    (db[m]||[]).forEach(function(row) {
+      if ((row.id||0) >= nextId) nextId = row.id + 1;
+    });
+  });
 }
 async function save() {
   _lastLocalSave = Date.now();
@@ -2438,6 +2444,12 @@ async function syncFromCloud() {
       }
       // Ensure all months exist
       MONTHS.forEach(function(m){ if (!db[m]) db[m] = []; });
+      // Sync nextId to avoid ID collisions
+      MONTHS.forEach(function(m) {
+        (db[m]||[]).forEach(function(row) {
+          if ((row.id||0) >= nextId) nextId = row.id + 1;
+        });
+      });
       save(); render();
       setAuthSyncStatus('sincronizado ✓');
     } else {
