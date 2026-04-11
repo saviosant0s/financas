@@ -1210,6 +1210,7 @@ async function load() {
   } catch(e) { seed(); }
 }
 async function save() {
+  _lastLocalSave = Date.now();
   await storageSet('fin-db',  JSON.stringify(db));
   await storageSet('fin-obj', JSON.stringify(objetivos));
   await storageSet('fin-meta', JSON.stringify({month:activeMonth,sortMode:sortMode,objFilter:objFilter,rendas:rendas,periodos:periodos,rulePcts:rulePcts}));
@@ -1662,7 +1663,6 @@ async function saveRow() {
   } else {
     for (var i = 0; i < db[m].length; i++) {
       if (db[m][i].id === eid) {
-        // preserve existing transactions
         var existingTx = db[m][i].transactions || [];
         db[m][i] = {id:eid, cat:cat, plan:plan, banco:banco, tipo:tipo, done:done, transactions:existingTx};
         break;
@@ -1670,10 +1670,15 @@ async function saveRow() {
     }
     showToast('Salvo', 'success');
   }
+  // Reset editing state BEFORE closing/rendering
+  editingId = null;
+  editingMonth = null;
   document.getElementById('modal').classList.remove('open');
-  await save();
+  // Render first with current in-memory data, then persist
   renderTabs();
   renderPanel(m);
+  // Save in background — don't let Firebase sync overwrite what we just rendered
+  save();
 }
 
 function deleteRow() {
@@ -2407,17 +2412,24 @@ async function doTokenRefresh() {
   }
 }
 
+var _lastLocalSave = 0; // timestamp of last local save
+
 async function syncFromCloud() {
   setAuthSyncStatus('sincronizando...');
   try {
     var doc = await fsGet();
     if (doc && doc.fields) {
+      // Don't overwrite if user just saved locally in the last 3 seconds
+      if (Date.now() - _lastLocalSave < 3000) {
+        setAuthSyncStatus('sincronizado ✓');
+        return;
+      }
       // Cloud has data — load it, overwrite local completely
       var d = fromFS(doc.fields);
       db        = d.db        || {};
       objetivos = d.objetivos || [];
       if (d.meta) {
-        activeMonth = d.meta.month     || 'MAR';
+        activeMonth = d.meta.month     || ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'][new Date().getMonth()];
         sortMode    = d.meta.sortMode  || 'default';
         objFilter   = d.meta.objFilter || 'mes';
         rendas      = d.meta.rendas    || {};
