@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 <style>
   /* =========================================================
      DESIGN SYSTEM — Light-first, dark mode via [data-theme=dark]
@@ -481,6 +482,9 @@
   /* Import Extra Modal */
   #importExtraText { width:100%; box-sizing:border-box; font-family:'JetBrains Mono',monospace }
   #importExtraText::placeholder { color:var(--text-3) }
+  #importAIPdfs { width:100%; box-sizing:border-box; font-family:'JetBrains Mono',monospace; font-size:12px; padding:10px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); transition:all .18s; }
+  #importAIPdfs:hover { border-color:var(--border-2) }
+  #importAIPdfs::file-selector-button { display:none }
 
   .rule-preview { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:14px 0; background:var(--bg-subtle); border-radius:var(--radius-sm); padding:14px; border:1px solid var(--border) }
   .rule-preview-item { text-align:center }
@@ -846,6 +850,7 @@
   <button class="menu-item" onclick="exportData();closeMenu()" aria-label="Exportar dados"><span class="mi-icon">⬇</span> Exportar dados <span class="premium-badge">💎</span></button>
   <label class="menu-item" aria-label="Importar dados"><span class="mi-icon">⬆</span> Importar dados<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
   <button class="menu-item" onclick="openImportExtraModal();closeMenu()" aria-label="Importação Inteligente"><span class="mi-icon">📋</span> Importação Inteligente</button>
+  <button class="menu-item" onclick="openImportAIModal();closeMenu()" aria-label="Importação com IA"><span class="mi-icon">🤖</span> Importar PDFs com IA</button>
   <div class="menu-divider"></div>
   <button class="menu-item" onclick="openPixModal();closeMenu()" aria-label="Apoiar o projeto via Pix"><span class="mi-icon">☕</span> Apoiar o projeto</button>
   <button class="menu-item" onclick="goToPremium();closeMenu()" style="color:var(--accent);font-weight:600" aria-label="Ativar Premium Vitalício"><span class="mi-icon">💎</span> Ativar Premium</button>
@@ -1105,6 +1110,45 @@
   </div>
 </div>
 
+<!-- MODAL IMPORTACAO IA -->
+<div class="modal-overlay" id="modalImportAI" role="dialog" aria-modal="true" aria-labelledby="importAITitle">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">
+      <span id="importAITitle">Importação com IA</span>
+      <button class="modal-close" onclick="closeImportAIModal()" aria-label="Fechar">×</button>
+    </div>
+    <p style="font-size:12px;color:var(--text-2);margin-bottom:16px;line-height:1.6">
+      Selecione um ou mais extratos em PDF. A IA irá processar e categorizar automaticamente. <strong>Dica:</strong> Funciona melhor com extratos bancários em português.
+    </p>
+    <div class="form-group">
+      <label class="form-label">Arquivos PDF (extratos bancários)</label>
+      <input type="file" id="importAIPdfs" accept="application/pdf" multiple style="width:100%;box-sizing:border-box;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.5" aria-label="Selecione arquivos PDF">
+      <div id="importAIFileNames" style="margin-top:8px;font-size:11px;color:var(--text-3);min-height:1em"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mês de destino</label>
+      <select class="form-input" id="importAIMonth">
+        <option value="JAN">Janeiro</option>
+        <option value="FEV">Fevereiro</option>
+        <option value="MAR">Março</option>
+        <option value="ABR">Abril</option>
+        <option value="MAI">Maio</option>
+        <option value="JUN">Junho</option>
+        <option value="JUL">Julho</option>
+        <option value="AGO">Agosto</option>
+        <option value="SET">Setembro</option>
+        <option value="OUT">Outubro</option>
+        <option value="NOV">Novembro</option>
+        <option value="DEZ">Dezembro</option>
+      </select>
+    </div>
+    <button class="btn-primary" onclick="processImportAI()" id="btnProcessAI">
+      <span id="btnProcessAIText">Processar PDFs com IA</span>
+    </button>
+    <button class="btn-danger" onclick="closeImportAIModal()" style="margin-top:8px">Cancelar</button>
+  </div>
+</div>
+
 <!-- MODAL PIX APOIO -->
 <div class="modal-overlay" id="modalPix" role="dialog" aria-modal="true" aria-labelledby="pixTitle">
   <div class="modal" style="max-width:400px;text-align:center">
@@ -1148,6 +1192,9 @@ var editingMonth = null;
 var editingObjId = null;
 var nextId = 200;
 var nextObjId = 100;
+var OPENROUTER_MODEL = 'google/gemini-2.5-pro';
+var OPENROUTER_API_KEY = '';
+var pdfjsLib = window.pdfjsLib;
 
 // Income helpers
 function getMesRendaEntries(m) {
@@ -2099,7 +2146,7 @@ function showToast(msg, type) {
 
 // KEYBOARD
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { closeModal(); closeRendaModal(); closeObjModal(); closeReport(); closeMenu(); closeQuickGasto(); closeRuleModal(); closeUpsell(); closePixModal(); closeImportExtraModal(); }
+  if (e.key === 'Escape') { closeModal(); closeRendaModal(); closeObjModal(); closeReport(); closeMenu(); closeQuickGasto(); closeRuleModal(); closeUpsell(); closePixModal(); closeImportExtraModal(); closeImportAIModal(); }
 });
 document.getElementById('modal').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeModal(); });
 document.getElementById('modalRenda').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeRendaModal(); });
@@ -2557,6 +2604,31 @@ function closeImportExtraModal() {
   document.getElementById('modalImportExtra').classList.remove('open');
 }
 
+// Modal functions for AI Import
+function openImportAIModal() {
+  document.getElementById('importAIPdfs').value = '';
+  document.getElementById('importAIMonth').value = activeMonth;
+  document.getElementById('importAIFileNames').textContent = '';
+  document.getElementById('modalImportAI').classList.add('open');
+}
+
+function closeImportAIModal() {
+  document.getElementById('modalImportAI').classList.remove('open');
+}
+
+// Update file names display
+document.getElementById('importAIPdfs').addEventListener('change', function(e) {
+  var files = e.target.files;
+  var fileNamesEl = document.getElementById('importAIFileNames');
+  if (files.length === 0) {
+    fileNamesEl.textContent = '';
+  } else if (files.length === 1) {
+    fileNamesEl.textContent = files[0].name;
+  } else {
+    fileNamesEl.textContent = files.length + ' arquivos selecionados';
+  }
+});
+
 // Mapeamento inteligente de tipo com base no nome da categoria
 function inferTipoFromCategory(catName) {
   var lowerCat = (catName || '').toLowerCase();
@@ -2816,6 +2888,255 @@ async function processImportExtra() {
     showToast('Erro ao processar: ' + e.message, 'error');
   }
 }
+
+// Funcoes de Importacao com IA
+async function processImportAI() {
+  var input = document.getElementById('importAIPdfs');
+  var files = input.files;
+  var month = document.getElementById('importAIMonth').value;
+  var btn = document.getElementById('btnProcessAI');
+  var btnText = document.getElementById('btnProcessAIText');
+
+  if (files.length === 0) {
+    showToast('Selecione ao menos um PDF', 'error');
+    return;
+  }
+
+  if (!month) {
+    showToast('Selecione um mês', 'error');
+    return;
+  }
+
+  // Desabilitar botao e mostrar estado de processamento
+  btn.disabled = true;
+  btnText.textContent = 'Processando...';
+  showToast('Extraindo texto dos PDFs...', 'warning');
+
+  try {
+    // Extrair texto de todos os PDFs
+    showToast('Extraindo texto dos PDFs...', 'warning');
+    var allText = await extractTextFromPDFs(files);
+
+    if (!allText || !allText.trim()) {
+      showToast('Nenhum texto foi extraído dos PDFs', 'error');
+      btn.disabled = false;
+      btnText.textContent = 'Processar PDFs com IA';
+      return;
+    }
+
+    showToast('Enviando para IA analisar...', 'warning');
+
+    // Chamar API do OpenRouter
+    var result = await callOpenRouterAPI(allText);
+
+    if (!result || !result.rendas && !result.categorias_resolvidas) {
+      showToast('A IA não retornou dados válidos', 'error');
+      btn.disabled = false;
+      btnText.textContent = 'Processar PDFs com IA';
+      return;
+    }
+
+    showToast('Processando dados recebidos...', 'warning');
+
+    // Injetar rendas
+    if (!rendas[month]) rendas[month] = [];
+    if (result.rendas && result.rendas.length > 0) {
+      result.rendas.forEach(function(renda) {
+        var exists = rendas[month].some(function(e) { return e.desc === renda.desc; });
+        if (!exists && renda.val > 0) {
+          rendas[month].push({ id: _nextIncomeId++, desc: renda.desc, val: renda.val });
+        }
+      });
+    }
+
+    // Injetar categorias
+    if (!db[month]) db[month] = [];
+    if (result.categorias_resolvidas && result.categorias_resolvidas.length > 0) {
+      result.categorias_resolvidas.forEach(function(cat) {
+        var existing = db[month].find(function(r) { return r.cat.toLowerCase() === cat.cat.toLowerCase(); });
+        if (existing) {
+          // Adicionar transacoes a categoria existente
+          cat.transactions.forEach(function(tx) {
+            existing.transactions.push({ id: nextTxId(existing), desc: tx.desc, val: tx.val });
+          });
+        } else if (cat.transactions && cat.transactions.length > 0) {
+          // Criar nova categoria
+          var newCat = {
+            id: nextId++,
+            cat: cat.cat,
+            plan: cat.plan || null,
+            banco: cat.banco || '',
+            tipo: cat.tipo || '',
+            done: cat.done || false,
+            transactions: cat.transactions.map(function(tx, idx) {
+              return { id: idx + 1, desc: tx.desc, val: tx.val };
+            })
+          };
+          db[month].push(newCat);
+        }
+      });
+    }
+
+    // Processar pendentes de classificacao
+    if (result.pendentes_classificacao && result.pendentes_classificacao.length > 0) {
+      var shouldClassify = confirm('Foram encontrados ' + result.pendentes_classificacao.length + ' itens que a IA não consegui classificar. Deseja categorizá-los agora?');
+      if (shouldClassify) {
+        await processPendentesClassificacao(result.pendentes_classificacao, month);
+      }
+    }
+
+    // Salvar e renderizar
+    await save();
+    closeImportAIModal();
+    btn.disabled = false;
+    btnText.textContent = 'Processar PDFs com IA';
+    showToast('Importação com IA concluída!', 'success');
+
+    if (month === activeMonth) {
+      renderHeader();
+      renderTabs();
+      renderPanel(activeMonth);
+    }
+
+  } catch(e) {
+    btn.disabled = false;
+    btnText.textContent = 'Processar PDFs com IA';
+    showToast('Erro na importação com IA: ' + e.message, 'error');
+    console.error('AI Import Error:', e);
+  }
+}
+
+// Extracao de texto dos PDFs
+async function extractTextFromPDFs(files) {
+  var allText = '';
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
+    var fileText = await extractTextFromPDF(file);
+    allText += fileText + '\n\n';
+  }
+
+  return allText;
+}
+
+async function extractTextFromPDF(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = async function(e) {
+      try {
+        var data = new Uint8Array(e.target.result);
+        var pdf = await pdfjsLib.getDocument({ data: data }).promise;
+        var fullText = '';
+
+        for (var pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          var page = await pdf.getPage(pageNum);
+          var textContent = await page.getTextContent();
+          var text = textContent.items.map(function(item) { return item.str; }).join(' ');
+          fullText += text + '\n';
+        }
+
+        resolve(fullText);
+      } catch(e) {
+        reject(e);
+      }
+    };
+    reader.onerror = function(e) { reject(e); };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// Chamada para API do OpenRouter
+async function callOpenRouterAPI(text) {
+  var systemPrompt = 'Você é um assistente financeiro especialista em processamento de dados. Seu objetivo é receber textos extraídos de extratos bancários em PDF, analisá-los e retorno ESTRITAMENTE um objeto JSON válido.\n\nRegras de Processamento:\n\nFiltro de Anulações: Identifique e ignore transferências entre contas do próprio titular, resgates de investimentos e aplicações automáticas.\nAgrupamento: Some e agrupe lançamentos recorrentes no mesmo local (ex: várias compras na "Mercearia Lucas") dentro da mesma Categoria Pai. As compras individuais devem ir para o array \'transactions\'.\nInferência de Categorias: Tente adivinhar a categoria pelo nome. Defina o \'tipo\' baseando-se na regra 50/30/20 (N, D ou P).\nIsolamento de Dúvidas: Se houver PIX enviados para pessoas físicas desconhecidas ou nomes genéricos, coloque-os no array \'pendentes_classificacao\'.\n\nFormato de Saída (JSON Exato):\n{\n\"rendas\": [ { \"desc\": \"Pix Recebido\", \"val\": 1500.00 } ],\n\"categorias_resolvidas\": [\n{\n\"cat\": \"Alimentação\", \"plan\": 0, \"banco\": \"\", \"tipo\": \"N\", \"done\": false,\n\"transactions\": [ { \"desc\": \"Mercado\", \"val\": 35.50 } ]\n}\n],\n\"pendentes_classificacao\": [ { \"desc_original\": \"Pix enviado - Fulano\", \"val\": 65.00 } ]\n}';
+
+  var messages = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: 'Processa este extrato bancário:\n\n' + text }
+  ];
+
+  var response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + OPENROUTER_API_KEY
+    },
+    body: JSON.stringify({
+      model: OPENROUTER_MODEL,
+      messages: messages,
+      temperature: 0.3,
+      response_format: { type: 'json_object' }
+    })
+  });
+
+  if (!response.ok) {
+    var errorData = await response.json().catch(function() { return {}; });
+    var errorMsg = errorData.error ? errorData.error.message : 'Erro desconhecido da API';
+    throw new Error('API Error: ' + response.status + ' - ' + errorMsg);
+  }
+
+  var data = await response.json();
+
+  if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    throw new Error('Resposta inválida da API');
+  }
+
+  var content = data.choices[0].message.content;
+
+  // Limpar crases se vierem no response
+  if (typeof content === 'string') {
+    content = content.replace(/^```(json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  }
+
+  // Parse JSON
+  try {
+    return JSON.parse(content);
+  } catch(e) {
+    console.error('Failed to parse JSON:', content);
+    throw new Error('A resposta da IA não é um JSON válido: ' + e.message);
+  }
+}
+
+// Processar itens pendentes de classificacao
+async function processPendentesClassificacao(pendentes, month) {
+  for (var i = 0; i < pendentes.length; i++) {
+    var item = pendentes[i];
+    var categoryName = prompt('Item ' + (i + 1) + ' de ' + pendentes.length + ': ' + item.desc_original + ' (R$ ' + item.val.toFixed(2) + ')\n\nDigite o nome da categoria:');
+
+    if (!categoryName) {
+      // Usuario cancelou - parar processamento
+      break;
+    }
+
+    categoryName = categoryName.trim();
+    if (!categoryName) continue;
+
+    // Verificar se categoria ja existe
+    var existingCat = db[month].find(function(cat) { return cat.cat.toLowerCase() === categoryName.toLowerCase(); });
+
+    if (existingCat) {
+      // Adicionar transacao a categoria existente
+      existingCat.transactions.push({ id: nextTxId(existingCat), desc: item.desc_original, val: item.val });
+    } else {
+      // Criar nova categoria
+      var newCat = {
+        id: nextId++,
+        cat: categoryName,
+        plan: null,
+        banco: '',
+        tipo: '',
+        done: false,
+        transactions: [{ id: 1, desc: item.desc_original, val: item.val }]
+      };
+      db[month].push(newCat);
+    }
+  }
+}
+
+// Event listener para fechar modal ao clicar fora
+document.getElementById('modalImportAI').addEventListener('click', function(e) {
+  if (e.target === e.currentTarget) closeImportAIModal();
+});
 
 // DARK MODE
 function toggleTheme() {
