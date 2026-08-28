@@ -478,6 +478,10 @@
   .month-chk-label:has(input:checked) { background:var(--accent-bg); border-color:var(--accent-border); color:var(--accent) }
   .month-chk-label input { display:none }
 
+  /* Import Extra Modal */
+  #importExtraText { width:100%; box-sizing:border-box; font-family:'JetBrains Mono',monospace }
+  #importExtraText::placeholder { color:var(--text-3) }
+
   .rule-preview { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:14px 0; background:var(--bg-subtle); border-radius:var(--radius-sm); padding:14px; border:1px solid var(--border) }
   .rule-preview-item { text-align:center }
   .rule-preview-pct { font-size:12px; font-weight:700; margin-bottom:2px }
@@ -841,6 +845,7 @@
   <div class="menu-divider"></div>
   <button class="menu-item" onclick="exportData();closeMenu()" aria-label="Exportar dados"><span class="mi-icon">⬇</span> Exportar dados <span class="premium-badge">💎</span></button>
   <label class="menu-item" aria-label="Importar dados"><span class="mi-icon">⬆</span> Importar dados<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+  <button class="menu-item" onclick="openImportExtraModal();closeMenu()" aria-label="Importação Inteligente"><span class="mi-icon">📋</span> Importação Inteligente</button>
   <div class="menu-divider"></div>
   <button class="menu-item" onclick="openPixModal();closeMenu()" aria-label="Apoiar o projeto via Pix"><span class="mi-icon">☕</span> Apoiar o projeto</button>
   <button class="menu-item" onclick="goToPremium();closeMenu()" style="color:var(--accent);font-weight:600" aria-label="Ativar Premium Vitalício"><span class="mi-icon">💎</span> Ativar Premium</button>
@@ -1056,6 +1061,47 @@
     </div>
     <button class="btn-premium" onclick="goToPremium()">💎 Ativar Premium Vitalício</button>
     <button class="btn-not-now" onclick="closeUpsell()">Agora não</button>
+  </div>
+</div>
+
+<!-- MODAL IMPORT EXTRATO -->
+<div class="modal-overlay" id="modalImportExtra" role="dialog" aria-modal="true" aria-labelledby="importExtraTitle">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">
+      <span id="importExtraTitle">Importação Inteligente</span>
+      <button class="modal-close" onclick="closeImportExtraModal()" aria-label="Fechar">×</button>
+    </div>
+    <p style="font-size:12px;color:var(--text-2);margin-bottom:16px;line-height:1.6">
+      Cole o texto estruturado gerado por IA com categorias e transações. <strong>Exemplo:</strong><br>
+      <em style="font-size:11px;color:var(--text-3)">Receitas: Salário R$3000, Freela R$500<br>
+      Alimentação: Mercearia Lucas R$33.50, padaria R$15.00<br>
+      Cartão de Crédito: Netflix R$39.90, Spotify R$27.00</em>
+    </p>
+    <div class="form-group">
+      <label class="form-label">Texto para importar</label>
+      <textarea class="form-input" id="importExtraText" placeholder="Cole aqui o texto estruturado com categorias e transações..."
+        style="min-height:200px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.5;resize:vertical"
+        aria-label="Texto para importar"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mês de destino</label>
+      <select class="form-input" id="importExtraMonth">
+        <option value="JAN">Janeiro</option>
+        <option value="FEV">Fevereiro</option>
+        <option value="MAR">Março</option>
+        <option value="ABR">Abril</option>
+        <option value="MAI">Maio</option>
+        <option value="JUN">Junho</option>
+        <option value="JUL">Julho</option>
+        <option value="AGO">Agosto</option>
+        <option value="SET">Setembro</option>
+        <option value="OUT">Outubro</option>
+        <option value="NOV">Novembro</option>
+        <option value="DEZ">Dezembro</option>
+      </select>
+    </div>
+    <button class="btn-primary" onclick="processImportExtra()">Processar e Salvar</button>
+    <button class="btn-danger" onclick="closeImportExtraModal()" style="margin-top:8px">Cancelar</button>
   </div>
 </div>
 
@@ -2053,7 +2099,7 @@ function showToast(msg, type) {
 
 // KEYBOARD
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { closeModal(); closeRendaModal(); closeObjModal(); closeReport(); closeMenu(); closeQuickGasto(); closeRuleModal(); closeUpsell(); closePixModal(); }
+  if (e.key === 'Escape') { closeModal(); closeRendaModal(); closeObjModal(); closeReport(); closeMenu(); closeQuickGasto(); closeRuleModal(); closeUpsell(); closePixModal(); closeImportExtraModal(); }
 });
 document.getElementById('modal').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeModal(); });
 document.getElementById('modalRenda').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeRendaModal(); });
@@ -2062,6 +2108,7 @@ document.getElementById('modalObj').addEventListener('click', function(e) { if (
 document.getElementById('modalRegra').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeRuleModal(); });
 document.getElementById('modalUpsell').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeUpsell(); });
 document.getElementById('modalPix').addEventListener('click', function(e) { if (e.target === e.currentTarget) closePixModal(); });
+document.getElementById('modalImportExtra').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeImportExtraModal(); });
 document.getElementById('fBanco').addEventListener('input', renderBancoSuggestions);
 
 // EXPORT / IMPORT
@@ -2497,6 +2544,278 @@ function tryRestoreSession() {
   } catch(e) {}
 }
 
+
+// IMPORT EXTRA MODAL FUNCTIONS
+function openImportExtraModal() {
+  document.getElementById('importExtraText').value = '';
+  document.getElementById('importExtraMonth').value = activeMonth;
+  document.getElementById('modalImportExtra').classList.add('open');
+  setTimeout(function(){ document.getElementById('importExtraText').focus(); }, 150);
+}
+
+function closeImportExtraModal() {
+  document.getElementById('modalImportExtra').classList.remove('open');
+}
+
+// Mapeamento inteligente de tipo com base no nome da categoria
+function inferTipoFromCategory(catName) {
+  var lowerCat = (catName || '').toLowerCase();
+
+  // Necessidades (N) - itens essenciais
+  var necessidades = ['alimenta', 'mercearia', 'supermercado', 'feira', 'padaria', 'acougue', 'farmacia', 'remedio', 'medicamento', 'conta de luz', 'conta de agua', 'agua', 'luz', 'energia', 'aluguel', 'alug', 'condominio', 'iptu', 'ipva', 'seguro', 'gasolina', 'combustivel', 'transporte', 'onibus', 'uber', 'taxi', 'plano de saude', 'saude', 'hospital', 'medico', 'escola', 'faculdade', 'curso', 'educacao', 'creche', 'internet', 'telefone', 'celular', 'net', 'claro', 'tim', 'vivo', 'boleto', 'fatura', 'imposto'];
+
+  // Poupança (P) - investimentos e economias
+  var poupanca = ['poupanca', 'investimento', 'tesouro', 'cdb', 'acao', 'bolsa', 'renda fixa', 'rendafixa', 'fgts', 'previdencia', 'aposentadoria', 'reserva', 'emergencia', 'fundo'];
+
+  // Desejos (D) - lazer e não essenciais
+  var desejos = ['restaurante', 'bar', 'balada', 'cinema', 'show', 'concerto', 'teatro', 'viagem', 'passagem', 'hotel', 'shipping', 'present', 'presente', 'brinquedo', 'jogo', 'video game', 'videogame', 'netflix', 'spotify', 'amazon prime', 'disney', 'hbo', 'streaming', 'academia', 'esporte', 'cinema', 'shopping', 'roupa', 'sapato', 'moda', 'beauty', 'beleza', 'maquiagem', 'perfume', 'cabeleireiro', 'salão', 'salao', 'pet', 'veterinario', 'animal', 'cachorro', 'gato'];
+
+  if (poupanca.some(function(word) { return lowerCat.indexOf(word) !== -1; })) return 'P';
+  if (necessidades.some(function(word) { return lowerCat.indexOf(word) !== -1; })) return 'N';
+  if (desejos.some(function(word) { return lowerCat.indexOf(word) !== -1; })) return 'D';
+
+  return ''; // Não consegue inferir
+}
+
+// Parser inteligente para texto estruturado
+function parseImportText(text) {
+  var result = {
+    receitas: [],
+    categorias: []
+  };
+
+  var lines = text.split('\n');
+  var currentCategory = null;
+
+  lines.forEach(function(line) {
+    line = line.trim();
+    if (!line) return;
+
+    // Detectar se é uma categoria (contém ":" ou " - ")
+    var colonMatch = line.match(/^([^:]+):\s*(.*)$/);
+    var dashMatch = line.match(/^([^-]+)\s+-\s+(.*)$/);
+
+    if (colonMatch) {
+      var catName = colonMatch[1].trim();
+      var rest = colonMatch[2].trim();
+
+      // Verificar se é Receitas
+      if (catName.toLowerCase() === 'receitas' || catName.toLowerCase() === 'renda' || catName.toLowerCase() === 'entradas') {
+        currentCategory = null;
+        // Processar itens de receita
+        if (rest) {
+          var items = rest.split(/[;,&]|\s+e\s+/i);
+          items.forEach(function(item) {
+            item = item.trim();
+            if (item) {
+              // Tentar extrair valor
+              var valMatch = item.match(/[R$]?\s*([\d.]+[,\d]*)/i) || item.match(/([\d.]+[,\d]*)\s*$/);
+              var descMatch = item.match(/(.+?)\s+[R$]?\s*[\d.]+[,\d]*/i);
+
+              var valor = valMatch ? parseFloat(valMatch[1].replace('.', '').replace(',', '.')) : 0;
+              var desc = descMatch ? descMatch[1].trim() : item.replace(/[R$]?\s*[\d.]+[,\d]*/i, '').trim();
+
+              if (valor > 0 || desc) {
+                result.receitas.push({ desc: desc || 'Receita', val: valor });
+              }
+            }
+          });
+        }
+        return;
+      }
+
+      // Nova categoria de despesa
+      currentCategory = {
+        name: catName,
+        tipo: inferTipoFromCategory(catName),
+        transactions: []
+      };
+      result.categorias.push(currentCategory);
+
+      // Processar itens na mesma linha
+      if (rest) {
+        parseTransactions(rest, currentCategory);
+      }
+    } else if (dashMatch) {
+      var catName = dashMatch[1].trim();
+      var rest = dashMatch[2] ? dashMatch[2].trim() : '';
+
+      if (catName.toLowerCase() === 'receitas' || catName.toLowerCase() === 'renda' || catName.toLowerCase() === 'receita') {
+        currentCategory = null;
+        if (rest) {
+          var items = rest.split(/[;,&]|\s+e\s+/i);
+          items.forEach(function(item) {
+            item = item.trim();
+            if (item) {
+              var valMatch = item.match(/[R$]?\s*([\d.]+[,\d]*)/i) || item.match(/([\d.]+[,\d]*)\s*$/);
+              var desc = item.replace(/[R$]?\s*[\d.]+[,\d]*/i, '').trim();
+              var valor = valMatch ? parseFloat(valMatch[1].replace('.', '').replace(',', '.')) : 0;
+              if (valor > 0 || desc) {
+                result.receitas.push({ desc: desc || 'Receita', val: valor });
+              }
+            }
+          });
+        }
+        return;
+      }
+
+      currentCategory = {
+        name: catName,
+        tipo: inferTipoFromCategory(catName),
+        transactions: []
+      };
+      result.categorias.push(currentCategory);
+
+      if (rest) {
+        parseTransactions(rest, currentCategory);
+      }
+    } else if (line.match(/^[\d.]+[,\d]*/) || line.includes('R$')) {
+      // Linha solta com valor - adicionar à categoria atual
+      if (currentCategory) {
+        parseTransactions(line, currentCategory);
+      } else {
+        // Se não tem categoria, tratar como receita
+        var valMatch = line.match(/[R$]?\s*([\d.]+[,\d]*)/i);
+        var desc = line.replace(/[R$]?\s*[\d.]+[,\d]*/i, '').trim();
+        var valor = valMatch ? parseFloat(valMatch[1].replace('.', '').replace(',', '.')) : 0;
+        if (valor > 0 || desc) {
+          result.receitas.push({ desc: desc || 'Receita', val: valor });
+        }
+      }
+    } else if (currentCategory && line) {
+      // continuação de transações para a categoria atual
+      parseTransactions(line, currentCategory);
+    } else if (!currentCategory) {
+      // Tentar parsear como receita
+      var valMatch = line.match(/[R$]?\s*([\d.]+[,\d]*)/i);
+      var desc = line.replace(/[R$]?\s*[\d.]+[,\d]*/i, '').trim();
+      var valor = valMatch ? parseFloat(valMatch[1].replace('.', '').replace(',', '.')) : 0;
+      if (valor > 0 || desc) {
+        result.receitas.push({ desc: desc || 'Receita', val: valor });
+      }
+    }
+  });
+
+  return result;
+}
+
+// Helper para parsear transações de uma string
+function parseTransactions(text, category) {
+  // Separar por vírgulas, ponto e vírgula, ou "e"
+  var items = text.split(/[;,]|\s+e\s+/i);
+
+  items.forEach(function(item) {
+    item = item.trim();
+    if (!item) return;
+
+    // Tentar extrair valor e descrição
+    var valMatch = item.match(/[R$]?\s*([\d.]+[,\d]*)/i) || item.match(/([\d.]+[,\d]*)\s*$/);
+    var descMatch = item.match(/(.+?)\s+[R$]?\s*[\d.]+[,\d]*/i);
+
+    var desc = descMatch ? descMatch[1].trim() : item.replace(/[R$]?\s*[\d.]+[,\d]*/i, '').trim();
+    var valor = valMatch ? parseFloat(valMatch[1].replace('.', '').replace(',', '.')) : 0;
+
+    // Somente adicionar se tiver valor ou descrição.
+    if (valor > 0 || desc) {
+      category.transactions.push({ desc: desc || 'Transação', val: valor });
+    }
+  });
+}
+
+// Processar importação
+async function processImportExtra() {
+  var text = document.getElementById('importExtraText').value.trim();
+  var month = document.getElementById('importExtraMonth').value;
+
+  if (!text) {
+    showToast('Cole o texto para importar', 'error');
+    return;
+  }
+
+  try {
+    var parsed = parseImportText(text);
+
+    // Processar receitas
+    if (parsed.receitas.length > 0) {
+      if (!rendas[month]) {
+        rendas[month] = [];
+      }
+      // Evitar duplicatas com mesmas descrições
+      parsed.receitas.forEach(function(receita) {
+        var exists = rendas[month].some(function(e) {
+          return e.desc === receita.desc;
+        });
+        if (!exists && receita.val > 0) {
+          rendas[month].push({
+            id: nextId++,
+            desc: receita.desc,
+            val: receita.val
+          });
+        }
+      });
+    }
+
+    // Processar categorias
+    if (!db[month]) {
+      db[month] = [];
+    }
+
+    parsed.categorias.forEach(function(cat) {
+      // Verificar se categoria já existe
+      var existing = db[month].find(function(r) {
+        return r.cat.toLowerCase() === cat.name.toLowerCase();
+      });
+
+      if (existing) {
+        // Adicionar transações à categoria existente
+        cat.transactions.forEach(function(tx) {
+          var txExists = (existing.transactions || []).some(function(t) {
+            return t.desc === tx.desc && t.val === tx.val;
+          });
+          if (!txExists && tx.val > 0) {
+            if (!existing.transactions) existing.transactions = [];
+            existing.transactions.push({
+              id: nextTxId(existing),
+              desc: tx.desc,
+              val: tx.val
+            });
+          }
+        });
+      } else {
+        // Criar nova categoria
+        if (cat.transactions.length > 0 || cat.name) {
+          var newCat = {
+            id: nextId++,
+            cat: cat.name,
+            plan: null,
+            banco: '',
+            tipo: cat.tipo,
+            done: false,
+            transactions: cat.transactions.map(function(tx, idx) {
+              return { id: idx + 1, desc: tx.desc, val: tx.val };
+            })
+          };
+          db[month].push(newCat);
+        }
+      }
+    });
+
+    // Salvar e renderizar
+    await save();
+    closeImportExtraModal();
+    showToast('Importação concluída com sucesso!', 'success');
+
+    // Atualizar visualização
+    if (month === activeMonth) {
+      renderHeader();
+      renderTabs();
+      renderPanel(activeMonth);
+    }
+
+  } catch(e) {
+    showToast('Erro ao processar: ' + e.message, 'error');
+  }
+}
 
 // DARK MODE
 function toggleTheme() {
