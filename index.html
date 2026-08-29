@@ -9,48 +9,47 @@
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 <style>
-  /* =========================================================
-     DESIGN SYSTEM — Light-first, dark mode via [data-theme=dark]
-     Accent: Indigo #5B5CE2
-  ========================================================= */
+/* =========================================================
+   DESIGN SYSTEM — Light-first, dark mode via [data-theme=dt]
+   Accent: Calm blue, away from IA purple
+   ========================================================= */
   :root {
     /* Backgrounds */
     --bg:          #FFFFFF;
-    --bg-subtle:   #F7F8FA;
+    --bg-subtle:   #F0F8FF;
     --bg-elevated: #FFFFFF;
 
     /* Surfaces / panels */
     --surface:     #FFFFFF;
-    --surface-2:   #F4F5F7;
-    --surface-3:   #ECEEF2;
+    --surface-2:   #F0F8FF;
+    --surface-3:   #E2F0FF;
 
     /* Borders */
-    --border:      #ECEEF2;
-    --border-2:    #D8DBE3;
+    --border:      #C0D6E8;
+    --border-2:    #A5C1DD;
 
     /* Text */
     --text:        #0F1117;
     --text-2:      #6B7280;
     --text-3:      #9CA3AF;
 
-    /* Accent — deep forest green */
-    --accent:      #10b981;   /* Emerald 500 mais vibrante */
-    --accent-2:    #059669;
-    --accent-3:    #047857;
-    --accent-bg:   rgba(16, 185, 129, 0.08);
-    --accent-border:rgba(16, 185, 129, 0.2);
+    /* Accent — calm blue, not purple/IA */
+    --accent:      #3b82f6;
+    --accent-2:    #2563eb;
+    --accent-3:    #1d4ed8;
+    --accent-bg:   rgba(59, 130, 246, 0.08);
+    --accent-border:rgba(59, 130, 246, 0.2);
 
     /* Semantic financial colors */
-    --c-need:      #3b82f6;   /* Blue 500 */
+    --c-need:      #3b82f6;
     --c-need-bg:   rgba(59, 130, 246, 0.08);
-    --c-want:      #f59e0b;   /* Amber 500 */
+    --c-want:      #f59e0b;
     --c-want-bg:   rgba(245, 158, 11, 0.08);
-    --c-save:      #10b981;   /* Emerald 500 */
+    --c-save:      #10b981;
     --c-save-bg:   rgba(16, 185, 129, 0.08);
-    --c-spend:     #ef4444;   /* Red 500 */
-    --c-spend-bg:  rgba(239, 68, 68, 0.08);
-    --c-plan:      #8b5cf6;   /* Violet 500 */
-    --c-plan-bg:   rgba(139, 92, 246, 0.08);
+    --c-spend:     #ef4444;
+    --c-plan:      #06b6d4;
+    --c-plan-bg:   rgba(6, 182, 212, 0.08);
 
     /* Radius */
     --radius:      16px;
@@ -75,9 +74,9 @@
     --text:        #f9fafb;
     --text-2:      #9ca3af;
     --text-3:      #6b7280;
-    --accent:      #34d399;
-    --accent-2:    #10b981;
-    --accent-bg:   rgba(52, 211, 153, 0.1);
+    --accent:      #60a5fa;
+    --accent-2:   #3b82f6;
+    --accent-bg:   rgba(96, 165, 250, 0.1);
     --shadow-sm:   0 1px 2px rgba(0,0,0,0.5);
     --shadow:      0 10px 15px -3px rgba(0,0,0,0.6);
     --shadow-lg:   0 20px 25px -5px rgba(0,0,0,0.7);
@@ -258,6 +257,8 @@
     border-left:3px solid var(--c-save);
     background:var(--c-save-bg);
   }
+  .budget-row.alerta80 { border-color: var(--c-want); }
+  .budget-row.alerta100 { border-color: var(--c-neg); }
 
   .row-top { display:flex; align-items:center; gap:8px; margin-bottom:6px }
   .row-dot { width:6px; height:6px; border-radius:50%; background:var(--border-2); flex-shrink:0 }
@@ -814,8 +815,8 @@
   body {
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     background:
-      radial-gradient(circle at 6% -8%, rgba(91, 92, 226, .15), transparent 27rem),
-      radial-gradient(circle at 98% 18%, rgba(22, 166, 121, .08), transparent 25rem),
+      radial-gradient(circle at 6% -8%, rgba(59, 130, 246, .15), transparent 27rem),
+      radial-gradient(circle at 98% 18%, rgba(6, 182, 212, .08), transparent 25rem),
       var(--bg);
     line-height: 1.45;
   }
@@ -838,8 +839,8 @@
     padding: 17px 20px;
     border-color: rgba(255, 255, 255, .20);
     color: #fff;
-    background: linear-gradient(135deg, #5152CC 0%, #6B61D8 58%, #7870E6 100%);
-    box-shadow: 0 12px 30px rgba(75, 75, 192, .23);
+    background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 58%, #93c5fd 100%);
+    box-shadow: 0 12px 30px rgba(59, 130, 246, .23);
   }
   .renda-card::after {
     content: '';
@@ -1036,26 +1037,27 @@
         <rect x="32" y="14" width="6" height="28" rx="2" fill="white"/>
       </svg>
     </div>
-    <div class="login-title">Controle <span>Financeiro</span></div>
-    <p class="login-sub">A maneira mais simples de organizar o seu dinheiro.</p>
+<div class="login-title">Castelay <span>Financeiro</span></div>
+    <p class="login-sub">Pegando a visão nas camadas do seu dinheiro.</p>
     <button class="login-btn" onclick="startGoogleLogin()">
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
         <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.30-4.53 6.16-4.53z" fill="#EA4335"/>
       </svg>
       Entrar com Google
     </button>
     <div style="margin-top:20px;font-size:11px;color:var(--text-3);font-family:'Inter',sans-serif">Built by <a href="https://www.instagram.com/savio.rocha_" target="_blank" rel="noopener" style="color:var(--accent);font-weight:600;text-decoration:none">@savio.rocha_</a></div>
-  </div>
+</div>
 </div>
 
 <div class="container" id="appContainer" style="display:none">
   <header>
-    <div>
-      <div class="header-label">// finanças</div>
-      <div class="header-name">Controle <span>Financeiro</span></div>
+<div>
+      <div class="header-label">// Castelay</div>
+      <div class="header-name">Castelay <span>Financeiro</span></div>
+      <div class="header-sub" style="font-size:10px;color:var(--text-3);margin-top:4px;font-weight:500">Pegando a visão nas camadas do seu dinheiro</div>
     </div>
     <div class="renda-card" onclick="openRendaModal()">
       <div class="renda-edit-hint">Editar renda</div>
@@ -1069,13 +1071,16 @@
     Regra 50/30/20
     <span id="ruleToggleIcon" style="margin-left:auto;font-size:12px;color:var(--text-3);font-weight:400;text-transform:none;letter-spacing:0;transition:transform .2s">▾</span>
   </div>
-  <div id="ruleSection" style="margin-bottom:32px">
+<div id="ruleSection" style="margin-bottom:32px">
   <div class="rule-grid">
     <div class="rule-item" style="cursor:pointer" onclick="openRuleModal()"><div class="rule-pct green" id="rulePctN">50%</div><div class="rule-lbl">Necessidades</div><div class="rule-val" id="rule50">-</div></div>
     <div class="rule-item" style="cursor:pointer" onclick="openRuleModal()"><div class="rule-pct gold" id="rulePctD">30%</div><div class="rule-lbl">Desejos</div><div class="rule-val" id="rule30">-</div></div>
     <div class="rule-item" style="cursor:pointer" onclick="openRuleModal()"><div class="rule-pct blue" id="rulePctP">20%</div><div class="rule-lbl">Poupança</div><div class="rule-val" id="rule20">-</div></div>
   </div>
+  <div id="taxaSaveLine" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border); font-size:11px; color:var(--text-2); display:none">
+    Taxa de poupança real de <span id="mesAtivoDisplay"></span>: <span id="taxaSaveVal" style="color:var(--c-save)">0%</span>
   </div>
+</div>
 
   <div class="months-wrap" style="margin-bottom:6px"><div class="month-tabs" id="monthTabs"></div></div>
   <div class="sec-title" style="margin-top:8px">Orçamento Mensal</div>
@@ -1090,10 +1095,27 @@
       </div>
     </div>
     <div id="objSummary"></div>
-    <div class="obj-grid" id="objGrid"></div>
-  </div>
+<div class="obj-grid" id="objGrid"></div>
+  </div> <!-- fim do style margin-top:36px -->
 
-  <footer>Copyright 2026 &nbsp;·&nbsp; @savio.rocha_ &nbsp;·&nbsp; Todos os direitos reservados</footer>
+  <div class="evolucao-section" style="margin-top:24px">
+    <div class="sec-title" style="margin-bottom:14px">Evolução por Categoria</div>
+    <div style="overflow-x:auto; margin-bottom:12px">
+      <table style="width:100%; border-collapse:collapse; font-size:12px">
+        <thead>
+          <tr>
+            <th style="padding:8px 12px; border:1px solid var(--border); text-align:left; color:var(--text-2); font-size:10px; text-transform:uppercase; letter-spacing:1px">Categoria</th>
+            ${MONTHS.map(function(mes) { return '<th style="padding:8px 12px; border:1px solid var(--border); text-align:center; min-width:60px">' + mes + '</th>'; }).join('')}
+            <th style="padding:8px 12px; border:1px solid var(--border); text-align:center; min-width:80px">Variação</th>
+          </tr>
+        </thead>
+        <tbody id="evolucaoTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+  <footer>Castelay 2026 &nbsp;·&nbsp; @savio.rocha_ &nbsp;·&nbsp; Todos os direitos reservados</footer>
   <button class="quick-capture-btn" onclick="openQuickCapture()" aria-label="Adicionar lançamento rápido" title="Adicionar lançamento (Ctrl/Cmd + K)">
     <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
     <span>Novo lançamento</span><kbd>Ctrl K</kbd>
@@ -1307,6 +1329,10 @@
       <div class="form-check-group">
         <input class="form-check" type="checkbox" id="fDone">
         <label for="fDone" style="font-size:13px;cursor:pointer">Marcar como concluído (ok)</label>
+      </div>
+      <div class="form-check-group">
+        <input class="form-check" type="checkbox" id="fFixa">
+        <label for="fFixa" style="font-size:13px;cursor:pointer">Categoria fixa (recorrente)</label>
       </div>
     </div>
     <button class="btn-primary" onclick="saveRow()">Salvar</button>
@@ -1768,6 +1794,23 @@ function renderHeader() {
   var countBadge = entries.length > 0 ? '<span class="renda-count">' + entries.length + ' entrada' + (entries.length>1?'s':'') + '</span>' : '';
   document.getElementById('rendaDisplay').innerHTML = display + countBadge;
   document.getElementById('periodoDisplay').textContent = (p.inicio && p.fim) ? p.inicio + ' → ' + p.fim : activeMonth + '/2025';
+  
+  // Taxa de poupança real
+  var rows = db[activeMonth] || [];
+  var gastoTotal = rows.reduce(function(a,r){ return a+getCatGasto(r); }, 0);
+  var taxaEl = document.getElementById('taxaSaveLine');
+  var taxaValEl = document.getElementById('taxaSaveVal');
+  var mesEl = document.getElementById('mesAtivoDisplay');
+  
+  if (total > 0) {
+    var taxa = ((total - gastoTotal) / total) * 100;
+    taxaEl.style.display = 'block';
+    mesEl.textContent = activeMonth;
+    taxaValEl.textContent = Math.round(taxa) + '%';
+    taxaValEl.style.color = taxa >= 0 ? 'var(--c-save)' : 'var(--c-neg)';
+  } else {
+    taxaEl.style.display = 'none';
+  }
 }
 function renderRule() {
   var r = getMesRenda(activeMonth);
@@ -1833,8 +1876,15 @@ function renderPanel(m) {
     + '<div class="rows-wrap">';
 
   if (!rows.length) {
-    html += '<div class="empty-state"><div>' + icon('folder', 'empty-icon') + '</div><p>Nenhum lançamento em ' + m + '</p>'
-      + '<button class="empty-start" onclick="openQuickCapture()">Adicionar primeiro lançamento</button></div>';
+    var prevIndex = MONTHS.indexOf(m) - 1;
+    var copyBtn = '';
+    if (m === activeMonth && prevIndex >= 0) {
+      var prevRows = db[MONTHS[prevIndex]] || [];
+      if (prevRows.length > 0) {
+        copyBtn = '<button class="empty-start" style="width:100%;margin-top:8px;padding:11px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius-sm);font-family:Inter,sans-serif;font-weight:600;font-size:13px;cursor:pointer;color:var(--accent);transition:all .15s" onclick="copiarPlanoMesAnterior()">📋 Copiar plano de ' + MONTHS[prevIndex] + '</button>';
+      }
+    }
+    html += '<div class="empty-state"><div>' + icon('folder', 'empty-icon') + '</div><p>Nenhum lançamento em ' + m + '</p>' + copyBtn + '<button class="empty-start" onclick="openQuickCapture()">Adicionar primeiro lançamento</button></div>';
   } else {
     sortedRows(rows).forEach(function(r) {
       var gasto  = getCatGasto(r);
@@ -1842,6 +1892,7 @@ function renderPanel(m) {
       var fc     = pct === 0 ? '' : pct < 100 ? 'partial' : 'ok';
       var diff   = (r.plan != null) ? (r.plan - gasto) : null;
       var rowClass = 'budget-row' + (r.done ? ' done' : '');
+      var alertClass = '';
       var dotHtml = '<span class="row-dot"></span>';
       var bancoHtml = r.banco ? '<span class="banco-tag">' + icon('bank') + r.banco + '</span>' : '';
       var tipoLabel = r.tipo === 'N' ? 'Necessidade' : r.tipo === 'D' ? 'Desejo' : r.tipo === 'P' ? 'Poupança' : r.tipo === 'T' ? 'Transferência' : r.tipo === 'E' ? 'Empréstimo' : '';
@@ -1877,11 +1928,11 @@ function renderPanel(m) {
         });
         txHtml += '</div></div>';
       }
-      html += '<div class="' + rowClass + '">'
+      html += '<div class="' + rowClass + alertClass + '">'
         + '<div class="row-top">' + dotHtml + '<span class="row-cat">' + r.cat + '</span>' + txBadge + editBtn + '</div>'
         + tagsHtml
         + '<div class="row-nums"><span class="num-plan" title="Orçamento">' + fmt(r.plan) + '</span><span class="num-arrow">→</span>'
-        + '<span class="num-gasto" title="Total gasto">' + (txCount ? fmtR(getCatGasto(r) === 0 && txCount > 0 ? (r.transactions||[]).reduce(function(a,t){ return a+(t.val||0);},0) : gasto) : '—') + '</span>'
+        + '<span class="num-gasto" title="Total gasto">' + (txCount ? fmtR(getCatGasto(r) === 0 && txCount > 0 ? (r.transactions||[]).reduce(function(a,t){ return a+(t.val||0);},0) : gasto) : '—') + '</span>' + alertBadge
         + (isNeutralTipo(r.tipo) ? '<span style="font-size:9px;color:var(--text-3);font-family:Inter,sans-serif;padding:1px 5px;border:1px solid var(--border);border-radius:4px;white-space:nowrap">não conta</span>' : diffHtml)
         + '<span style="margin-left:auto;display:flex;gap:4px">' + addBtn + '</span></div>'
         + txHtml
@@ -1966,6 +2017,85 @@ function renderObjetivos() {
   }).join('');
 
   grid.innerHTML = cardsHtml + '<button class="obj-add-btn" onclick="openObjModal()">+ Novo objetivo</button>';
+
+  // Render Evolução por Categoria
+  renderEvolucaoCategoria();
+}
+
+function renderEvolucaoCategoria() {
+  // Collect categories and their spent values per month
+  var catMonthData = {}; // { cat: { [mes]: totalGasto } }
+
+  MONTHS.forEach(function(m) {
+    var rows = db[m] || [];
+    rows.forEach(function(r) {
+      if (!r.cat) return;
+      if (!catMonthData[r.cat]) catMonthData[r.cat] = {};
+      var gasto = (r.transactions||[]).reduce(function(a,t){ return a+(t.val||0); }, 0);
+      catMonthData[r.cat][m] = gasto;
+    });
+  });
+
+  // Find categories appearing in at least 2 months
+  var catMonthCount = {};
+  MONTHS.forEach(function(m) {
+    var rows = db[m] || [];
+    rows.forEach(function(r) {
+      if (r.cat) catMonthCount[r.cat] = (catMonthCount[r.cat] || 0) + 1;
+    });
+  });
+
+  var categorias = Object.keys(catMonthCount).filter(function(cat) { return catMonthCount[cat] >= 2; });
+
+  if (!categorias.length) {
+    document.getElementById('evolucaoTbody').innerHTML = '<tr><td style="padding:12px; color:var(--text-3); text-align:center" colspan="' + (MONTHS.length + 1) + '">Nenhuma categoria em pelo menos 2 meses</td></tr>';
+    return;
+  }
+
+  // Sort categories alphabetically for consistent rendering
+  categorias.sort();
+
+  // Render table rows
+  var tbodyHtml = categorias.map(function(cat) {
+    var values = [];
+    MONTHS.forEach(function(m) {
+      var v = catMonthData[cat] && catMonthData[cat][m] !== undefined ? catMonthData[cat][m] : 0;
+      values.push(v);
+    });
+
+    // Calculate variation between first and last month
+    var firstVal = values[0];
+    var lastVal = values[values.length - 1];
+    var variacao = 0;
+    if (firstVal > 0) {
+      variacao = Math.round((lastVal - firstVal) / firstVal * 100);
+    } else if (lastVal > 0) {
+      variacao = 100;
+    }
+
+    // Build cell HTML with color coding
+    var cells = values.map(function(val, i) {
+      var mes = MONTHS[i];
+      var prevVal = i > 0 ? values[i-1] : null;
+      var style = '';
+      if (prevVal !== null && val !== 0) {
+        if (val > prevVal) {
+          style = 'background:rgba(239,68,68,0.15);';
+        } else if (val < prevVal) {
+          style = 'background:rgba(16,185,129,0.15);';
+        }
+      }
+
+      return '<td style="padding:8px 12px; border:1px solid var(--border); text-align:right; ' + style + 'color:var(--text);">' + fmtR(val) + '</td>';
+    });
+
+    // Variation percentage cell
+    var variacaoCell = '<td style="padding:8px 12px; border:1px solid var(--border); text-align:center; color:var(--text-2); font-weight:700">' + variacao + '%</td>';
+
+    return '<tr>' + cells.join('') + variacaoCell + '</tr>';
+  }).join('');
+
+  document.getElementById('evolucaoTbody').innerHTML = tbodyHtml;
 }
 
 // NAV
@@ -2097,6 +2227,7 @@ function openEdit(m, id) {
   document.getElementById('fBanco').value = row.banco || '';
   document.getElementById('fTipo').value = row.tipo || '';
   document.getElementById('fDone').checked = row.done;
+  document.getElementById('fFixa').checked = row.fixa || false;
   document.getElementById('deleteBtn').style.display = 'block';
   document.getElementById('modal').classList.add('open');
   renderBancoSuggestions();
@@ -2155,18 +2286,19 @@ async function saveRow() {
   var banco = document.getElementById('fBanco').value.trim();
   var tipo  = document.getElementById('fTipo').value;
   var done  = document.getElementById('fDone').checked;
+  var fixa  = document.getElementById('fFixa').checked;
   var m     = editingMonth;
   var eid   = editingId;
   if (!db[m]) db[m] = [];
   if (eid === null) {
     nextId++;
-    db[m].push({id:nextId, cat:cat, plan:plan, banco:banco, tipo:tipo, done:done, transactions:[]});
+    db[m].push({id:nextId, cat:cat, plan:plan, banco:banco, tipo:tipo, done:done, fixa:fixa, transactions:[]});
     showToast('Categoria adicionada', 'success');
   } else {
     for (var i = 0; i < db[m].length; i++) {
       if (db[m][i].id === eid) {
         var existingTx = db[m][i].transactions || [];
-        db[m][i] = {id:eid, cat:cat, plan:plan, banco:banco, tipo:tipo, done:done, transactions:existingTx};
+        db[m][i] = {id:eid, cat:cat, plan:plan, banco:banco, tipo:tipo, done:done, fixa:fixa, transactions:existingTx};
         break;
       }
     }
@@ -2188,6 +2320,41 @@ function deleteRow() {
   db[editingMonth] = (db[editingMonth]||[]).filter(function(r){ return r.id !== editingId; });
   closeModal(); save(); renderTabs(); renderPanel(editingMonth);
   showToast('Categoria excluída', 'success');
+}
+
+function copiarPlanoMesAnterior() {
+  var currentIndex = MONTHS.indexOf(activeMonth);
+  var prevIndex = currentIndex - 1;
+  if (prevIndex < 0) {
+    showToast('Não há mês anterior', 'error');
+    return;
+  }
+  var prevMonth = MONTHS[prevIndex];
+  var prevRows = db[prevMonth] || [];
+  if (!prevRows.length) {
+    showToast('Mês anterior sem categorias para copiar', 'error');
+    return;
+  }
+  if (!db[activeMonth]) db[activeMonth] = [];
+  prevRows.forEach(function(prevRow) {
+    var existing = db[activeMonth].find(function(r) { return r.cat === prevRow.cat; });
+    if (!existing) {
+      var newRow = {
+        id: nextId++,
+        cat: prevRow.cat,
+        plan: prevRow.plan,
+        banco: prevRow.banco,
+        tipo: prevRow.tipo,
+        done: prevRow.done,
+        fixa: prevRow.fixa,
+        transactions: []
+      };
+      db[activeMonth].push(newRow);
+    }
+  });
+  renderTabs();
+  renderPanel(activeMonth);
+  showToast('Plano do mês anterior copiado', 'success');
 }
 
 // ── TRANSACTION MODAL ─────────────────────────────────────────────────────────
