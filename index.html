@@ -949,6 +949,78 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
   }
+
+  /* ── ICONOGRAPHY & QUICK ACTIONS ── */
+  .app-icon {
+    width: 1em; height: 1em; display: inline-block; flex: 0 0 auto;
+    fill: none; stroke: currentColor; stroke-width: 1.8;
+    stroke-linecap: round; stroke-linejoin: round; vertical-align: -.125em;
+  }
+  .mi-icon { width: 17px; height: 17px; color: var(--text-3); }
+  .menu-item:hover .mi-icon { color: var(--accent); }
+  .menu-item .premium-badge { margin-left: auto; }
+  .premium-badge { background: var(--accent-bg); border: 1px solid var(--accent-border); color: var(--accent); letter-spacing: .6px; }
+  .upsell-icon { color: var(--accent); width: 42px; height: 42px; margin: 0 auto 14px; display: grid; place-items: center; background: var(--accent-bg); border-radius: 14px; }
+  .upsell-icon .app-icon { width: 22px; height: 22px; }
+  .btn-premium .app-icon { width: 17px; height: 17px; }
+
+  .quick-capture-btn {
+    position: fixed; z-index: 60; right: 24px; bottom: 22px;
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 13px 15px; border: 0; border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff;
+    box-shadow: 0 12px 26px rgba(78,79,195,.28);
+    font-size: 12px; font-weight: 700; cursor: pointer;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .quick-capture-btn .app-icon { width: 17px; height: 17px; }
+  .quick-capture-btn kbd { display: inline-block; padding: 2px 5px; border: 1px solid rgba(255,255,255,.30); border-radius: 5px; color: rgba(255,255,255,.8); font: 500 9px 'DM Mono', monospace; }
+  .quick-capture-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 32px rgba(78,79,195,.38); }
+  .quick-capture-btn:focus-visible { outline-color: #fff; outline-offset: 3px; }
+  .toast { bottom: 82px; }
+
+  .quick-capture-intro { margin: -8px 0 20px; color: var(--text-2); font-size: 13px; line-height: 1.6; }
+  .quick-capture-value { font-size: 25px; font-weight: 800; letter-spacing: -.04em; text-align: center; padding: 13px; }
+  .field-hint { display: block; margin-top: 6px; color: var(--text-3); font-size: 11px; }
+  .quick-capture-actions { display: grid; grid-template-columns: .8fr 1.4fr; gap: 9px; margin-top: 18px; }
+  .quick-capture-actions .btn-primary { display: inline-flex; justify-content: center; align-items: center; gap: 7px; margin-top: 0; }
+  .btn-secondary { border: 1px solid var(--border-2); border-radius: var(--radius-sm); background: transparent; color: var(--text-2); font-size: 13px; font-weight: 700; cursor: pointer; }
+  .btn-secondary:hover { color: var(--text); background: var(--surface-2); }
+
+  .budget-insight {
+    display: flex; align-items: center; gap: 13px; margin: -4px 0 17px;
+    padding: 13px 15px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--surface); box-shadow: var(--shadow-sm);
+  }
+  .budget-insight.good { background: linear-gradient(100deg, var(--c-save-bg), var(--surface)); border-color: rgba(22,166,121,.22); }
+  .budget-insight.attention { background: linear-gradient(100deg, var(--c-want-bg), var(--surface)); border-color: rgba(228,145,58,.24); }
+  .budget-insight.alert { background: linear-gradient(100deg, var(--c-spend-bg), var(--surface)); border-color: rgba(229,87,99,.24); }
+  .budget-insight.neutral { background: linear-gradient(100deg, var(--accent-bg), var(--surface)); border-color: var(--accent-border); }
+  .insight-icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; flex: 0 0 auto; }
+  .insight-icon .app-icon { width: 17px; height: 17px; }
+  .good .insight-icon { background: var(--c-save-bg); color: var(--c-save); }
+  .attention .insight-icon { background: var(--c-want-bg); color: var(--c-want); }
+  .alert .insight-icon { background: var(--c-spend-bg); color: var(--c-neg); }
+  .neutral .insight-icon { background: var(--accent-bg); color: var(--accent); }
+  .insight-copy { min-width: 0; flex: 1; }
+  .insight-title { color: var(--text); font-size: 12px; font-weight: 800; margin-bottom: 1px; }
+  .insight-text { color: var(--text-2); font-size: 11px; }
+  .insight-action { flex: 0 0 auto; border: 0; padding: 7px 10px; border-radius: 8px; background: var(--surface); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent-border); font-size: 10px; font-weight: 800; cursor: pointer; }
+  .insight-action:hover { background: var(--accent-bg); }
+
+  .empty-state .empty-icon { width: 34px; height: 34px; margin-bottom: 10px; color: var(--text-3); }
+  .banco-tag .app-icon { width: 12px; height: 12px; margin-right: 3px; }
+  .btn-icon .app-icon { width: 15px; height: 15px; }
+  .tx-toggle-icon { width: 12px; height: 12px; transition: transform .15s; }
+
+  @media (max-width: 600px) {
+    .quick-capture-btn { right: 16px; bottom: 16px; padding: 13px 14px; border-radius: 14px; }
+    .quick-capture-btn kbd { display: none; }
+    .toast { right: 16px; left: 16px; bottom: 82px; text-align: center; }
+    .budget-insight { align-items: flex-start; padding: 12px; gap: 10px; }
+    .insight-action { display: none; }
+    .quick-capture-actions { grid-template-columns: 1fr 1.35fr; }
+  }
 </style>
 </head>
 <body><div class="blob3"></div>
@@ -986,7 +1058,7 @@
       <div class="header-name">Controle <span>Financeiro</span></div>
     </div>
     <div class="renda-card" onclick="openRendaModal()">
-      <div class="renda-edit-hint">pencil editar</div>
+      <div class="renda-edit-hint">Editar renda</div>
       <div class="renda-label">Renda mensal</div>
       <div class="renda-value" id="rendaDisplay">R$1.150</div>
       <div class="renda-period" id="periodoDisplay">16/03 -> 16/04</div>
@@ -1021,7 +1093,11 @@
     <div class="obj-grid" id="objGrid"></div>
   </div>
 
-  <footer>© 2026 &nbsp;·&nbsp; @savio.rocha_ &nbsp;·&nbsp; Todos os direitos reservados</footer>
+  <footer>Copyright 2026 &nbsp;·&nbsp; @savio.rocha_ &nbsp;·&nbsp; Todos os direitos reservados</footer>
+  <button class="quick-capture-btn" onclick="openQuickCapture()" aria-label="Adicionar lançamento rápido" title="Adicionar lançamento (Ctrl/Cmd + K)">
+    <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+    <span>Novo lançamento</span><kbd>Ctrl K</kbd>
+  </button>
 </div>
 
 <!-- HAMBURGER BUTTON -->
@@ -1040,26 +1116,26 @@
     <span id="authName" style="font-size:12px;color:var(--text-2);font-family:'Inter',sans-serif;font-weight:500"></span>
     <span id="authSyncStatus" style="font-size:10px;color:var(--text-3);font-family:'Inter',sans-serif"></span>
     <div class="theme-toggle" onclick="toggleTheme()" title="Alternar modo escuro">
-      <span class="toggle-icon">&#9728;&#65039;</span>
+      <svg class="app-icon toggle-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
       <div class="toggle-track"><div class="toggle-thumb"></div></div>
-      <span class="toggle-icon">&#127769;</span>
+      <svg class="app-icon toggle-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z"/></svg>
     </div>
     <button id="authActionBtn" onclick="handleAuthAction()" style="padding:5px 12px;background:transparent;border:1px solid var(--border-2);border-radius:20px;color:var(--text-2);font-family:'Inter',sans-serif;font-size:10px;font-weight:600;cursor:pointer;transition:all .15s"></button>
   </div>
 </div>
 <!-- DROPDOWN MENU -->
 <div class="hamburger-menu" id="hamburgerMenu">
-  <button class="menu-item" onclick="openReport();closeMenu()" aria-label="Relatório Anual"><span class="mi-icon">📊</span> Relatório Anual <span class="premium-badge">💎</span></button>
+  <button class="menu-item" onclick="openReport();closeMenu()" aria-label="Relatório Anual"><svg class="app-icon mi-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg> Relatório Anual <span class="premium-badge">PRO</span></button>
   <div class="menu-divider"></div>
-  <button class="menu-item" onclick="window.open('https://wa.me/5575988926392?text=Oi%20S%C3%A1vio%2C%20tenho%20um%20feedback%20sobre%20o%20app%20de%20finan%C3%A7as!','_blank');closeMenu()" aria-label="Enviar feedback pelo WhatsApp"><span class="mi-icon">💬</span> Enviar feedback</button>
+  <button class="menu-item" onclick="window.open('https://wa.me/5575988926392?text=Oi%20S%C3%A1vio%2C%20tenho%20um%20feedback%20sobre%20o%20app%20de%20finan%C3%A7as!','_blank');closeMenu()" aria-label="Enviar feedback pelo WhatsApp"><svg class="app-icon mi-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15a4 4 0 0 1-4 4H8l-4 3v-7a4 4 0 0 1-2-3.5V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg> Enviar feedback</button>
   <div class="menu-divider"></div>
-  <button class="menu-item" onclick="exportData();closeMenu()" aria-label="Exportar dados"><span class="mi-icon">⬇</span> Exportar dados <span class="premium-badge">💎</span></button>
-  <label class="menu-item" aria-label="Importar dados"><span class="mi-icon">⬆</span> Importar dados<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
-  <button class="menu-item" onclick="openImportExtraModal();closeMenu()" aria-label="Importação Inteligente"><span class="mi-icon">📋</span> Importação Inteligente</button>
-  <button class="menu-item" onclick="openImportAIModal();closeMenu()" aria-label="Importação com IA"><span class="mi-icon">🤖</span> Importar PDFs com IA</button>
+  <button class="menu-item" onclick="exportData();closeMenu()" aria-label="Exportar dados"><svg class="app-icon mi-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg> Exportar dados <span class="premium-badge">PRO</span></button>
+  <label class="menu-item" aria-label="Importar dados"><svg class="app-icon mi-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V9M7 14l5-5 5 5M5 3h14"/></svg> Importar dados<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+  <button class="menu-item" onclick="openImportExtraModal();closeMenu()" aria-label="Importação Inteligente"><svg class="app-icon mi-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h10a2 2 0 0 1 2 2v14H6a2 2 0 0 0-2-2V6a2 2 0 0 1 2-2h2Zm0 0v14"/></svg> Importação Inteligente</button>
+  <button class="menu-item" onclick="openImportAIModal();closeMenu()" aria-label="Importação com IA"><svg class="app-icon mi-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12h.01M16 12h.01M9 16c1.5 1 4.5 1 6 0M12 2v2M12 20v2M2 12h2M20 12h2"/></svg> Importar PDFs com IA</button>
   <div class="menu-divider"></div>
-  <button class="menu-item" onclick="openPixModal();closeMenu()" aria-label="Apoiar o projeto via Pix"><span class="mi-icon">☕</span> Apoiar o projeto</button>
-  <button class="menu-item" onclick="goToPremium();closeMenu()" style="color:var(--accent);font-weight:600" aria-label="Ativar Premium Vitalício"><span class="mi-icon">💎</span> Ativar Premium</button>
+  <button class="menu-item" onclick="openPixModal();closeMenu()" aria-label="Apoiar o projeto via Pix"><svg class="app-icon mi-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.4-7-10.2A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.8C19 16.6 12 21 12 21Z"/></svg> Apoiar o projeto</button>
+  <button class="menu-item" onclick="goToPremium();closeMenu()" style="color:var(--accent);font-weight:600" aria-label="Ativar Premium Vitalício"><svg class="app-icon mi-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg> Ativar Premium</button>
 </div>
 
 <div class="report-overlay" id="reportOverlay">
@@ -1089,6 +1165,34 @@
 </div>
 
 <!-- MODAL ADD TRANSACTION -->
+<div class="modal-overlay" id="modalQuickCapture" role="dialog" aria-modal="true" aria-labelledby="quickCaptureTitle">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-title">
+      <span id="quickCaptureTitle">Novo lançamento</span>
+      <button class="modal-close" onclick="closeQuickCapture()" aria-label="Fechar">×</button>
+    </div>
+    <p class="quick-capture-intro">Registre uma saída em segundos. Escolha uma categoria existente ou crie uma nova automaticamente.</p>
+    <div class="form-group">
+      <label class="form-label" for="quickCaptureCategory">Categoria</label>
+      <input class="form-input" id="quickCaptureCategory" list="quickCaptureCategories" type="text" placeholder="Ex: Alimentação" autocomplete="off" aria-describedby="quickCaptureHint">
+      <datalist id="quickCaptureCategories"></datalist>
+      <span class="field-hint" id="quickCaptureHint">Você pode digitar uma categoria nova.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="quickCaptureDesc">Descrição <span>opcional</span></label>
+      <input class="form-input" id="quickCaptureDesc" type="text" placeholder="Ex: mercado da semana" autocomplete="off">
+    </div>
+    <div class="form-group" style="margin-bottom:8px">
+      <label class="form-label" for="quickCaptureValue">Valor</label>
+      <input class="form-input quick-capture-value" id="quickCaptureValue" type="number" inputmode="decimal" placeholder="0,00" step="0.01" min="0" onkeydown="if(event.key==='Enter') saveQuickCapture()">
+    </div>
+    <div class="quick-capture-actions">
+      <button class="btn-secondary" onclick="closeQuickCapture()">Cancelar</button>
+      <button class="btn-primary" onclick="saveQuickCapture()"><svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 9.2 17 19 7"/></svg> Salvar lançamento</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalQuickGasto" role="dialog" aria-modal="true" aria-labelledby="quickGastoTitle">
   <div class="modal" style="max-width:400px">
     <div class="modal-title">
@@ -1261,7 +1365,7 @@
 <!-- MODAL UPSELL PREMIUM -->
 <div class="modal-overlay upsell-modal" id="modalUpsell" role="dialog" aria-modal="true" aria-labelledby="upsellTitle">
   <div class="modal">
-    <div class="upsell-icon">💎</div>
+    <div class="upsell-icon"><svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg></div>
     <div class="upsell-title" id="upsellTitle">Recurso Premium</div>
     <p class="upsell-sub" id="upsellSub">Este recurso é exclusivo para usuários Premium.</p>
     <div class="upsell-features">
@@ -1270,7 +1374,7 @@
       <div class="upsell-feature"><span>✓</span> Objetivos ilimitados</div>
       <div class="upsell-feature"><span>✓</span> Acesso vitalício — pague uma vez</div>
     </div>
-    <button class="btn-premium" onclick="goToPremium()">💎 Ativar Premium Vitalício</button>
+    <button class="btn-premium" onclick="goToPremium()"><svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg> Ativar Premium Vitalício</button>
     <button class="btn-not-now" onclick="closeUpsell()">Agora não</button>
   </div>
 </div>
@@ -1359,10 +1463,10 @@
 <div class="modal-overlay" id="modalPix" role="dialog" aria-modal="true" aria-labelledby="pixTitle">
   <div class="modal" style="max-width:400px;text-align:center">
     <div class="modal-title" style="justify-content:center;position:relative">
-      <span id="pixTitle">☕ Apoie o Projeto</span>
+      <span id="pixTitle">Apoie o Projeto</span>
       <button class="modal-close" onclick="closePixModal()" style="position:absolute;right:0" aria-label="Fechar">×</button>
     </div>
-    <p style="font-size:13px;color:var(--text-2);line-height:1.7;margin-bottom:20px">Esse app é mantido de forma independente. Se ele te ajuda a economizar, considere me pagar um café através do Pix! ☕</p>
+    <p style="font-size:13px;color:var(--text-2);line-height:1.7;margin-bottom:20px">Esse app é mantido de forma independente. Se ele te ajuda a economizar, considere contribuir através do Pix.</p>
     <!-- QR Code placeholder -->
     <div style="width:160px;height:160px;margin:0 auto 16px;background:var(--bg-subtle);border:2px dashed var(--border-2);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:11px;font-weight:500">
       QR Code Pix<br><span style="font-size:9px;opacity:.6">(adicione sua imagem)</span>
@@ -1374,7 +1478,7 @@
         <button onclick="copyPixKey()" style="flex-shrink:0;padding:5px 12px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--radius-xs);color:var(--accent);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer" aria-label="Copiar chave Pix">Copiar</button>
       </div>
     </div>
-    <p style="font-size:11px;color:var(--text-3)">Qualquer valor é muito bem-vindo 💚</p>
+    <p style="font-size:11px;color:var(--text-3)">Qualquer valor é muito bem-vindo.</p>
   </div>
 </div>
 
@@ -1434,6 +1538,56 @@ function fmt(v) {
 }
 function fmtR(v) {
   return 'R$' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:0,maximumFractionDigits:2});
+}
+var ICONS = {
+  spark: '<path d="m12 3 1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6z"/><path d="m19 16 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7z"/>',
+  wallet: '<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H19v14H6.5A2.5 2.5 0 0 1 4 16.5Z"/><path d="M4 8h15M15 13h2"/>',
+  alert: '<path d="M12 4 3.8 19h16.4z"/><path d="M12 9v4M12 16h.01"/>',
+  folder: '<path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  bank: '<path d="m3 10 9-6 9 6M5 10v7M9 10v7M15 10v7M19 10v7M3 20h18"/>',
+  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v2M22 12h-2M12 22v-2M2 12h2"/>',
+  edit: '<path d="m4 16-.7 3.7L7 19l10.6-10.6-3.7-3.7zM15.2 6.2l3.7 3.7"/>',
+  chevron: '<path d="m9 5 7 7-7 7"/>'
+};
+function icon(name, className) {
+  return '<svg class="app-icon ' + (className || '') + '" viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[name] || '') + '</svg>';
+}
+function buildBudgetInsight(m, renda, gastoTotal, planTotal, saldo) {
+  var tone = 'neutral', iconName = 'spark', title = '', text = '', action = '', actionLabel = '';
+  if (!renda) {
+    title = 'Defina sua renda mensal';
+    text = 'Assim o sistema mostra seu saldo e recomenda limites para cada categoria.';
+    action = 'openRendaModal()'; actionLabel = 'Definir renda';
+  } else if (!gastoTotal) {
+    title = 'Pronto para começar';
+    text = 'Registre seu primeiro lançamento para acompanhar o consumo deste mês.';
+    action = 'openQuickCapture()'; actionLabel = 'Lançar gasto';
+  } else if (saldo < 0) {
+    tone = 'alert'; iconName = 'alert';
+    title = 'Sua renda foi ultrapassada';
+    text = 'O saldo deste mês está em ' + fmtR(saldo) + '. Revise as categorias com maior impacto.';
+    action = "setSort('diff_worst')"; actionLabel = 'Revisar';
+  } else if (planTotal && gastoTotal > planTotal) {
+    tone = 'attention'; iconName = 'alert';
+    title = 'Acima do orçamento planejado';
+    text = 'Você excedeu o planejamento em ' + fmtR(gastoTotal - planTotal) + '.';
+    action = "setSort('diff_worst')"; actionLabel = 'Revisar';
+  } else if (!planTotal) {
+    tone = 'attention'; iconName = 'wallet';
+    title = 'Crie limites para suas categorias';
+    text = 'Você tem ' + fmtR(saldo) + ' disponíveis, mas ainda não definiu um orçamento mensal.';
+    action = "openAdd('" + m + "')"; actionLabel = 'Criar categoria';
+  } else {
+    tone = 'good'; iconName = 'wallet';
+    title = 'Você está dentro do planejado';
+    text = 'Restam ' + fmtR(Math.max(planTotal - gastoTotal, 0)) + ' do orçamento e ' + fmtR(saldo) + ' da renda.';
+    action = 'openQuickCapture()'; actionLabel = 'Novo lançamento';
+  }
+  return '<div class="budget-insight ' + tone + '">'
+    + '<div class="insight-icon">' + icon(iconName) + '</div>'
+    + '<div class="insight-copy"><div class="insight-title">' + title + '</div><div class="insight-text">' + text + '</div></div>'
+    + '<button class="insight-action" onclick="' + action + '">' + actionLabel + '</button>'
+    + '</div>';
 }
 function slugStatus(s) {
   return (s||'').toLowerCase()
@@ -1663,6 +1817,7 @@ function renderPanel(m) {
     + '<div class="sum-card"><div class="sum-lbl">Gasto</div><div class="sum-val ' + gastoClass + '">' + fmt(gastoTotal) + '</div></div>'
     + '<div class="sum-card"><div class="sum-lbl">Diferenca</div><div class="sum-val ' + diffClass + '">' + diffStr + '</div></div>'
     + '</div>'
+    + buildBudgetInsight(m, renda, gastoTotal, planTotal, saldo)
     + '<div class="tipo-breakdown">'
     + '<div class="tipo-chip N"><span class="tipo-chip-lbl">Necessidade</span><span class="tipo-chip-val">' + fmt(planN) + '</span></div>'
     + '<div class="tipo-chip D"><span class="tipo-chip-lbl">Desejo</span><span class="tipo-chip-val">' + fmt(planD) + '</span></div>'
@@ -1678,8 +1833,8 @@ function renderPanel(m) {
     + '<div class="rows-wrap">';
 
   if (!rows.length) {
-    html += '<div class="empty-state"><div class="icon">📂</div><p>Nenhum lancamento em ' + m + '</p>'
-      + '<button class="empty-start" onclick="openAdd(\'' + m + '\')">+ Adicionar primeiro gasto</button></div>';
+    html += '<div class="empty-state"><div>' + icon('folder', 'empty-icon') + '</div><p>Nenhum lançamento em ' + m + '</p>'
+      + '<button class="empty-start" onclick="openQuickCapture()">Adicionar primeiro lançamento</button></div>';
   } else {
     sortedRows(rows).forEach(function(r) {
       var gasto  = getCatGasto(r);
@@ -1688,14 +1843,14 @@ function renderPanel(m) {
       var diff   = (r.plan != null) ? (r.plan - gasto) : null;
       var rowClass = 'budget-row' + (r.done ? ' done' : '');
       var dotHtml = '<span class="row-dot"></span>';
-      var bancoHtml = r.banco ? '<span class="banco-tag">🏦 ' + r.banco + '</span>' : '';
+      var bancoHtml = r.banco ? '<span class="banco-tag">' + icon('bank') + r.banco + '</span>' : '';
       var tipoLabel = r.tipo === 'N' ? 'Necessidade' : r.tipo === 'D' ? 'Desejo' : r.tipo === 'P' ? 'Poupança' : r.tipo === 'T' ? 'Transferência' : r.tipo === 'E' ? 'Empréstimo' : '';
       var tipoHtml = tipoLabel ? '<span class="tipo-tag ' + r.tipo + '">' + tipoLabel + '</span>' : '';
       var txCount  = (r.transactions||[]).length;
       var txBadge  = txCount ? '<span style="font-size:9px;font-weight:600;padding:1px 6px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;color:var(--text-3);margin-left:2px">' + txCount + ' lançamento' + (txCount>1?'s':'') + '</span>' : '';
       var badgeHtml = showStatus ? '<span class="badge ' + (r.done ? 'ok' : 'pend') + '">' + (r.done ? 'ok' : 'pendente') + '</span>' : '';
       var tagsHtml = (tipoHtml || bancoHtml || badgeHtml) ? '<div class="row-tags">' + tipoHtml + bancoHtml + badgeHtml + '</div>' : '';
-      var editBtn  = '<button class="btn-icon" style="margin-left:auto;flex-shrink:0" title="Editar categoria" aria-label="Editar categoria" onclick="openEdit(\'' + m + '\',' + r.id + ')">✏️</button>';
+      var editBtn  = '<button class="btn-icon" style="margin-left:auto;flex-shrink:0" title="Editar categoria" aria-label="Editar categoria" onclick="openEdit(\'' + m + '\',' + r.id + ')">' + icon('edit') + '</button>';
       var addBtn   = '<button class="btn-icon gasto-add" style="flex-shrink:0" title="Adicionar lançamento" aria-label="Adicionar lançamento" onclick="quickGasto(\'' + m + '\',' + r.id + ')">+</button>';
       var diffHtml = '';
       if (diff !== null) {
@@ -1710,7 +1865,7 @@ function renderPanel(m) {
         var txToggleLabel = txCount + ' lançamento' + (txCount>1?'s':'');
         txHtml = '<div>'
           + '<button onclick="toggleTxList(\'' + txId + '\')" style="margin-top:6px;background:transparent;border:none;font-size:10px;font-weight:600;color:var(--text-3);cursor:pointer;padding:2px 0;display:flex;align-items:center;gap:4px;letter-spacing:.3px" aria-expanded="false" id="' + txId + '-btn">'
-          + '<span id="' + txId + '-icon" style="transition:transform .15s;display:inline-block">▶</span> ' + txToggleLabel
+          + '<span id="' + txId + '-icon" style="display:inline-flex">' + icon('chevron', 'tx-toggle-icon') + '</span> ' + txToggleLabel
           + '</button>'
           + '<div id="' + txId + '" class="tx-list" style="display:none">';
         (r.transactions||[]).forEach(function(tx) {
@@ -1748,7 +1903,7 @@ function renderObjetivos() {
 
   if (!list.length && objetivos.length === 0) {
     summary.innerHTML = '';
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">🎯</div><p>Nenhum objetivo cadastrado</p></div>'
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div>' + icon('target', 'empty-icon') + '</div><p>Nenhum objetivo cadastrado</p></div>'
       + '<button class="obj-add-btn" onclick="openObjModal()">+ Novo objetivo</button>';
     return;
   }
@@ -1798,7 +1953,7 @@ function renderObjetivos() {
       + '<span class="obj-name">' + o.nome + '</span>'
       + '<div style="display:flex;align-items:center;gap:5px">'
       + '<span class="status-badge ' + sc + '">' + o.status + '</span>'
-      + '<button class="btn-icon" onclick="openEditObj(' + o.id + ')">✏️</button>'
+      + '<button class="btn-icon" title="Editar objetivo" aria-label="Editar objetivo" onclick="openEditObj(' + o.id + ')">' + icon('edit') + '</button>'
       + '</div></div>'
       + '<div class="obj-gasto-block">'
       + '<div class="obj-gasto-main">'
@@ -1949,6 +2104,48 @@ function openEdit(m, id) {
 }
 
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+// ── QUICK CAPTURE ───────────────────────────────────────────────────────────
+function openQuickCapture() {
+  var list = document.getElementById('quickCaptureCategories');
+  var categories = (db[activeMonth] || []).map(function(row){ return row.cat; }).filter(Boolean);
+  list.innerHTML = '';
+  categories.forEach(function(category) {
+    var option = document.createElement('option');
+    option.value = category;
+    list.appendChild(option);
+  });
+  document.getElementById('quickCaptureCategory').value = '';
+  document.getElementById('quickCaptureDesc').value = '';
+  document.getElementById('quickCaptureValue').value = '';
+  document.getElementById('modalQuickCapture').classList.add('open');
+  setTimeout(function(){ document.getElementById('quickCaptureCategory').focus(); }, 120);
+}
+function closeQuickCapture() { document.getElementById('modalQuickCapture').classList.remove('open'); }
+async function saveQuickCapture() {
+  var category = document.getElementById('quickCaptureCategory').value.trim();
+  var description = document.getElementById('quickCaptureDesc').value.trim() || 'Lançamento rápido';
+  var value = parseFloat(document.getElementById('quickCaptureValue').value);
+  if (!category) { showToast('Informe uma categoria', 'error'); document.getElementById('quickCaptureCategory').focus(); return; }
+  if (!isFinite(value) || value <= 0) { showToast('Informe um valor maior que zero', 'error'); document.getElementById('quickCaptureValue').focus(); return; }
+  if (!db[activeMonth]) db[activeMonth] = [];
+  var row = db[activeMonth].find(function(item){ return item.cat.toLowerCase() === category.toLowerCase(); });
+  var isNew = !row;
+  if (!row) {
+    row = {
+      id: nextId++, cat: category, plan: null, banco: '',
+      tipo: inferTipoFromCategory(category), done: false, transactions: []
+    };
+    db[activeMonth].push(row);
+  }
+  if (!row.transactions) row.transactions = [];
+  row.transactions.push({id: nextTxId(row), desc: description, val: value});
+  await save();
+  closeQuickCapture();
+  renderTabs();
+  renderPanel(activeMonth);
+  showToast(isNew ? 'Categoria e lançamento adicionados' : 'Lançamento adicionado', 'success');
+}
 
 async function saveRow() {
   var cat = document.getElementById('fCat').value.trim();
@@ -3342,6 +3539,19 @@ async function processPendentesClassificacao(pendentes, month) {
 // Event listener para fechar modal ao clicar fora
 document.getElementById('modalImportAI').addEventListener('click', function(e) {
   if (e.target === e.currentTarget) closeImportAIModal();
+});
+document.getElementById('modalQuickCapture').addEventListener('click', function(e) {
+  if (e.target === e.currentTarget) closeQuickCapture();
+});
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    openQuickCapture();
+  }
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(function(modal) { modal.classList.remove('open'); });
+    document.getElementById('hamburgerMenu').classList.remove('open');
+  }
 });
 
 // DARK MODE
