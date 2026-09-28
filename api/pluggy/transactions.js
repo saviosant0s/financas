@@ -50,6 +50,7 @@ module.exports = handler(['POST'], async (req) => {
         val: Math.abs(amount),
         kind: out ? 'out' : 'in',
         account: accName,
+        accountId: acc.id,
         card: isCard,
         category: t.category || ''
       });

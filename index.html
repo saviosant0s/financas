@@ -688,6 +688,8 @@ table.data td.dim { color: var(--text-3); }
 
 .income-row { display: grid; grid-template-columns: minmax(0, 1fr) 130px 34px; gap: 8px; margin-bottom: 8px; animation: viewIn .2s var(--ease); }
 .income-row .input { min-height: 40px; }
+.income-row .input.sub { min-height: 34px; font-size: 12.5px; }
+.income-row select.input.sub { grid-column: span 2; }
 .total-box { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); margin: 12px 0 16px; }
 .total-box b { font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
 .split-preview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -740,7 +742,10 @@ table.data td.dim { color: var(--text-3); }
 .review-item .rv { font-weight: 800; white-space: nowrap; text-align: right; }
 .review-item .input { min-height: 32px; padding: 5px 9px; font-size: 12.5px; }
 .review-item .input.need { border-color: var(--warn-mark); }
-.review-item.income { grid-template-columns: 24px minmax(0, 1fr) auto 28px; }
+.acc-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.acc-map { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 10px; align-items: center; font-size: 12.5px; }
+.acc-map > span { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.acc-map b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .progress-line { height: 4px; border-radius: 99px; background: var(--surface-3); overflow: hidden; margin-top: 14px; }
 .progress-line span { display: block; height: 100%; width: 40%; background: var(--accent); border-radius: inherit; animation: indet 1.2s infinite var(--ease); }
 @keyframes indet { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
@@ -753,6 +758,11 @@ table.data td.dim { color: var(--text-3); }
 /* Settings */
 .settings-sec { padding: 4px 0 16px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
 .settings-sec:last-child { border-bottom: 0; margin-bottom: 0; }
+.set-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.set-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 170px) auto; gap: 8px; align-items: center; }
+.set-row .input { min-height: 34px; font-size: 12.5px; }
+.set-row.rule { grid-template-columns: minmax(0, 1fr) auto; font-size: 12.5px; background: var(--surface-2); padding: 6px 10px; border-radius: 10px; }
+.set-row.rule > span { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .settings-sec h3 { font-size: 13.5px; font-weight: 800; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
 .settings-sec > p { font-size: 12.5px; color: var(--text-3); margin-bottom: 12px; }
 .settings-actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -868,7 +878,7 @@ table.data td.dim { color: var(--text-3); }
   .month-chips { grid-template-columns: repeat(4, 1fr); }
   .review-item { grid-template-columns: 22px minmax(0, 1fr) auto 26px; }
   .review-item .cat-in { grid-column: 2 / 4; grid-row: 2; }
-  .review-item.income { grid-template-columns: 22px minmax(0, 1fr) auto 26px; }
+  .acc-map { grid-template-columns: 1fr; gap: 4px; }
 
   .modal { padding: 0; align-items: end; }
   .modal-panel { max-width: none; border-radius: 22px 22px 0 0; max-height: 94vh; transform: translateY(40px); padding-bottom: env(safe-area-inset-bottom); }
@@ -1121,6 +1131,8 @@ const TIPOS = {
   E: { label: 'Empréstimo', plural: 'Empréstimos', neutral: true },
   '': { label: 'Sem tipo', plural: 'Sem tipo' }
 };
+const CONTA_TIPOS = { conta: 'Conta', cartao: 'Cartão de crédito', invest: 'Investimento / caixinha' };
+const INCOME_CATS = ['Salário', 'Freela', 'Reembolso', 'Rendimentos', 'Vendas', 'Presente', 'Outros'];
 const BANCO_DEFAULTS = ['Nubank', 'Inter', 'Itaú', 'Bradesco', 'Banco do Brasil', 'Caixa', 'C6', 'PicPay', 'Santander', 'Mercado Pago'];
 const GOAL_STATUS = { 'Nao comprado': 'Juntando', 'Parcelado': 'Parcelado', 'Comprado': 'Concluído' };
 const PRIO_LABEL = { Alta: 'Alta', Media: 'Média', Baixa: 'Baixa' };
@@ -1257,7 +1269,7 @@ let seq = 1;
 const newId = () => seq++;
 
 function emptyData() {
-  return { v: 3, updatedAt: 0, db: {}, objetivos: [], rendas: {}, periodos: {}, rulePcts: { ...DEFAULT_RULE }, conexoes: [] };
+  return { v: 3, updatedAt: 0, db: {}, objetivos: [], rendas: {}, periodos: {}, rulePcts: { ...DEFAULT_RULE }, conexoes: [], contas: [], regras: [] };
 }
 function hasAnyData(d) {
   return Object.values(d.db).some((l) => l.length) || d.objetivos.length || Object.values(d.rendas).some((l) => l.length);
@@ -1294,6 +1306,7 @@ function normalizeData(d) {
       cat.transactions = txs.filter((t) => t && typeof t === 'object').map((t) => {
         const tx = { id: see(t.id), desc: str(t.desc), val: round2(num(t.val)), date: isISO(t.date) ? t.date : '' };
         if (str(t.ext)) tx.ext = str(t.ext);
+        if (str(t.conta)) tx.conta = str(t.conta);
         if (!tx.id || usedTx.has(tx.id)) fixIds.push(tx); else usedTx.add(tx.id);
         return tx;
       });
@@ -1308,6 +1321,8 @@ function normalizeData(d) {
     const list = (Array.isArray(arr) ? arr : []).filter((e) => e && typeof e === 'object').map((e) => {
       const it = { id: see(e.id), desc: str(e.desc), val: round2(num(e.val)) };
       if (str(e.ext)) it.ext = str(e.ext);
+      if (str(e.cat)) it.cat = str(e.cat);
+      if (str(e.conta)) it.conta = str(e.conta);
       if (!it.id || used.has(it.id)) fixIds.push(it); else used.add(it.id);
       return it;
     }).filter((e) => e.val || e.desc);
@@ -1339,6 +1354,16 @@ function normalizeData(d) {
   const seenCx = new Set();
   out.conexoes = (Array.isArray(d.conexoes) ? d.conexoes : []).filter((c) => c && str(c.id) && !seenCx.has(str(c.id)) && seenCx.add(str(c.id)))
     .map((c) => ({ id: str(c.id), nome: str(c.nome) || 'Banco', sync: isISO(c.sync) ? c.sync : '' }));
+
+  // Contas bancárias/cartões: { id, nome, tipo: 'conta'|'cartao'|'invest', ext: [ids de conta da Pluggy] }
+  const seenCt = new Set();
+  out.contas = (Array.isArray(d.contas) ? d.contas : []).filter((c) => c && str(c.id) && !seenCt.has(str(c.id)) && seenCt.add(str(c.id)))
+    .map((c) => ({ id: str(c.id), nome: str(c.nome) || 'Conta', tipo: CONTA_TIPOS[c.tipo] ? c.tipo : 'conta', ext: (Array.isArray(c.ext) ? c.ext : []).map(str).filter(Boolean) }));
+  // Regras lembradas na importação: { k: chave da descrição, kind: 'out'|'in', cat }
+  const seenRg = new Set();
+  out.regras = (Array.isArray(d.regras) ? d.regras : []).filter((r) => r && str(r.k) && str(r.cat) && (r.kind === 'in' || r.kind === 'out'))
+    .filter((r) => !seenRg.has(r.kind + '|' + str(r.k)) && seenRg.add(r.kind + '|' + str(r.k)))
+    .map((r) => ({ k: str(r.k), kind: r.kind, cat: str(r.cat) }));
 
   seq = Math.max(seq, maxId + 1);
   fixIds.forEach((o) => { o.id = newId(); });
@@ -1380,14 +1405,14 @@ function migrateLegacy(raw) {
 function serialize() {
   return {
     v: 3, updatedAt: data.updatedAt, db: data.db, objetivos: data.objetivos,
-    meta: { rendas: data.rendas, periodos: data.periodos, rulePcts: data.rulePcts, conexoes: data.conexoes }
+    meta: { rendas: data.rendas, periodos: data.periodos, rulePcts: data.rulePcts, conexoes: data.conexoes, contas: data.contas, regras: data.regras }
   };
 }
 function deserialize(raw) {
   if (!raw) return null;
   if (isLegacy(raw)) return migrateLegacy(raw);
   const meta = raw.meta || {};
-  return normalizeData({ updatedAt: raw.updatedAt, db: raw.db, objetivos: raw.objetivos, rendas: meta.rendas, periodos: meta.periodos, rulePcts: meta.rulePcts, conexoes: meta.conexoes });
+  return normalizeData({ updatedAt: raw.updatedAt, db: raw.db, objetivos: raw.objetivos, rendas: meta.rendas, periodos: meta.periodos, rulePcts: meta.rulePcts, conexoes: meta.conexoes, contas: meta.contas, regras: meta.regras });
 }
 
 /* ─── Consultas e cálculos ─────────────────────────────────────────── */
@@ -1466,6 +1491,44 @@ function knownBanks() {
   return list.slice(0, 10);
 }
 
+/* Contas bancárias */
+const contaById = (id) => (id ? data.contas.find((c) => c.id === id) : null);
+const contaNome = (id) => { const c = contaById(id); return c ? c.nome : ''; };
+function createConta(nome, tipo = 'conta', ext = []) {
+  const existing = data.contas.find((c) => norm(c.nome) === norm(nome));
+  if (existing) { ext.forEach((x) => { if (!existing.ext.includes(x)) existing.ext.push(x); }); return existing; }
+  const c = { id: 'ct' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), nome: str(nome).slice(0, 40) || 'Conta', tipo: CONTA_TIPOS[tipo] ? tipo : 'conta', ext: ext.slice() };
+  data.contas.push(c);
+  return c;
+}
+/** <option>s de conta. extra: { none: 'rótulo de sem conta', create: true } */
+function contaOptions(sel, extra = {}) {
+  return (extra.none !== false ? `<option value="">${esc(extra.none || 'Sem conta')}</option>` : '')
+    + data.contas.map((c) => `<option value="${esc(c.id)}" ${c.id === sel ? 'selected' : ''}>${esc(c.nome)}</option>`).join('')
+    + (extra.create ? `<option value="__new" ${sel === '__new' ? 'selected' : ''}>+ Nova conta…</option>` : '');
+}
+function knownIncomeCats() {
+  const used = new Map();
+  Object.values(data.rendas).forEach((l) => l.forEach((e) => { if (e.cat) used.set(norm(e.cat), e.cat); }));
+  data.regras.forEach((r) => { if (r.kind === 'in') used.set(norm(r.cat), r.cat); });
+  INCOME_CATS.forEach((n) => { if (!used.has(norm(n))) used.set(norm(n), n); });
+  return [...used.values()];
+}
+
+/* Regras lembradas: "Pix de Fulano" (pago ou recebido) → categoria */
+function findRule(desc, kind) {
+  const mk = merchantKey(desc);
+  return mk && mk.length >= 3 ? data.regras.find((r) => r.kind === kind && r.k === mk) : null;
+}
+function rememberRule(desc, kind, cat) {
+  const mk = merchantKey(desc);
+  if (!mk || mk.length < 3 || !str(cat)) return false;
+  const cur = data.regras.find((r) => r.kind === kind && r.k === mk);
+  if (cur) { if (cur.cat === cat) return false; cur.cat = cat; }
+  else data.regras.push({ k: mk, kind, cat: str(cat) });
+  return true;
+}
+
 /* Metas */
 const goalSaved = (o) => (o.status === 'Parcelado' ? round2(sum(Object.values(o.pagamentos || {}))) : round2(o.tenho || 0));
 function goalProgress(o) {
@@ -1521,7 +1584,7 @@ const AUTO_RULES = [
 ];
 const DESC_NOISE = /^(compra (no|com) (cartao )?(de )?(debito|credito)|compra (no )?(debito|credito)|pagamento (de|com) (boleto|pix)|pix (enviado|recebido|transf\w*)|transferencia (enviada|recebida)( pelo pix)?|transf(erencia)? pix|pagamento|debito|credito|pix)\s*[-:]?\s*/;
 function merchantKey(desc) {
-  const n = norm(desc).replace(DESC_NOISE, '').replace(/[0-9*#/\\._,:;()-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const n = norm(desc).replace(DESC_NOISE, '').replace(/^(para|de|do|da|p\/)\s+/, '').replace(/[0-9*#/\\._,:;()-]+/g, ' ').replace(/\s+/g, ' ').trim();
   return n.split(' ').filter((w) => w.length > 1).slice(0, 3).join(' ');
 }
 let _memory = null;
@@ -1538,9 +1601,21 @@ function categoryMemory() {
   _memory = m;
   return m;
 }
-/** Sugere categoria para uma descrição: primeiro pelo histórico do usuário, depois por regras. */
-function guessCategory(desc) {
+/** Sugere categoria: regras que o usuário salvou, depois o histórico, depois regras prontas. */
+function guessCategory(desc, kind = 'out') {
+  const rule = findRule(desc, kind);
+  if (rule) {
+    const known = kind === 'out' && knownCategories().find((c) => norm(c.name) === norm(rule.cat));
+    return { cat: rule.cat, tipo: known ? known.tipo : (kind === 'out' ? inferTipo(rule.cat) : ''), source: 'saved' };
+  }
   const mk = merchantKey(desc);
+  if (kind === 'in') {
+    if (!mk || mk.length < 3) return null;
+    const count = {};
+    Object.values(data.rendas).forEach((l) => l.forEach((e) => { if (e.cat && merchantKey(e.desc) === mk) count[e.cat] = (count[e.cat] || 0) + 1; }));
+    const best = Object.entries(count).sort((a, b) => b[1] - a[1])[0];
+    return best ? { cat: best[0], tipo: '', source: 'memory' } : null;
+  }
   if (mk && mk.length >= 3) {
     const e = categoryMemory().get(mk);
     if (e) {
@@ -2119,7 +2194,8 @@ function topCategoriesHTML(k, s) {
 function txRowHTML(t, k, opts = {}) {
   const b = bucketOf(t.tipo);
   const initial = esc((t.cat || '?').trim()[0] || '?').toUpperCase();
-  const meta = opts.showDate ? `${esc(t.cat)} · ${esc(fmtDay(t.date))}` : esc(t.cat) + (isNeutral(t.tipo) ? ' · não conta' : '');
+  const cn = contaNome(t.conta);
+  const meta = (opts.showDate ? `${esc(t.cat)} · ${esc(fmtDay(t.date))}` : esc(t.cat) + (isNeutral(t.tipo) ? ' · não conta' : '')) + (cn ? ' · ' + esc(cn) : '');
   return `<div class="${opts.cls || 'tx-row'}" data-act="edit-tx" data-cat="${t.catId}" data-tx="${t.id}" role="button" tabindex="0">
     <span class="tx-ic ${b}">${initial}</span>
     <span class="tx-main"><div class="tx-desc">${esc(t.desc || t.cat)}</div><div class="tx-meta">${meta}</div></span>
@@ -2284,6 +2360,7 @@ function viewTx() {
   const toolbar = `<div class="toolbar">
     <label class="search">${icon('search', 'i-sm')}<span class="sr-only">Buscar lançamento</span><input class="input" type="search" placeholder="Buscar por descrição ou categoria" value="${esc(ui.txSearch)}" data-input="tx-search"></label>
     <select class="input" data-change="tx-cat" aria-label="Filtrar por categoria"><option value="">Todas as categorias</option>${catOpts}</select>
+    ${data.contas.length ? `<select class="input" data-change="tx-conta" aria-label="Filtrar por conta"><option value="">Todas as contas</option>${data.contas.map((c) => `<option value="${esc(c.id)}" ${ui.txConta === c.id ? 'selected' : ''}>${esc(c.nome)}</option>`).join('')}<option value="__none" ${ui.txConta === '__none' ? 'selected' : ''}>Sem conta</option></select>` : ''}
     <select class="input" data-change="tx-sort" aria-label="Ordenar">
       ${[['date_desc', 'Mais recentes'], ['date_asc', 'Mais antigos'], ['val_desc', 'Maior valor'], ['val_asc', 'Menor valor']].map(([v, l]) => `<option value="${v}" ${ui.txSort === v ? 'selected' : ''}>${l}</option>`).join('')}
     </select>
@@ -2296,6 +2373,7 @@ function txListHTML(k) {
   let list = allTx(k);
   if (!list.length) return `<div class="card empty"><div class="empty-icon">${icon('list')}</div><h3>Nenhum lançamento em ${esc(monthName(k))}</h3><p>Registre um gasto ou importe o extrato do banco.</p><div class="actions"><button class="btn btn-primary btn-sm" data-act="quick">${icon('plus', 'i-sm')}Novo lançamento</button><button class="btn btn-secondary btn-sm" data-act="open-import">${icon('upload', 'i-sm')}Importar extrato</button></div></div>`;
   if (ui.txCat) list = list.filter((t) => String(t.catId) === String(ui.txCat));
+  if (ui.txConta) list = list.filter((t) => (ui.txConta === '__none' ? !contaById(t.conta) : t.conta === ui.txConta));
   const q = norm(ui.txSearch);
   if (q) list = list.filter((t) => norm(t.desc).includes(q) || norm(t.cat).includes(q) || String(t.val).includes(q.replace(',', '.')));
   if (!list.length) return `<div class="card empty"><h3>Nada encontrado</h3><p>Tente outra busca ou limpe os filtros.</p><div class="actions"><button class="btn btn-secondary btn-sm" data-act="clear-tx-filters">Limpar filtros</button></div></div>`;
@@ -2717,6 +2795,22 @@ function budgetMenuHTML() {
     <button class="menu-item danger" data-act="clear-month">${icon('trash')}Limpar orçamento de ${esc(monthShortLabel(k))}</button>`;
 }
 
+/* Campo "Conta" reutilizado nos formulários (com opção de criar na hora) */
+function contaFieldHTML(id, sel) {
+  return `<div class="row-2 keep conta-field">
+      <div class="field"><label for="${id}">Conta <span class="opt">(opcional)</span></label><select class="input" id="${id}" name="conta" data-change="conta-pick">${contaOptions(contaById(sel) ? sel : '', { none: 'Sem conta', create: true })}</select></div>
+      <div class="field" hidden><label for="${id}New">Nome da nova conta</label><input class="input" id="${id}New" name="contaNova" maxlength="40" placeholder="Ex.: Nubank"></div>
+    </div>`;
+}
+/** Lê o campo de conta; cria a conta se o usuário escolheu "+ Nova conta". */
+function readContaField(f) {
+  if (!f.conta) return '';
+  if (f.conta.value !== '__new') return contaById(f.conta.value) ? f.conta.value : '';
+  const nome = str(f.contaNova.value);
+  if (!nome) { markInvalid(f.contaNova, 'Dê um nome para a conta'); return ''; }
+  return createConta(nome).id;
+}
+
 /* ─── Formulário: lançamento rápido ────────────────────────────────── */
 let quickKind = 'out';
 const TIPO_OPTIONS = [['', 'Sem tipo'], ['N', 'Necessidade'], ['D', 'Desejo'], ['P', 'Poupança'], ['T', 'Transferência (não conta)'], ['E', 'Empréstimo (não conta)']];
@@ -2742,6 +2836,10 @@ function openQuick(opts = {}) {
         <div class="field" id="qTipoField" hidden><label for="qTipo">Tipo (nova categoria)</label><select class="input" id="qTipo" name="tipo">${tipoOptions('')}</select></div>
       </div>
     </div>
+    <div data-in ${quickKind === 'in' ? '' : 'hidden'}>
+      <div class="field"><label for="qInCat">Categoria <span class="opt">(opcional)</span></label><input class="input" id="qInCat" name="incat" list="qInCatList" maxlength="60" placeholder="Ex.: Salário, Freela"><datalist id="qInCatList">${knownIncomeCats().map((n) => `<option value="${esc(n)}"></option>`).join('')}</datalist></div>
+    </div>
+    ${contaFieldHTML('qConta', LS.get('fin-last-conta') || '')}
     <p class="hint">Lançado em <b>${esc(monthLabel(k))}</b>. Atalho: <b>Ctrl + K</b>.</p>
   </form>`;
   const foot = `<button type="button" class="btn btn-ghost shrink" data-close>Cancelar</button><button type="button" class="btn btn-secondary" data-act="quick-save-more">Salvar e continuar</button><button type="submit" class="btn btn-primary" form="quickForm">${icon('check', 'i-sm')}Salvar</button>`;
@@ -2754,6 +2852,7 @@ function setQuickKind(kind) {
   if (!f) return;
   $$('[data-act="quick-kind"]', f).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.kind === kind)));
   $('[data-out]', f).hidden = kind === 'in';
+  $('[data-in]', f).hidden = kind !== 'in';
   f.desc.placeholder = kind === 'in' ? 'Ex.: salário, freela, reembolso' : 'Ex.: mercado da semana';
   $('#m-quick-title').firstChild.textContent = kind === 'in' ? 'Nova entrada' : 'Novo lançamento';
   f.val.focus();
@@ -2785,8 +2884,13 @@ function saveQuick(keepOpen) {
   if (!(val > 0)) return markInvalid(f.val, 'Informe um valor maior que zero');
   const k = ui.month;
   const desc = f.desc.value.trim();
+  const conta = readContaField(f);
+  if (!conta && f.conta && f.conta.value === '__new') return;
+  LS.set('fin-last-conta', conta);
   if (quickKind === 'in') {
-    (data.rendas[k] || (data.rendas[k] = [])).push({ id: newId(), desc: desc || 'Entrada', val });
+    let icat = f.incat.value.trim();
+    if (!icat && desc) { const g = guessCategory(desc, 'in'); if (g) icat = g.cat; }
+    (data.rendas[k] || (data.rendas[k] = [])).push({ id: newId(), desc: desc || 'Entrada', val, ...(icat ? { cat: icat } : {}), ...(conta ? { conta } : {}) });
     save(); renderAll();
     toast(`Entrada de ${fmt(val)} registrada em ${monthName(k)}`);
   } else {
@@ -2796,7 +2900,7 @@ function saveQuick(keepOpen) {
     let c = findCatByName(k, name);
     const isNew = !c;
     if (!c) { c = { id: newId(), cat: name, plan: null, banco: '', tipo: f.tipo.value, done: false, fixa: false, transactions: [] }; catsMut(k).push(c); }
-    c.transactions.push({ id: newId(), desc, val, date: isISO(f.date.value) ? f.date.value : defaultDateFor(k) });
+    c.transactions.push({ id: newId(), desc, val, date: isISO(f.date.value) ? f.date.value : defaultDateFor(k), ...(conta ? { conta } : {}) });
     save(); renderAll();
     const sp = txTotal(c);
     const over = c.plan != null && c.tipo !== 'P' && sp > c.plan;
@@ -3009,6 +3113,7 @@ function openTxEdit(catId, txId) {
       <div class="field"><label for="tDate">Data</label><input class="input" type="date" id="tDate" name="date" value="${esc(t.date)}"></div>
       <div class="field"><label for="tCat">Categoria</label><select class="input" id="tCat" name="cat">${cats(k).map((x) => `<option value="${x.id}" ${x.id === c.id ? 'selected' : ''}>${esc(x.cat)}</option>`).join('')}</select></div>
     </div>
+    ${contaFieldHTML('tConta', t.conta)}
   </form>`;
   openModal({
     id: 'tx', title: 'Editar lançamento', sub: esc(monthLabel(k)), width: 440, body,
@@ -3023,6 +3128,9 @@ function saveTxForm(f) {
   const val = parseMoney(f.val.value);
   if (!(val > 0)) return markInvalid(f.val, 'Informe um valor maior que zero');
   Object.assign(t, { val, desc: f.desc.value.trim(), date: isISO(f.date.value) ? f.date.value : '' });
+  const conta = readContaField(f);
+  if (!conta && f.conta.value === '__new') return;
+  if (conta) t.conta = conta; else delete t.conta;
   const target = findCat(k, +f.cat.value);
   let moved = false;
   if (target && target !== c) {
@@ -3040,6 +3148,8 @@ function incomeRowHTML(e = {}) {
     <input class="input" name="idesc" maxlength="60" placeholder="Ex.: Salário, freela" value="${esc(e.desc || '')}" aria-label="Descrição da entrada">
     <input class="input" name="ival" inputmode="decimal" placeholder="R$ 0,00" value="${e.val ? moneyInput(e.val) : ''}" aria-label="Valor da entrada" data-input="income-val">
     <button type="button" class="icon-btn" data-act="income-del" aria-label="Remover entrada" title="Remover">${icon('trash', 'i-sm')}</button>
+    <input class="input sub" name="icat" list="incomeCatList" maxlength="60" placeholder="Categoria (opcional)" value="${esc(e.cat || '')}" aria-label="Categoria da entrada">
+    ${data.contas.length ? `<select class="input sub" name="iconta" aria-label="Conta da entrada">${contaOptions(e.conta || '')}</select>` : ''}
   </div>`;
 }
 function openIncome() {
@@ -3050,6 +3160,7 @@ function openIncome() {
   const r = data.rulePcts;
   const body = `<form data-form="income" id="incomeForm" autocomplete="off" novalidate>
     <p class="hint" style="margin:-4px 0 14px">Cadastre todas as fontes de renda do mês. O total é a base da regra ${r.N}/${r.D}/${r.P}.</p>
+    <datalist id="incomeCatList">${knownIncomeCats().map((n) => `<option value="${esc(n)}"></option>`).join('')}</datalist>
     <div id="incomeRows">${rows.length ? rows.map(incomeRowHTML).join('') : incomeRowHTML({})}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button type="button" class="btn btn-soft btn-sm" data-act="income-add">${icon('plus', 'i-sm')}Adicionar fonte</button>
@@ -3089,7 +3200,12 @@ function saveIncomeForm(f) {
     if (!desc && !raw) continue;
     const val = parseMoney(raw);
     if (isNaN(val) || val < 0) return markInvalid(row.querySelector('[name="ival"]'), 'Valor inválido');
-    list.push({ id: +row.dataset.id || newId(), desc: desc || 'Entrada', val });
+    const id = +row.dataset.id || newId();
+    const prev = incomes(k).find((e) => e.id === id) || {};
+    const icat = str((row.querySelector('[name="icat"]') || {}).value);
+    const selC = row.querySelector('[name="iconta"]');
+    const conta = selC ? selC.value : prev.conta || '';
+    list.push({ id, desc: desc || 'Entrada', val, ...(prev.ext ? { ext: prev.ext } : {}), ...(icat ? { cat: icat } : {}), ...(conta ? { conta } : {}) });
   }
   if (list.length) data.rendas[k] = list; else delete data.rendas[k];
   const ini = f.inicio.value.trim(), fim = f.fim.value.trim();
@@ -3325,6 +3441,34 @@ async function clearMonth() {
 }
 
 /* ─── Configurações, upsell, Pix ───────────────────────────────────── */
+function contasSettingsHTML() {
+  const tipoSel = (v, attrs) => `<select class="input" ${attrs}>${Object.entries(CONTA_TIPOS).map(([k, l]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+  const rows = data.contas.map((c) => `<div class="set-row">
+      <input class="input" value="${esc(c.nome)}" maxlength="40" data-change="conta-rename" data-id="${esc(c.id)}" aria-label="Nome da conta">
+      ${tipoSel(c.tipo, `data-change="conta-tipo" data-id="${esc(c.id)}" aria-label="Tipo da conta"`)}
+      <button type="button" class="icon-btn sm" data-act="conta-del" data-id="${esc(c.id)}" title="Excluir conta" aria-label="Excluir ${esc(c.nome)}">${icon('trash', 'i-sm')}</button></div>`).join('');
+  return `<section class="settings-sec"><h3>${icon('bank', 'i-sm')}Contas</h3><p>Suas contas, cartões e caixinhas. Cada lançamento pode ficar ligado a uma delas; as contas do Open Finance são vinculadas na importação.</p>
+    <div class="set-list">${rows || '<div class="muted" style="font-size:12.5px">Nenhuma conta ainda.</div>'}</div>
+    <div class="set-row add"><input class="input" id="newContaNome" maxlength="40" placeholder="Nova conta — ex.: Nubank">${tipoSel('conta', 'id="newContaTipo" aria-label="Tipo da nova conta"')}<button type="button" class="btn btn-secondary btn-sm" data-act="conta-add">${icon('plus', 'i-sm')}Adicionar</button></div></section>`;
+}
+function regrasSettingsHTML() {
+  if (!data.regras.length) return `<section class="settings-sec"><h3>${icon('zap', 'i-sm')}Regras de categoria</h3><p style="margin:0">Quando você escolhe a categoria de um lançamento na importação, o app guarda aqui e aplica sozinho nas próximas vezes.</p></section>`;
+  const rows = data.regras.map((r, i) => `<div class="set-row rule"><span>${icon(r.kind === 'in' ? 'in' : 'out', 'i-sm')}<b>${esc(r.k)}</b> → ${esc(r.cat)}</span>
+      <button type="button" class="icon-btn sm" data-act="regra-del" data-i="${i}" title="Esquecer regra" aria-label="Esquecer regra ${esc(r.k)}">${icon('trash', 'i-sm')}</button></div>`).join('');
+  return `<section class="settings-sec"><h3>${icon('zap', 'i-sm')}Regras de categoria</h3><p>Aplicadas automaticamente ao importar. Para mudar uma, é só escolher outra categoria na próxima importação.</p><div class="set-list">${rows}</div></section>`;
+}
+function reopenSettings() { const el = $('#m-settings .modal-body'); const top = el ? el.scrollTop : 0; closeModal('settings', true); openSettings(); const n = $('#m-settings .modal-body'); if (n) n.scrollTop = top; }
+async function deleteConta(id) {
+  const c = contaById(id);
+  if (!c) return;
+  const ok = await confirmDialog({ title: `Excluir ${c.nome}?`, text: 'Os lançamentos continuam no app, só deixam de estar ligados a essa conta.', confirm: 'Excluir', danger: true });
+  if (!ok) return;
+  data.contas = data.contas.filter((x) => x.id !== id);
+  Object.values(data.db).forEach((l) => l.forEach((cat) => cat.transactions.forEach((t) => { if (t.conta === id) delete t.conta; })));
+  Object.values(data.rendas).forEach((l) => l.forEach((e) => { if (e.conta === id) delete e.conta; }));
+  save(); renderAll(); reopenSettings();
+  toast(`${c.nome} excluída`);
+}
 function openSettings() {
   const pref = LS.get('theme') || 'system';
   const priv = document.documentElement.classList.contains('privacy');
@@ -3339,6 +3483,8 @@ function openSettings() {
     </section>
     <section class="settings-sec"><h3>${icon('wallet', 'i-sm')}Orçamento</h3><p>Sua regra atual é <b>${r.N}/${r.D}/${r.P}</b> (necessidades/desejos/poupança).</p>
       <button type="button" class="btn btn-secondary btn-sm" data-act="open-rule">Ajustar regra</button></section>
+    ${contasSettingsHTML()}
+    ${regrasSettingsHTML()}
     <section class="settings-sec"><h3>${icon('sparkles', 'i-sm')}Importação com IA</h3><p>Para ler PDFs de extrato com IA, use sua chave do <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">OpenRouter</a>. Ela fica salva só neste aparelho.</p>
       <form data-form="ai" id="aiForm" autocomplete="off">
         <div class="field"><label for="aiKey">Chave da API</label><input class="input" id="aiKey" name="key" type="password" placeholder="sk-or-v1-…" value="${esc(key)}" autocomplete="off" spellcheck="false"></div>
@@ -3565,19 +3711,26 @@ function prepareItems(items) {
     it.desc = str(it.desc).replace(/\s+/g, ' ').slice(0, 120);
     it.cat = str(it.cat);   // lançamentos sem categoria sugerida chegam sem o campo
     if (it.include === undefined) it.include = true;
-    if (it.kind === 'out' && !it.cat) {
-      const g = guessCategory(it.desc);
-      if (g) { it.cat = g.cat; it.tipo = g.tipo; it.auto = true; }
+    if (!it.cat) {
+      const g = guessCategory(it.desc, it.kind);
+      if (g) { it.cat = g.cat; it.tipo = g.tipo; it.auto = true; it.saved = g.source === 'saved'; }
     }
     if (it.kind === 'out' && it.cat && !it.tipo) {
       const known = knownCategories().find((c) => norm(c.name) === norm(it.cat));
       it.tipo = known ? known.tipo : inferTipo(it.cat);
     }
-    if (it.tipo === 'T' || /transferencia entre contas|mesma titularidade|pagamento de fatura|pagamento recebido|resgate/.test(norm(it.desc))) { it.include = false; it.why = it.why || 'transferência entre suas contas'; }
+    if (it.tipo === 'T' || (!it.saved && /transferencia entre contas|mesma titularidade|pagamento de fatura|pagamento recebido|resgate/.test(norm(it.desc)))) { it.include = false; it.why = it.why || 'transferência entre suas contas'; }
   });
   const dated = items.filter((i) => isISO(i.date)).length;
   imp.target = dated >= items.length / 2 ? 'auto' : ui.month;
   imp.items = items.filter((i) => i.val > 0);
+  // Contas do banco (Open Finance): já vinculadas a uma conta do app ou "criar nova"
+  imp.accMap = imp.accMap || {};
+  imp.items.forEach((it) => {
+    if (!it.acc || it.acc in imp.accMap) return;
+    const c = data.contas.find((x) => x.ext.includes(it.acc));
+    imp.accMap[it.acc] = c ? c.id : '__new';
+  });
   markDuplicates();
 }
 function itemMonth(it) { return imp.target === 'auto' && isISO(it.date) ? it.date.slice(0, 7) : (imp.target === 'auto' ? ui.month : imp.target); }
@@ -3594,6 +3747,27 @@ function markDuplicates() {
     it.dup = dup;
   });
 }
+/** Seção "Contas" da revisão: vincular contas do banco ou escolher a conta do arquivo. */
+function importAccountsHTML() {
+  const accs = new Map();
+  imp.items.forEach((it) => { if (it.acc && !accs.has(it.acc)) accs.set(it.acc, it); });
+  if (accs.size) {
+    const rows = [...accs.values()].map((it) => {
+      const v = imp.accMap[it.acc];
+      return `<div class="acc-map"><span>${icon(it.card ? 'wallet' : 'bank', 'i-sm')}<b>${esc(it.accName || 'Conta do banco')}</b></span>
+        <select class="input" data-change="imp-accmap" data-acc="${esc(it.acc)}" aria-label="Conta do app para ${esc(it.accName || 'esta conta')}">
+          <option value="__new" ${v === '__new' ? 'selected' : ''}>+ Criar conta “${esc(it.accName || 'Conta')}”</option>
+          ${contaOptions(v, { none: 'Não vincular a uma conta' })}
+        </select></div>`;
+    }).join('');
+    return `<div class="section-label">Contas</div><div class="acc-list">${rows}</div>`;
+  }
+  const v = imp.conta || '';
+  return `<div class="row-2" style="align-items:end">
+      <div class="field"><label for="impConta">Conta destes lançamentos</label><select class="input" id="impConta" data-change="imp-conta">${contaOptions(v, { none: 'Sem conta', create: true })}</select></div>
+      ${v === '__new' ? `<div class="field"><label for="impNewConta">Nome da nova conta</label><input class="input" id="impNewConta" maxlength="40" placeholder="Ex.: Nubank, Cartão Inter" value="${esc(imp.newConta || '')}" data-input="imp-newconta"></div>` : ''}
+    </div>`;
+}
 function importReviewHTML() {
   const outs = imp.items.filter((i) => i.kind === 'out');
   const ins = imp.items.filter((i) => i.kind === 'in');
@@ -3606,26 +3780,24 @@ function importReviewHTML() {
   const targets = [];
   for (let i = -12; i <= 2; i++) targets.push(shiftKey(currentKey(), i));
   if (!targets.includes(ui.month)) targets.push(ui.month);
-  const row = (it) => it.kind === 'out'
-    ? `<div class="review-item ${it.include ? '' : 'off'}" data-key="${it.key}">
+  const meta = (it) => `${isISO(it.date) ? esc(fmtDateShort(it.date)) : 'sem data'}${it.accName ? ' · ' + esc(it.accName) : ''}${it.dup ? ` · <span class="warn-ink">${it.dupExt ? 'já importado' : 'possível duplicado'}</span>` : ''}${!it.include && !it.dup && it.why ? ` · <span class="warn-ink">${esc(it.why)}</span>` : ''}${it.saved ? ' · regra salva' : it.auto ? ' · sugerido' : ''}`;
+  const row = (it) => {
+    const inc = it.kind === 'in';
+    return `<div class="review-item ${inc ? 'income' : ''} ${it.include ? '' : 'off'}" data-key="${it.key}">
         <input type="checkbox" ${it.include ? 'checked' : ''} data-change="imp-include" data-key="${it.key}" aria-label="Incluir">
-        <div class="rd"><b title="${esc(it.desc)}">${esc(it.desc || '—')}</b><span>${isISO(it.date) ? esc(fmtDateShort(it.date)) : 'sem data'}${it.dup ? ` · <span class="warn-ink">${it.dupExt ? 'já importado' : 'possível duplicado'}</span>` : ''}${!it.include && !it.dup && it.why ? ` · <span class="warn-ink">${esc(it.why)}</span>` : ''}${it.auto ? ' · sugerido' : ''}</span></div>
-        <input class="input cat-in ${it.include && !it.cat ? 'need' : ''}" list="impCats" value="${esc(it.cat || '')}" placeholder="Categoria" data-input="imp-cat" data-key="${it.key}" aria-label="Categoria">
-        <span class="rv">${money(it.val)}</span>
-        <button type="button" class="icon-btn sm" data-act="imp-flip" data-key="${it.key}" title="Mover para entradas" aria-label="Mover para entradas">${icon('in', 'i-sm')}</button>
-      </div>`
-    : `<div class="review-item income ${it.include ? '' : 'off'}" data-key="${it.key}">
-        <input type="checkbox" ${it.include ? 'checked' : ''} data-change="imp-include" data-key="${it.key}" aria-label="Incluir">
-        <div class="rd"><b title="${esc(it.desc)}">${esc(it.desc || 'Entrada')}</b><span>${isISO(it.date) ? esc(fmtDateShort(it.date)) : 'sem data'}${it.dup ? ` · <span class="warn-ink">${it.dupExt ? 'já importado' : 'possível duplicado'}</span>` : ''}${!it.include && !it.dup && it.why ? ` · <span class="warn-ink">${esc(it.why)}</span>` : ''}</span></div>
-        <span class="rv pos">+${money(it.val)}</span>
-        <button type="button" class="icon-btn sm" data-act="imp-flip" data-key="${it.key}" title="Mover para saídas" aria-label="Mover para saídas">${icon('out', 'i-sm')}</button>
+        <div class="rd"><b title="${esc(it.desc)}">${esc(it.desc || (inc ? 'Entrada' : '—'))}</b><span>${meta(it)}</span></div>
+        <input class="input cat-in ${!inc && it.include && !it.cat ? 'need' : ''}" list="${inc ? 'impInCats' : 'impCats'}" value="${esc(it.cat || '')}" placeholder="${inc ? 'Categoria (opcional)' : 'Categoria'}" data-input="imp-cat" data-key="${it.key}" aria-label="Categoria">
+        <span class="rv ${inc ? 'pos' : ''}">${inc ? '+' : ''}${money(it.val)}</span>
+        <button type="button" class="icon-btn sm" data-act="imp-flip" data-key="${it.key}" title="${inc ? 'Mover para saídas' : 'Mover para entradas'}" aria-label="${inc ? 'Mover para saídas' : 'Mover para entradas'}">${icon(inc ? 'out' : 'in', 'i-sm')}</button>
       </div>`;
+  };
   return `<div class="review-summary">
       <span class="tag">${plural(selOut.length, 'saída', 'saídas')} · ${esc(fmt(sum(selOut, (i) => i.val)))}</span>
       <span class="tag pos">${plural(selIn.length, 'entrada', 'entradas')} · ${esc(fmt(sum(selIn, (i) => i.val)))}</span>
       ${noCat ? `<span class="tag warn">${plural(noCat, 'sem categoria', 'sem categoria')}</span>` : ''}
       ${dups ? `<span class="tag warn">${plural(dups, 'possível duplicado', 'possíveis duplicados')} desmarcado${dups > 1 ? 's' : ''}</span>` : ''}
     </div>
+    ${importAccountsHTML()}
     <div class="row-2" style="align-items:end">
       <div class="field"><label for="impTarget">Mês de destino</label><select class="input" id="impTarget" data-change="imp-target">
         <option value="auto" ${imp.target === 'auto' ? 'selected' : ''}>Automático — pela data de cada item</option>
@@ -3637,8 +3809,9 @@ function importReviewHTML() {
         <button type="button" class="btn btn-ghost btn-sm" data-act="imp-all" data-on="0">Desmarcar</button>
       </div>
     </div>
-    <p class="hint" style="margin:-4px 0 12px">Destino: ${months.length ? months.map((k) => `<b>${esc(monthLabel(k))}</b>`).join(', ') : '—'}. Ao mudar a categoria de um item, os itens parecidos também são atualizados.</p>
+    <p class="hint" style="margin:-4px 0 12px">Destino: ${months.length ? months.map((k) => `<b>${esc(monthLabel(k))}</b>`).join(', ') : '—'}. A categoria que você escolher fica <b>salva como regra</b>: na próxima importação, o mesmo Pix, loja ou pessoa já vem com ela.</p>
     <datalist id="impCats">${known.concat(autoNames).map((n) => `<option value="${esc(n)}"></option>`).join('')}</datalist>
+    <datalist id="impInCats">${knownIncomeCats().map((n) => `<option value="${esc(n)}"></option>`).join('')}</datalist>
     <div class="review-list">
       ${outs.length ? `<div class="review-group-head"><span>Saídas (${outs.length})</span><span>${money(sum(selOut, (i) => i.val))}</span></div>${outs.map(row).join('')}` : ''}
       ${ins.length ? `<div class="review-group-head"><span>Entradas (${ins.length})</span><span class="pos">${money(sum(selIn, (i) => i.val))}</span></div>${ins.map(row).join('')}` : ''}
@@ -3654,20 +3827,42 @@ function setItemCategory(key, value) {
   if (!it) return;
   const old = it.cat;
   it.cat = value;
-  it.auto = false;
-  const known = knownCategories().find((c) => norm(c.name) === norm(value));
-  const rule = AUTO_RULES.find((r) => norm(r.cat) === norm(value));
-  it.tipo = known ? known.tipo : rule ? rule.tipo : inferTipo(value);
+  it.auto = false; it.saved = false; it.manual = true;
+  if (it.kind === 'out') {
+    const known = knownCategories().find((c) => norm(c.name) === norm(value));
+    const rule = AUTO_RULES.find((r) => norm(r.cat) === norm(value));
+    it.tipo = known ? known.tipo : rule ? rule.tipo : inferTipo(value);
+  }
   const mk = merchantKey(it.desc);
   if (!mk || !value.trim()) return;
   imp.items.forEach((o) => {
-    if (o === it || o.kind !== 'out' || merchantKey(o.desc) !== mk) return;
+    if (o === it || o.kind !== it.kind || merchantKey(o.desc) !== mk) return;
     if (!o.cat || o.auto || o.cat === old) {
-      o.cat = value; o.tipo = it.tipo; o.auto = false;
+      o.cat = value; o.tipo = it.tipo; o.auto = false; o.saved = false; o.manual = true;
       const inp = $(`#m-import input.cat-in[data-key="${o.key}"]`);
       if (inp) { inp.value = value; inp.classList.remove('need'); }
     }
   });
+}
+/** Resolve a conta de cada item, criando as contas novas escolhidas na revisão. */
+function resolveImportAccounts() {
+  const byAcc = {};
+  Object.entries(imp.accMap || {}).forEach(([acc, v]) => {
+    if (!imp.items.some((i) => i.include && i.acc === acc)) return;
+    if (v === '__new') {
+      const it = imp.items.find((i) => i.acc === acc);
+      byAcc[acc] = createConta(it.accName || 'Conta', it.card ? 'cartao' : 'conta', [acc]).id;
+    } else if (v) {
+      const c = contaById(v);
+      if (c) { if (!c.ext.includes(acc)) c.ext.push(acc); byAcc[acc] = c.id; }
+    }
+  });
+  let fileConta = '';
+  if (imp.conta === '__new') {
+    const nome = str(imp.newConta);
+    if (nome) fileConta = createConta(nome).id;
+  } else if (contaById(imp.conta)) fileConta = imp.conta;
+  return (it) => (it.acc ? byAcc[it.acc] || '' : fileConta);
 }
 function commitImport() {
   const sel = imp.items.filter((i) => i.include);
@@ -3678,20 +3873,25 @@ function commitImport() {
     if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); }
     return;
   }
+  if (imp.conta === '__new' && !str(imp.newConta)) { toast('Dê um nome para a nova conta', 'error'); const el = $('#impNewConta'); if (el) el.focus(); return; }
   const snap = snapshot();
+  const contaOf = resolveImportAccounts();
   const months = new Set();
-  let nOut = 0, nIn = 0;
+  let nOut = 0, nIn = 0, nRules = 0;
   sel.forEach((it) => {
     const k = itemMonth(it);
+    const conta = contaOf(it);
+    const extra = { ...(it.ext ? { ext: it.ext } : {}), ...(conta ? { conta } : {}) };
     months.add(k);
+    if (it.manual && str(it.cat) && rememberRule(it.desc, it.kind, str(it.cat))) nRules++;
     if (it.kind === 'in') {
-      (data.rendas[k] || (data.rendas[k] = [])).push({ id: newId(), desc: it.desc || 'Entrada', val: it.val, ...(it.ext ? { ext: it.ext } : {}) });
+      (data.rendas[k] || (data.rendas[k] = [])).push({ id: newId(), desc: it.desc || 'Entrada', val: it.val, ...(str(it.cat) ? { cat: str(it.cat) } : {}), ...extra });
       nIn++;
     } else {
       const name = str(it.cat);
       let c = findCatByName(k, name);
       if (!c) { c = { id: newId(), cat: name, plan: null, banco: '', tipo: it.tipo || '', done: false, fixa: false, transactions: [] }; catsMut(k).push(c); }
-      c.transactions.push({ id: newId(), desc: it.desc, val: it.val, date: isISO(it.date) ? it.date : '', ...(it.ext ? { ext: it.ext } : {}) });
+      c.transactions.push({ id: newId(), desc: it.desc, val: it.val, date: isISO(it.date) ? it.date : '', ...extra });
       nOut++;
     }
   });
@@ -3701,7 +3901,7 @@ function commitImport() {
   closeModal('import');
   const ms = [...months].sort();
   if (ms.length === 1 && ms[0] !== ui.month) setMonth(ms[0]); else renderAll();
-  undoToast(`${plural(nOut, 'saída importada', 'saídas importadas')}${nIn ? ` e ${plural(nIn, 'entrada', 'entradas')}` : ''} em ${ms.map(monthShortLabel).join(', ')}`, snap);
+  undoToast(`${plural(nOut, 'saída importada', 'saídas importadas')}${nIn ? ` e ${plural(nIn, 'entrada', 'entradas')}` : ''} em ${ms.map(monthShortLabel).join(', ')}${nRules ? ` · ${plural(nRules, 'regra salva', 'regras salvas')}` : ''}`, snap);
 }
 
 /* ─── Open Finance (Pluggy) ────────────────────────────────────────── */
@@ -3833,7 +4033,7 @@ async function fetchBankItems() {
         if (d.updating && !txs.length) { problems.push(`${c.nome} ainda está sincronizando com o banco, tente de novo em alguns minutos`); return; }
         txs.forEach((t) => {
           if (!isISO(t.date) || t.date < imp.from) return;
-          const it = { kind: t.kind === 'in' ? 'in' : 'out', val: Math.abs(num(t.val)), date: t.date, desc: t.desc, ext: t.id };
+          const it = { kind: t.kind === 'in' ? 'in' : 'out', val: Math.abs(num(t.val)), date: t.date, desc: t.desc, ext: t.id, acc: str(t.accountId), accName: str(t.account), card: !!t.card };
           if (PLUGGY_NEUTRAL.test(t.category || '')) { it.include = false; it.why = /card/i.test(t.category) ? 'pagamento de fatura' : 'transferência entre suas contas'; }
           items.push(it);
         });
@@ -4165,7 +4365,7 @@ const ACTIONS = {
   'imp-process': () => processImport(),
   'imp-back': () => { imp.step = 1; refreshImport(); },
   'imp-commit': () => commitImport(),
-  'imp-flip': (el) => { const it = findItem(el.dataset.key); it.kind = it.kind === 'in' ? 'out' : 'in'; if (it.kind === 'out' && !it.cat) { const g = guessCategory(it.desc); if (g) { it.cat = g.cat; it.tipo = g.tipo; it.auto = true; } } markDuplicates(); refreshImport(); },
+  'imp-flip': (el) => { const it = findItem(el.dataset.key); it.kind = it.kind === 'in' ? 'out' : 'in'; it.cat = ''; it.tipo = ''; it.auto = it.saved = it.manual = false; const g = guessCategory(it.desc, it.kind); if (g) { it.cat = g.cat; it.tipo = g.tipo; it.auto = true; it.saved = g.source === 'saved'; } markDuplicates(); refreshImport(); },
   'imp-invert': () => { imp.items.forEach((it) => { if (it.fromCsv) it.kind = it.kind === 'in' ? 'out' : 'in'; }); prepareItems(imp.items); refreshImport(); },
   'imp-all': (el) => { imp.items.forEach((i) => { i.include = el.dataset.on === '1'; }); refreshImport(); },
   'of-connect': () => connectBank(),
@@ -4187,6 +4387,14 @@ const ACTIONS = {
   'open-pix': () => { closePopover(); openPix(); },
   'copy-pix': () => { const done = () => toast('Chave Pix copiada!'); if (navigator.clipboard) navigator.clipboard.writeText(PIX_KEY).then(done, () => toast('Copie manualmente: ' + PIX_KEY, 'info')); else toast('Copie manualmente: ' + PIX_KEY, 'info'); },
   feedback: () => { closePopover(); window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent('Oi, Sávio! Tenho um feedback sobre o Castelay Financeiro:')}`, '_blank', 'noopener'); },
+  'conta-add': () => {
+    const nome = str(($('#newContaNome') || {}).value);
+    if (!nome) { toast('Digite o nome da conta', 'error'); return; }
+    createConta(nome, ($('#newContaTipo') || {}).value);
+    save(); reopenSettings(); toast(`Conta ${nome} criada`);
+  },
+  'conta-del': (el) => deleteConta(el.dataset.id),
+  'regra-del': (el) => { data.regras.splice(+el.dataset.i, 1); save(); reopenSettings(); toast('Regra esquecida'); },
   'confirm-yes': () => { if (confirmResolver) confirmResolver(); }
 };
 const FORMS = {
@@ -4215,17 +4423,24 @@ const INPUTS = {
   'income-val': () => updateIncomeTotal(),
   rule: () => updateRuleForm(),
   goal: debounce(() => updateGoalForm(), 120),
+  'imp-newconta': (el) => { imp.newConta = el.value; },
   'imp-cat': (el) => { setItemCategory(el.dataset.key, el.value); el.classList.toggle('need', !el.value.trim()); }
 };
 const CHANGES = {
   'budget-sort': (el) => { ui.sort = el.value; LS.set('fin-sort', ui.sort); $('#catList').innerHTML = catListHTML(ui.month); },
   'tx-cat': (el) => { ui.txCat = el.value; $('#txList').innerHTML = txListHTML(ui.month); },
   'tx-sort': (el) => { ui.txSort = el.value; $('#txList').innerHTML = txListHTML(ui.month); },
+  'conta-pick': (el) => { const box = el.closest('.conta-field').querySelector('[name="contaNova"]').closest('.field'); box.hidden = el.value !== '__new'; if (!box.hidden) box.querySelector('input').focus(); },
+  'conta-rename': (el) => { const c = contaById(el.dataset.id); const v = str(el.value); if (c && v) { c.nome = v.slice(0, 40); save(); renderAll(); } else if (c) el.value = c.nome; },
+  'conta-tipo': (el) => { const c = contaById(el.dataset.id); if (c && CONTA_TIPOS[el.value]) { c.tipo = el.value; save(); } },
+  'tx-conta': (el) => { ui.txConta = el.value; $('#txList').innerHTML = txListHTML(ui.month); },
   privacy: (el) => togglePrivacy(el.checked),
   'imp-files': (el) => setImportFiles(el.files),
   'imp-include': (el) => { const it = findItem(el.dataset.key); it.include = el.checked; el.closest('.review-item').classList.toggle('off', !el.checked); updateImportSummary(); },
   'imp-target': (el) => { imp.target = el.value; markDuplicates(); refreshImport(); },
-  'of-from': (el) => { if (isISO(el.value)) imp.from = el.value; }
+  'of-from': (el) => { if (isISO(el.value)) imp.from = el.value; },
+  'imp-accmap': (el) => { imp.accMap[el.dataset.acc] = el.value; },
+  'imp-conta': (el) => { imp.conta = el.value; refreshImport(); if (el.value === '__new') { const n = $('#impNewConta'); if (n) n.focus(); } }
 };
 
 document.addEventListener('click', (e) => {
