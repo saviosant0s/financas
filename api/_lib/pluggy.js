@@ -31,10 +31,16 @@ async function pluggyApiKey() {
 
 async function pluggy(path, opts = {}) {
   const key = await pluggyApiKey();
-  const res = await fetch(PLUGGY + path, {
-    ...opts,
-    headers: { 'Content-Type': 'application/json', 'X-API-KEY': key, ...(opts.headers || {}) }
-  });
+  let res;
+  try {
+    res = await fetch(PLUGGY + path, {
+      ...opts,
+      signal: AbortSignal.timeout(20000),
+      headers: { 'Content-Type': 'application/json', 'X-API-KEY': key, ...(opts.headers || {}) }
+    });
+  } catch (e) {
+    throw new HttpError(504, 'A Pluggy demorou para responder. Tente de novo em instantes.');
+  }
   if (res.status === 204) return null;
   const d = await res.json().catch(() => ({}));
   if (!res.ok) {
