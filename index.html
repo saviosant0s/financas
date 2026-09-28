@@ -758,6 +758,20 @@ table.data td.dim { color: var(--text-3); }
 /* Settings */
 .settings-sec { padding: 4px 0 16px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
 .settings-sec:last-child { border-bottom: 0; margin-bottom: 0; }
+.conta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.conta-card { padding: 16px; display: flex; flex-direction: column; gap: 4px; border-top: 3px solid var(--accent); }
+.conta-card.invest { border-top-color: var(--pos, #16a34a); }
+.conta-card.cartao { border-top-color: var(--warn-mark, #f59e0b); }
+.conta-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.conta-head > div { flex: 1; min-width: 0; }
+.conta-head b { display: block; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conta-head span { font-size: 11.5px; color: var(--text-3); }
+.conta-ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--surface-2); flex: none; }
+.conta-lbl { font-size: 11.5px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+.conta-val { font-size: 22px; font-weight: 800; }
+.conta-src, .conta-month { font-size: 11.5px; color: var(--text-3); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.conta-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.contas-mini { cursor: pointer; }
 .set-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
 .set-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 170px) auto; gap: 8px; align-items: center; }
 .set-row .input { min-height: 34px; font-size: 12.5px; }
@@ -1036,6 +1050,7 @@ table.data td.dim { color: var(--text-3); }
       <a class="nav-item" href="#orcamento" data-view="budget" title="Orçamento"><svg class="i"><use href="#i-wallet"/></svg><span>Orçamento</span></a>
       <a class="nav-item" href="#lancamentos" data-view="tx" title="Lançamentos"><svg class="i"><use href="#i-list"/></svg><span>Lançamentos</span></a>
       <a class="nav-item" href="#metas" data-view="goals" title="Metas"><svg class="i"><use href="#i-target"/></svg><span>Metas</span></a>
+      <a class="nav-item" href="#contas" data-view="contas" title="Contas"><svg class="i"><use href="#i-bank"/></svg><span>Contas</span></a>
       <a class="nav-item" href="#relatorios" data-view="reports" title="Relatórios"><svg class="i"><use href="#i-chart"/></svg><span>Relatórios</span></a>
     </nav>
     <div class="nav-label">Ferramentas</div>
@@ -1269,7 +1284,7 @@ let seq = 1;
 const newId = () => seq++;
 
 function emptyData() {
-  return { v: 3, updatedAt: 0, db: {}, objetivos: [], rendas: {}, periodos: {}, rulePcts: { ...DEFAULT_RULE }, conexoes: [], contas: [], regras: [] };
+  return { v: 3, updatedAt: 0, db: {}, objetivos: [], rendas: {}, periodos: {}, rulePcts: { ...DEFAULT_RULE }, conexoes: [], contas: [], regras: [], transf: [] };
 }
 function hasAnyData(d) {
   return Object.values(d.db).some((l) => l.length) || d.objetivos.length || Object.values(d.rendas).some((l) => l.length);
@@ -1358,7 +1373,19 @@ function normalizeData(d) {
   // Contas bancárias/cartões: { id, nome, tipo: 'conta'|'cartao'|'invest', ext: [ids de conta da Pluggy] }
   const seenCt = new Set();
   out.contas = (Array.isArray(d.contas) ? d.contas : []).filter((c) => c && str(c.id) && !seenCt.has(str(c.id)) && seenCt.add(str(c.id)))
-    .map((c) => ({ id: str(c.id), nome: str(c.nome) || 'Conta', tipo: CONTA_TIPOS[c.tipo] ? c.tipo : 'conta', ext: (Array.isArray(c.ext) ? c.ext : []).map(str).filter(Boolean) }));
+    .map((c) => {
+      const o = { id: str(c.id), nome: str(c.nome) || 'Conta', tipo: CONTA_TIPOS[c.tipo] ? c.tipo : 'conta', ext: (Array.isArray(c.ext) ? c.ext : []).map(str).filter(Boolean) };
+      if (c.saldoIni != null && isFinite(+c.saldoIni)) o.saldoIni = round2(+c.saldoIni);        // saldo antes dos lançamentos do app
+      if (c.saldoBanco != null && isFinite(+c.saldoBanco)) { o.saldoBanco = round2(+c.saldoBanco); o.saldoEm = isISO(c.saldoEm) ? c.saldoEm : ''; }   // saldo real vindo do Open Finance
+      return o;
+    });
+  // Transferências entre contas (não contam como gasto nem entrada): { id, date, de, para, val, desc }
+  const usedTf = new Set();
+  out.transf = (Array.isArray(d.transf) ? d.transf : []).filter((t) => t && typeof t === 'object' && num(t.val) > 0).map((t) => {
+    const tf = { id: see(t.id), date: isISO(t.date) ? t.date : '', de: str(t.de), para: str(t.para), val: round2(num(t.val)), desc: str(t.desc) };
+    if (!tf.id || usedTf.has(tf.id)) fixIds.push(tf); else usedTf.add(tf.id);
+    return tf;
+  });
   // Regras lembradas na importação: { k: chave da descrição, kind: 'out'|'in', cat }
   const seenRg = new Set();
   out.regras = (Array.isArray(d.regras) ? d.regras : []).filter((r) => r && str(r.k) && str(r.cat) && (r.kind === 'in' || r.kind === 'out'))
@@ -1405,14 +1432,14 @@ function migrateLegacy(raw) {
 function serialize() {
   return {
     v: 3, updatedAt: data.updatedAt, db: data.db, objetivos: data.objetivos,
-    meta: { rendas: data.rendas, periodos: data.periodos, rulePcts: data.rulePcts, conexoes: data.conexoes, contas: data.contas, regras: data.regras }
+    meta: { rendas: data.rendas, periodos: data.periodos, rulePcts: data.rulePcts, conexoes: data.conexoes, contas: data.contas, regras: data.regras, transf: data.transf }
   };
 }
 function deserialize(raw) {
   if (!raw) return null;
   if (isLegacy(raw)) return migrateLegacy(raw);
   const meta = raw.meta || {};
-  return normalizeData({ updatedAt: raw.updatedAt, db: raw.db, objetivos: raw.objetivos, rendas: meta.rendas, periodos: meta.periodos, rulePcts: meta.rulePcts, conexoes: meta.conexoes, contas: meta.contas, regras: meta.regras });
+  return normalizeData({ updatedAt: raw.updatedAt, db: raw.db, objetivos: raw.objetivos, rendas: meta.rendas, periodos: meta.periodos, rulePcts: meta.rulePcts, conexoes: meta.conexoes, contas: meta.contas, regras: meta.regras, transf: meta.transf });
 }
 
 /* ─── Consultas e cálculos ─────────────────────────────────────────── */
@@ -1965,6 +1992,7 @@ const VIEWS = {
   budget: { hash: 'orcamento', title: 'Orçamento' },
   tx: { hash: 'lancamentos', title: 'Lançamentos' },
   goals: { hash: 'metas', title: 'Metas' },
+  contas: { hash: 'contas', title: 'Contas' },
   reports: { hash: 'relatorios', title: 'Relatórios' }
 };
 const ui = {
@@ -2039,7 +2067,7 @@ function renderView() {
   const el = $('#content');
   destroyCharts();
   if (!booted) { el.innerHTML = skeletonHTML(); return; }
-  const fn = { home: viewHome, budget: viewBudget, tx: viewTx, goals: viewGoals, reports: viewReports }[ui.view];
+  const fn = { home: viewHome, budget: viewBudget, tx: viewTx, goals: viewGoals, contas: viewContas, reports: viewReports }[ui.view];
   el.innerHTML = `<div class="view">${fn()}</div>`;
   if (ui.view === 'reports') renderReportCharts();
 }
@@ -2128,6 +2156,7 @@ function viewHome() {
       <div class="hero-side">${heroSide}</div>
     </section>
     <div class="section">${insightHTML(buildInsights(s, k))}</div>
+    ${contasMiniHTML()}
     ${ruleSection(s)}
     <div class="grid-2 section">
       <section class="card card-pad">
@@ -2391,6 +2420,176 @@ function txListHTML(k) {
   return head + [...groups.entries()].map(([d, items]) => `<div class="day-group">
     <div class="day-head"><span>${esc(fmtDay(d))}</span><span>${money(sum(items.filter((t) => !isNeutral(t.tipo)), (t) => t.val))}</span></div>
     <div class="card day-card">${items.map((t) => txRowHTML(t, k)).join('')}</div></div>`).join('');
+}
+
+/* ─── Contas: saldos, caixinhas, faturas e transferências ─────────── */
+const CONTA_ICON = { conta: 'bank', cartao: 'wallet', invest: 'coins' };
+/** Movimento de uma conta; com k, só naquele mês. */
+function contaMov(id, k) {
+  let ins = 0, outs = 0, tin = 0, tout = 0;
+  Object.entries(data.rendas).forEach(([mk, l]) => { if (!k || mk === k) l.forEach((e) => { if (e.conta === id) ins += e.val; }); });
+  Object.entries(data.db).forEach(([mk, l]) => { if (!k || mk === k) l.forEach((c) => c.transactions.forEach((t) => { if (t.conta === id) outs += t.val; })); });
+  data.transf.forEach((t) => {
+    if (k && (t.date || '').slice(0, 7) !== k) return;
+    if (t.para === id) tin += t.val;
+    if (t.de === id) tout += t.val;
+  });
+  return { ins: round2(ins), outs: round2(outs), tin: round2(tin), tout: round2(tout) };
+}
+/** Saldo: o real do banco (Open Finance) ou calculado a partir do saldo inicial. Cartão fica negativo quando há fatura. */
+function contaSaldo(c) {
+  if (c.saldoBanco != null) return { val: c.tipo === 'cartao' ? -c.saldoBanco : c.saldoBanco, banco: true, em: c.saldoEm };
+  const m = contaMov(c.id);
+  const base = c.tipo === 'cartao' ? -(c.saldoIni || 0) : (c.saldoIni || 0);
+  return { val: round2(base + m.ins - m.outs + m.tin - m.tout), banco: false };
+}
+function contasResumo() {
+  const r = { contas: 0, guardado: 0, faturas: 0 };
+  data.contas.forEach((c) => {
+    const v = contaSaldo(c).val;
+    if (c.tipo === 'cartao') r.faturas += Math.max(-v, 0);
+    else if (c.tipo === 'invest') r.guardado += v;
+    else r.contas += v;
+  });
+  Object.keys(r).forEach((x) => { r[x] = round2(r[x]); });
+  r.liquido = round2(r.contas + r.guardado - r.faturas);
+  return r;
+}
+function contaCardHTML(c, k) {
+  const s = contaSaldo(c), m = contaMov(c.id, k);
+  const card = c.tipo === 'cartao';
+  const lbl = card ? (s.val <= 0 ? 'Fatura em aberto' : 'Crédito no cartão') : c.tipo === 'invest' ? 'Guardado' : 'Saldo';
+  const val = card ? Math.abs(s.val) : s.val;
+  const src = s.banco ? `${icon('refresh', 'i-xs')}Saldo do banco${s.em ? ' · ' + esc(fmtDateShort(s.em)) : ''}` : `Calculado pelos lançamentos${c.saldoIni == null ? ' · <button class="link-btn" data-act="conta-edit" data-id="' + esc(c.id) + '">definir saldo inicial</button>' : ''}`;
+  const monthBits = [];
+  if (m.ins) monthBits.push(`<span class="pos">+${money(m.ins)}</span> entradas`);
+  if (m.outs) monthBits.push(`<span>−${money(m.outs)}</span> ${card ? 'compras' : 'saídas'}`);
+  if (m.tin) monthBits.push(`<span class="pos">+${money(m.tin)}</span> ${card ? 'pagamentos' : 'recebido de contas'}`);
+  if (m.tout) monthBits.push(`<span>−${money(m.tout)}</span> transferido`);
+  return `<article class="card conta-card ${c.tipo}">
+    <div class="conta-head"><span class="conta-ic">${icon(CONTA_ICON[c.tipo] || 'bank')}</span><div><b>${esc(c.nome)}</b><span>${esc(CONTA_TIPOS[c.tipo])}</span></div>
+      <button class="icon-btn sm" data-act="conta-edit" data-id="${esc(c.id)}" title="Editar conta" aria-label="Editar ${esc(c.nome)}">${icon('edit', 'i-sm')}</button></div>
+    <div class="conta-lbl">${lbl}</div>
+    <div class="conta-val ${!card && s.val < 0 ? 'neg' : ''}">${money(val)}</div>
+    <div class="conta-src">${src}</div>
+    <div class="conta-month">${monthBits.length ? `Em ${esc(monthName(k))}: ${monthBits.join(' · ')}` : `Sem movimento em ${esc(monthName(k))}`}</div>
+    <div class="conta-actions">
+      ${c.tipo === 'invest' ? `<button class="btn btn-soft btn-sm" data-act="transfer" data-para="${esc(c.id)}">${icon('in', 'i-sm')}Guardar</button><button class="btn btn-ghost btn-sm" data-act="transfer" data-de="${esc(c.id)}">${icon('out', 'i-sm')}Resgatar</button>`
+        : card ? `<button class="btn btn-soft btn-sm" data-act="transfer" data-para="${esc(c.id)}">${icon('check', 'i-sm')}Pagar fatura</button>`
+        : `<button class="btn btn-soft btn-sm" data-act="transfer" data-de="${esc(c.id)}">${icon('repeat', 'i-sm')}Transferir</button>`}
+    </div>
+  </article>`;
+}
+function viewContas() {
+  const k = ui.month;
+  if (!data.contas.length) {
+    return `<section class="section card card-pad"><div class="empty"><div class="empty-icon">${icon('bank')}</div><h3>Cadastre suas contas</h3><p>Conta corrente, cartão de crédito e caixinhas/investimentos. Veja o saldo de cada uma, quanto está guardado e o total das faturas. Contas conectadas pelo Open Finance mostram o saldo real do banco.</p><div class="actions"><button class="btn btn-primary" data-act="conta-new">${icon('plus')}Nova conta</button><button class="btn btn-secondary" data-act="open-import" data-tab="bank">${icon('bank')}Conectar banco</button></div></div></section>`;
+  }
+  const r = contasResumo();
+  const kpis = `<div class="kpis">
+    <div class="card kpi"><div class="kpi-lbl">${icon('bank', 'i-sm')}Em contas</div><div class="kpi-val">${money(r.contas)}</div><div class="kpi-meta">Saldo das contas correntes</div></div>
+    <div class="card kpi"><div class="kpi-lbl">${icon('coins', 'i-sm')}Guardado</div><div class="kpi-val pos">${money(r.guardado)}</div><div class="kpi-meta">Caixinhas e investimentos</div></div>
+    <div class="card kpi"><div class="kpi-lbl">${icon('wallet', 'i-sm')}Faturas</div><div class="kpi-val">${money(r.faturas)}</div><div class="kpi-meta">Em aberto nos cartões</div></div>
+    <div class="card kpi"><div class="kpi-lbl">${icon('trend-up', 'i-sm')}Patrimônio</div><div class="kpi-val ${r.liquido < 0 ? 'neg' : ''}">${money(r.liquido)}</div><div class="kpi-meta">Contas + guardado − faturas</div></div>
+  </div>`;
+  const order = { conta: 0, invest: 1, cartao: 2 };
+  const cards = data.contas.slice().sort((a, b) => order[a.tipo] - order[b.tipo]).map((c) => contaCardHTML(c, ui.month)).join('');
+  const tfs = data.transf.filter((t) => (t.date || '').slice(0, 7) === k).sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.id - a.id);
+  const tfList = tfs.length ? tfs.map((t) => `<div class="tx-row" data-act="tf-edit" data-id="${t.id}" role="button" tabindex="0">
+      <span class="tx-ic T">${icon('repeat', 'i-sm')}</span>
+      <span class="tx-main"><div class="tx-desc">${esc(contaNome(t.de) || '—')} → ${esc(contaNome(t.para) || '—')}</div><div class="tx-meta">${esc(fmtDay(t.date))}${t.desc ? ' · ' + esc(t.desc) : ''}</div></span>
+      <span class="tx-val">${money(t.val, 'muted')}</span></div>`).join('')
+    : `<p class="muted" style="font-size:12.5px;margin:0">Nenhuma transferência em ${esc(monthName(k))}. Transferências não contam como gasto nem como entrada.</p>`;
+  return kpis + `<div class="toolbar"><span class="grow"></span>
+      <button class="btn btn-secondary btn-sm" data-act="conta-new">${icon('plus', 'i-sm')}Nova conta</button>
+      <button class="btn btn-primary btn-sm" data-act="transfer">${icon('repeat', 'i-sm')}Transferir</button></div>
+    <div class="conta-grid">${cards}</div>
+    <section class="section card card-pad"><div class="card-head"><div><div class="card-title">${icon('repeat')}Transferências de ${esc(monthName(k))}</div><div class="card-sub">Entre suas contas, caixinhas e pagamento de fatura</div></div></div>${tfList}</section>`;
+}
+function contasMiniHTML() {
+  if (!data.contas.length) return '';
+  const r = contasResumo();
+  return `<section class="section card card-pad contas-mini" data-act="go-contas" role="button" tabindex="0">
+    <div class="card-head" style="margin:0"><div><div class="card-title">${icon('bank')}Suas contas</div><div class="card-sub">Em contas <b>${money(r.contas)}</b> · Guardado <b class="pos">${money(r.guardado)}</b>${r.faturas ? ` · Faturas <b>${money(r.faturas)}</b>` : ''}</div></div><span class="link-btn">Ver contas ${icon('chev-r', 'i-xs')}</span></div>
+  </section>`;
+}
+
+/* Formulário de conta (nome, tipo, saldo inicial) */
+function openContaForm(id) {
+  const c = contaById(id);
+  const tipo = c ? c.tipo : 'conta';
+  const body = `<form data-form="conta" id="contaForm" data-id="${c ? esc(c.id) : ''}" autocomplete="off" novalidate>
+    <div class="field"><label for="ctNome">Nome</label><input class="input" id="ctNome" name="nome" maxlength="40" value="${esc(c ? c.nome : '')}" placeholder="Ex.: Nubank, Caixinha Viagem" autofocus></div>
+    <div class="field"><label for="ctTipo">Tipo</label><select class="input" id="ctTipo" name="tipo" data-change="conta-form-tipo">${Object.entries(CONTA_TIPOS).map(([v, l]) => `<option value="${v}" ${v === tipo ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    ${c && c.saldoBanco != null
+      ? `<div class="notice">${icon('refresh')}<div>O saldo desta conta vem direto do banco pelo Open Finance e é atualizado a cada busca.</div></div>`
+      : `<div class="field"><label for="ctSaldo" id="ctSaldoLbl">${tipo === 'cartao' ? 'Fatura em aberto antes dos lançamentos do app' : 'Saldo antes dos lançamentos do app'}</label><input class="input input-money" id="ctSaldo" name="saldo" inputmode="decimal" placeholder="R$ 0,00" value="${c && c.saldoIni != null ? moneyInput(c.saldoIni) : ''}"><span class="hint">A partir dele, o app soma entradas e transferências recebidas e desconta gastos e transferências enviadas desta conta.</span></div>`}
+  </form>`;
+  openModal({
+    id: 'conta', title: c ? 'Editar conta' : 'Nova conta', width: 440, body,
+    foot: `${c ? `<button type="button" class="btn btn-danger shrink" data-act="conta-del" data-id="${esc(c.id)}" title="Excluir conta" aria-label="Excluir conta">${icon('trash', 'i-sm')}</button>` : ''}<button type="button" class="btn btn-ghost" data-close>Cancelar</button><button type="submit" class="btn btn-primary" form="contaForm">Salvar</button>`
+  });
+}
+function saveContaForm(f) {
+  const nome = str(f.nome.value);
+  if (!nome) return markInvalid(f.nome, 'Dê um nome para a conta');
+  let c = contaById(f.dataset.id);
+  if (!c) c = createConta(nome, f.tipo.value);
+  c.nome = nome.slice(0, 40);
+  c.tipo = CONTA_TIPOS[f.tipo.value] ? f.tipo.value : 'conta';
+  if (f.saldo) {
+    const raw = f.saldo.value.trim();
+    if (!raw) delete c.saldoIni;
+    else { const v = parseMoney(raw); if (isNaN(v)) return markInvalid(f.saldo, 'Valor inválido'); c.saldoIni = v; }
+  }
+  save(); closeModal('conta'); renderAll(); if (isOpen('settings')) reopenSettings();
+  toast(`Conta ${c.nome} salva`);
+}
+
+/* Transferência entre contas */
+function openTransfer(opts = {}) {
+  if (data.contas.length < 2) { toast('Cadastre pelo menos duas contas para transferir', 'warn'); openContaForm(); return; }
+  const t = opts.id ? data.transf.find((x) => x.id === opts.id) : null;
+  const de = t ? t.de : opts.de || '', para = t ? t.para : opts.para || '';
+  const paraC = contaById(para);
+  const sub = paraC && paraC.tipo === 'cartao' ? 'Pagamento de fatura' : paraC && paraC.tipo === 'invest' ? 'Guardar na caixinha' : '';
+  const body = `<form data-form="transf" id="transfForm" data-id="${t ? t.id : ''}" autocomplete="off" novalidate>
+    <div class="row-2 keep">
+      <div class="field"><label for="tfDe">De</label><select class="input" id="tfDe" name="de">${contaOptions(de, { none: 'Escolha a conta' })}</select></div>
+      <div class="field"><label for="tfPara">Para</label><select class="input" id="tfPara" name="para">${contaOptions(para, { none: 'Escolha a conta' })}</select></div>
+    </div>
+    <div class="row-2 keep">
+      <div class="field"><label for="tfVal">Valor</label><input class="input input-money" id="tfVal" name="val" inputmode="decimal" placeholder="R$ 0,00" value="${t ? moneyInput(t.val) : ''}" autofocus></div>
+      <div class="field"><label for="tfDate">Data</label><input class="input" type="date" id="tfDate" name="date" value="${t ? esc(t.date) : todayISO()}"></div>
+    </div>
+    <div class="field"><label for="tfDesc">Descrição <span class="opt">(opcional)</span></label><input class="input" id="tfDesc" name="desc" maxlength="80" value="${esc(t ? t.desc : sub)}" placeholder="Ex.: reserva de emergência"></div>
+    <p class="hint">Transferências não contam como gasto nem como entrada — só mudam o dinheiro de lugar.</p>
+  </form>`;
+  openModal({
+    id: 'transf', title: t ? 'Editar transferência' : 'Transferir entre contas', width: 460, body,
+    foot: `${t ? `<button type="button" class="btn btn-danger shrink" data-act="tf-del" data-id="${t.id}" title="Excluir" aria-label="Excluir transferência">${icon('trash', 'i-sm')}</button>` : ''}<button type="button" class="btn btn-ghost" data-close>Cancelar</button><button type="submit" class="btn btn-primary" form="transfForm">${icon('check', 'i-sm')}Salvar</button>`
+  });
+}
+function saveTransfForm(f) {
+  const de = f.de.value, para = f.para.value;
+  if (!contaById(de)) return markInvalid(f.de, 'Escolha a conta de origem');
+  if (!contaById(para)) return markInvalid(f.para, 'Escolha a conta de destino');
+  if (de === para) return markInvalid(f.para, 'Escolha uma conta diferente');
+  const val = parseMoney(f.val.value);
+  if (!(val > 0)) return markInvalid(f.val, 'Informe um valor maior que zero');
+  const fields = { date: isISO(f.date.value) ? f.date.value : todayISO(), de, para, val, desc: str(f.desc.value) };
+  const cur = data.transf.find((x) => x.id === +f.dataset.id);
+  if (cur) Object.assign(cur, fields); else data.transf.push({ id: newId(), ...fields });
+  save(); closeModal('transf'); renderAll();
+  toast(`${fmt(val)}: ${contaNome(de)} → ${contaNome(para)}`);
+}
+function deleteTransf(id) {
+  const t = data.transf.find((x) => x.id === id);
+  if (!t) return;
+  const snap = snapshot();
+  data.transf = data.transf.filter((x) => x !== t);
+  save(); closeModal('transf'); renderAll();
+  undoToast('Transferência excluída', snap);
 }
 
 /* ─── Metas ────────────────────────────────────────────────────────── */
@@ -2771,6 +2970,7 @@ function userMenuHTML() {
   return `<div class="menu-head"><span class="avatar" data-avatar>${fbUser && fbUser.photoURL ? `<img src="${esc(fbUser.photoURL)}" alt="" referrerpolicy="no-referrer" style="width:100%;height:100%;border-radius:50%">` : esc(name[0] || '?')}</span><div style="min-width:0"><b>${esc(name)}</b><span>${esc(fbUser ? fbUser.email : '')}</span></div></div>
     ${isPremium ? `<div style="padding:0 10px 8px"><span class="tag pos">${icon('star')}Premium ativo</span></div>` : ''}
     <div class="menu-sep"></div>
+    <button class="menu-item" data-act="go-contas">${icon('bank')}Contas</button>
     <button class="menu-item" data-act="go-reports">${icon('chart')}Relatórios</button>
     <button class="menu-item" data-act="open-import">${icon('upload')}Importar extrato</button>
     <button class="menu-item" data-act="open-settings">${icon('settings')}Configurações</button>
@@ -3461,12 +3661,13 @@ function reopenSettings() { const el = $('#m-settings .modal-body'); const top =
 async function deleteConta(id) {
   const c = contaById(id);
   if (!c) return;
-  const ok = await confirmDialog({ title: `Excluir ${c.nome}?`, text: 'Os lançamentos continuam no app, só deixam de estar ligados a essa conta.', confirm: 'Excluir', danger: true });
+  const ok = await confirmDialog({ title: `Excluir ${c.nome}?`, text: 'Os lançamentos continuam no app, só deixam de estar ligados a essa conta. As transferências dessa conta são apagadas.', confirm: 'Excluir', danger: true });
   if (!ok) return;
   data.contas = data.contas.filter((x) => x.id !== id);
   Object.values(data.db).forEach((l) => l.forEach((cat) => cat.transactions.forEach((t) => { if (t.conta === id) delete t.conta; })));
   Object.values(data.rendas).forEach((l) => l.forEach((e) => { if (e.conta === id) delete e.conta; }));
-  save(); renderAll(); reopenSettings();
+  data.transf = data.transf.filter((t) => t.de !== id && t.para !== id);
+  save(); closeModal('conta'); renderAll(); if (isOpen('settings')) reopenSettings();
   toast(`${c.nome} excluída`);
 }
 function openSettings() {
@@ -3856,6 +4057,8 @@ function resolveImportAccounts() {
       const c = contaById(v);
       if (c) { if (!c.ext.includes(acc)) c.ext.push(acc); byAcc[acc] = c.id; }
     }
+    const c = contaById(byAcc[acc]);
+    if (c && imp.accBal && acc in imp.accBal) { c.saldoBanco = imp.accBal[acc]; c.saldoEm = todayISO(); }
   });
   let fileConta = '';
   if (imp.conta === '__new') {
@@ -4020,7 +4223,8 @@ async function fetchBankItems() {
   if (inp && isISO(inp.value)) imp.from = inp.value;
   if (!isISO(imp.from)) throw new Error('Escolha a data inicial');
   const items = [], problems = [];
-  imp.synced = [];
+  let balUpdated = false;
+  imp.synced = []; imp.accBal = {};
   const n = data.conexoes.length;
   setBankBusy(true, n > 1 ? `Buscando lançamentos de ${n} bancos…` : `Buscando lançamentos de ${data.conexoes[0].nome}…`);
   try {
@@ -4028,6 +4232,11 @@ async function fetchBankItems() {
       try {
         const d = await apiFetch('/api/pluggy/transactions', { method: 'POST', body: JSON.stringify({ itemId: c.id, from: imp.from }) });
         if (d.item && d.item.name) c.nome = d.item.name;
+        (d.accounts || []).forEach((a) => {
+          const ct = data.contas.find((x) => x.ext.includes(a.id));
+          if (ct) { ct.saldoBanco = round2(num(a.balance)); ct.saldoEm = todayISO(); balUpdated = true; }
+          else imp.accBal[a.id] = round2(num(a.balance));
+        });
         const txs = d.transactions || [];
         if (d.item && /LOGIN_ERROR|OUTDATED|WAITING_USER_INPUT/.test(d.item.status)) problems.push(`${c.nome} precisa ser reconectado`);
         if (d.updating && !txs.length) { problems.push(`${c.nome} ainda está sincronizando com o banco, tente de novo em alguns minutos`); return; }
@@ -4042,6 +4251,7 @@ async function fetchBankItems() {
     }));
   } finally { imp.busy = false; imp.status = ''; }
   items.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  if (balUpdated) save();   // saldos das contas já vinculadas valem mesmo sem importar
   if (!imp.synced.length) throw new Error(problems.join(' · ') || 'Não foi possível buscar os lançamentos');
   if (problems.length) toast(problems.join(' · '), 'warn');
   return items;
@@ -4288,6 +4498,12 @@ const ACTIONS = {
   'go-tx': () => go('tx'),
   'go-goals': () => go('goals'),
   'go-reports': () => { closePopover(); go('reports'); },
+  'go-contas': () => { closePopover(); go('contas'); },
+  'conta-new': () => openContaForm(),
+  'conta-edit': (el) => openContaForm(el.dataset.id),
+  transfer: (el) => openTransfer({ de: el.dataset.de, para: el.dataset.para }),
+  'tf-edit': (el) => openTransfer({ id: +el.dataset.id }),
+  'tf-del': (el) => deleteTransf(+el.dataset.id),
   'sort-worst': () => { ui.sort = 'diff_worst'; LS.set('fin-sort', ui.sort); ui.tipoFilter = 'all'; go('budget'); },
   'filter-D': () => { ui.tipoFilter = 'D'; go('budget'); },
   'filter-O': () => { ui.tipoFilter = 'O'; go('budget'); },
@@ -4360,7 +4576,7 @@ const ACTIONS = {
   },
 
   // importação
-  'open-import': () => { closePopover(); openImport(); },
+  'open-import': (el) => { closePopover(); openImport(el && el.dataset.tab); },
   'imp-tab': (el) => { if (imp.busy) return; imp.tab = el.dataset.tab; imp.files = []; refreshImport(); },
   'imp-process': () => processImport(),
   'imp-back': () => { imp.step = 1; refreshImport(); },
@@ -4406,6 +4622,8 @@ const FORMS = {
   rule: (f) => saveRuleForm(f),
   goal: (f) => saveGoalForm(f),
   aporte: (f) => saveAporteForm(f),
+  conta: (f) => saveContaForm(f),
+  transf: (f) => saveTransfForm(f),
   ai: (f) => {
     const key = f.key.value.trim(), model = f.model.value.trim() || AI_DEFAULT_MODEL;
     if (key) LS.set('fin-ai-key', key); else LS.del('fin-ai-key');
@@ -4432,6 +4650,7 @@ const CHANGES = {
   'tx-sort': (el) => { ui.txSort = el.value; $('#txList').innerHTML = txListHTML(ui.month); },
   'conta-pick': (el) => { const box = el.closest('.conta-field').querySelector('[name="contaNova"]').closest('.field'); box.hidden = el.value !== '__new'; if (!box.hidden) box.querySelector('input').focus(); },
   'conta-rename': (el) => { const c = contaById(el.dataset.id); const v = str(el.value); if (c && v) { c.nome = v.slice(0, 40); save(); renderAll(); } else if (c) el.value = c.nome; },
+  'conta-form-tipo': (el) => { const l = $('#ctSaldoLbl'); if (l) l.textContent = el.value === 'cartao' ? 'Fatura em aberto antes dos lançamentos do app' : 'Saldo antes dos lançamentos do app'; },
   'conta-tipo': (el) => { const c = contaById(el.dataset.id); if (c && CONTA_TIPOS[el.value]) { c.tipo = el.value; save(); } },
   'tx-conta': (el) => { ui.txConta = el.value; $('#txList').innerHTML = txListHTML(ui.month); },
   privacy: (el) => togglePrivacy(el.checked),

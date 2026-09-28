@@ -62,6 +62,8 @@ module.exports = handler(['POST'], async (req) => {
     item: { ...itemSummary(item), name: connectionName(item, accounts) },
     // Logo após conectar a Pluggy ainda está copiando os dados do banco
     updating: item.status === 'UPDATING' || (!accounts.length && !item.lastUpdatedAt),
+    // Saldo atual de cada conta (no cartão, é o valor da fatura em aberto)
+    accounts: accounts.map((a) => ({ id: a.id, name: a.marketingName || a.name || '', type: a.type, balance: Number(a.balance) || 0 })),
     transactions: perAccount.flat()
   };
 });
