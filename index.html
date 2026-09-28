@@ -221,6 +221,7 @@ textarea.input { resize: vertical; min-height: 120px; line-height: 1.55; }
 .seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow-xs), 0 0 0 1px var(--border); }
 .seg.block { display: flex; }
 .seg.block button { flex: 1; justify-content: center; }
+.seg.block.imp-tabs button { flex: 1 1 auto; white-space: nowrap; }
 .seg .dot { width: 8px; height: 8px; border-radius: 50%; }
 
 /* Switch */
@@ -1256,7 +1257,7 @@ let seq = 1;
 const newId = () => seq++;
 
 function emptyData() {
-  return { v: 3, updatedAt: 0, db: {}, objetivos: [], rendas: {}, periodos: {}, rulePcts: { ...DEFAULT_RULE } };
+  return { v: 3, updatedAt: 0, db: {}, objetivos: [], rendas: {}, periodos: {}, rulePcts: { ...DEFAULT_RULE }, conexoes: [] };
 }
 function hasAnyData(d) {
   return Object.values(d.db).some((l) => l.length) || d.objetivos.length || Object.values(d.rendas).some((l) => l.length);
@@ -1292,6 +1293,7 @@ function normalizeData(d) {
       const usedTx = new Set();
       cat.transactions = txs.filter((t) => t && typeof t === 'object').map((t) => {
         const tx = { id: see(t.id), desc: str(t.desc), val: round2(num(t.val)), date: isISO(t.date) ? t.date : '' };
+        if (str(t.ext)) tx.ext = str(t.ext);
         if (!tx.id || usedTx.has(tx.id)) fixIds.push(tx); else usedTx.add(tx.id);
         return tx;
       });
@@ -1305,6 +1307,7 @@ function normalizeData(d) {
     const used = new Set();
     const list = (Array.isArray(arr) ? arr : []).filter((e) => e && typeof e === 'object').map((e) => {
       const it = { id: see(e.id), desc: str(e.desc), val: round2(num(e.val)) };
+      if (str(e.ext)) it.ext = str(e.ext);
       if (!it.id || used.has(it.id)) fixIds.push(it); else used.add(it.id);
       return it;
     }).filter((e) => e.val || e.desc);
@@ -1331,6 +1334,11 @@ function normalizeData(d) {
     if (!g.id || usedG.has(g.id)) fixIds.push(g); else usedG.add(g.id);
     return g;
   });
+
+  // Bancos conectados via Open Finance (Pluggy): { id: itemId, nome, sync: 'AAAA-MM-DD' }
+  const seenCx = new Set();
+  out.conexoes = (Array.isArray(d.conexoes) ? d.conexoes : []).filter((c) => c && str(c.id) && !seenCx.has(str(c.id)) && seenCx.add(str(c.id)))
+    .map((c) => ({ id: str(c.id), nome: str(c.nome) || 'Banco', sync: isISO(c.sync) ? c.sync : '' }));
 
   seq = Math.max(seq, maxId + 1);
   fixIds.forEach((o) => { o.id = newId(); });
@@ -1372,14 +1380,14 @@ function migrateLegacy(raw) {
 function serialize() {
   return {
     v: 3, updatedAt: data.updatedAt, db: data.db, objetivos: data.objetivos,
-    meta: { rendas: data.rendas, periodos: data.periodos, rulePcts: data.rulePcts }
+    meta: { rendas: data.rendas, periodos: data.periodos, rulePcts: data.rulePcts, conexoes: data.conexoes }
   };
 }
 function deserialize(raw) {
   if (!raw) return null;
   if (isLegacy(raw)) return migrateLegacy(raw);
   const meta = raw.meta || {};
-  return normalizeData({ updatedAt: raw.updatedAt, db: raw.db, objetivos: raw.objetivos, rendas: meta.rendas, periodos: meta.periodos, rulePcts: meta.rulePcts });
+  return normalizeData({ updatedAt: raw.updatedAt, db: raw.db, objetivos: raw.objetivos, rendas: meta.rendas, periodos: meta.periodos, rulePcts: meta.rulePcts, conexoes: meta.conexoes });
 }
 
 /* ─── Consultas e cálculos ─────────────────────────────────────────── */
@@ -3450,15 +3458,16 @@ function restoreBackup(file) {
 */
 let imp = null;
 function openImport(tab) {
-  imp = { tab: tab || 'file', files: [], items: [], target: 'auto', invertible: false, busy: false, step: 1 };
+  imp = { tab: tab || 'file', files: [], items: [], target: 'auto', invertible: false, busy: false, step: 1, from: bankDefaultFrom() };
   openModal({ id: 'import', title: 'Importar extrato', sub: 'Traga seus lançamentos do banco em poucos cliques', width: 680, body: importStep1HTML(), foot: importFootHTML() });
 }
 function importStep1HTML() {
   const t = imp.tab;
-  const tabs = `<div class="seg block" role="tablist" style="margin-bottom:16px">
+  const tabs = `<div class="seg block imp-tabs" role="tablist" style="margin-bottom:16px">
     <button type="button" data-act="imp-tab" data-tab="file" aria-pressed="${t === 'file'}">${icon('file', 'i-sm')}Arquivo OFX / CSV</button>
     <button type="button" data-act="imp-tab" data-tab="text" aria-pressed="${t === 'text'}">${icon('list', 'i-sm')}Colar texto</button>
     <button type="button" data-act="imp-tab" data-tab="ai" aria-pressed="${t === 'ai'}">${icon('sparkles', 'i-sm')}PDF com IA</button>
+    <button type="button" data-act="imp-tab" data-tab="bank" aria-pressed="${t === 'bank'}">${icon('bank', 'i-sm')}Conectar banco</button>
   </div>`;
   let content = '';
   if (t === 'file') {
@@ -3470,6 +3479,8 @@ function importStep1HTML() {
     content = `<div class="field"><label for="impText">Cole o texto com categorias e valores</label>
       <textarea class="input" id="impText" rows="9" placeholder="Receitas: Salário R$ 3.000, Freela R$ 500\nMercado: Assaí R$ 233,50, padaria R$ 15\nAssinaturas: Netflix R$ 39,90; Spotify R$ 21,90\n05/09 Uber R$ 18,40">${esc(imp.text || '')}</textarea>
       <span class="hint">Formato livre: <b>Categoria: item valor, item valor</b>. Linhas sem categoria são classificadas automaticamente. Aceita “R$ 1.234,56”, “33.50” e datas como 05/09.</span></div>`;
+  } else if (t === 'bank') {
+    content = bankTabHTML();
   } else {
     const key = LS.get('fin-ai-key');
     content = (key ? '' : `<div class="notice warn">${icon('alert')}<div>Para usar a IA, adicione sua chave do OpenRouter em <button type="button" class="link-btn" data-act="open-settings">Configurações</button>. Sem chave? Use a aba <b>Arquivo OFX/CSV</b> — funciona sem IA.</div></div>`)
@@ -3489,8 +3500,10 @@ function importFootHTML() {
     const sel = imp.items.filter((i) => i.include);
     return `<button type="button" class="btn btn-ghost shrink" data-act="imp-back">${icon('chev-l', 'i-sm')}Voltar</button><button type="button" class="btn btn-primary" data-act="imp-commit" ${sel.length ? '' : 'disabled'}>${icon('check', 'i-sm')}Importar ${plural(sel.length, 'item', 'itens')}</button>`;
   }
-  const label = imp.tab === 'ai' ? (imp.busy ? 'Processando…' : 'Processar com IA') : 'Revisar lançamentos';
-  return `<button type="button" class="btn btn-ghost shrink" data-close>Cancelar</button><button type="button" class="btn btn-primary" data-act="imp-process" ${imp.busy ? 'disabled' : ''}>${icon(imp.tab === 'ai' ? 'sparkles' : 'chev-r', 'i-sm')}${label}</button>`;
+  const label = imp.tab === 'ai' ? (imp.busy ? 'Processando…' : 'Processar com IA')
+    : imp.tab === 'bank' ? (imp.busy ? 'Buscando…' : 'Buscar lançamentos') : 'Revisar lançamentos';
+  const off = imp.busy || (imp.tab === 'bank' && !(fbUser && data.conexoes.length));
+  return `<button type="button" class="btn btn-ghost shrink" data-close>Cancelar</button><button type="button" class="btn btn-primary" data-act="imp-process" ${off ? 'disabled' : ''}>${icon(imp.tab === 'ai' ? 'sparkles' : imp.tab === 'bank' ? 'refresh' : 'chev-r', 'i-sm')}${label}</button>`;
 }
 function refreshImport() {
   if (!isOpen('import')) return;
@@ -3517,6 +3530,9 @@ async function processImport() {
       if (!imp.files.length) { toast('Escolha ao menos um arquivo', 'error'); return; }
       for (const f of imp.files) items = items.concat(await parseStatementFile(f));
       imp.invertible = items.some((i) => i.fromCsv);
+    } else if (imp.tab === 'bank') {
+      items = await fetchBankItems();
+      imp.invertible = false;
     } else {
       if (!imp.files.length) { toast('Escolha ao menos um PDF', 'error'); return; }
       if (!LS.get('fin-ai-key')) { toast('Configure sua chave do OpenRouter primeiro', 'error'); openSettings(); return; }
@@ -3564,10 +3580,12 @@ function prepareItems(items) {
 }
 function itemMonth(it) { return imp.target === 'auto' && isISO(it.date) ? it.date.slice(0, 7) : (imp.target === 'auto' ? ui.month : imp.target); }
 function markDuplicates() {
+  _extIndex = null;
   imp.items.forEach((it) => {
     const k = itemMonth(it);
     let dup = false;
-    if (it.kind === 'out') dup = allTx(k).some((t) => Math.abs(t.val - it.val) < 0.005 && ((it.date && t.date === it.date) || norm(t.desc) === norm(it.desc)));
+    if (it.ext && isImportedExt(it.ext)) dup = true;
+    else if (it.kind === 'out') dup = allTx(k).some((t) => Math.abs(t.val - it.val) < 0.005 && ((it.date && t.date === it.date) || norm(t.desc) === norm(it.desc)));
     else dup = incomes(k).some((e) => Math.abs(e.val - it.val) < 0.005 && norm(e.desc) === norm(it.desc));
     if (dup && !it.dup) it.include = false;
     it.dup = dup;
@@ -3664,21 +3682,155 @@ function commitImport() {
     const k = itemMonth(it);
     months.add(k);
     if (it.kind === 'in') {
-      (data.rendas[k] || (data.rendas[k] = [])).push({ id: newId(), desc: it.desc || 'Entrada', val: it.val });
+      (data.rendas[k] || (data.rendas[k] = [])).push({ id: newId(), desc: it.desc || 'Entrada', val: it.val, ...(it.ext ? { ext: it.ext } : {}) });
       nIn++;
     } else {
       const name = str(it.cat);
       let c = findCatByName(k, name);
       if (!c) { c = { id: newId(), cat: name, plan: null, banco: '', tipo: it.tipo || '', done: false, fixa: false, transactions: [] }; catsMut(k).push(c); }
-      c.transactions.push({ id: newId(), desc: it.desc, val: it.val, date: isISO(it.date) ? it.date : '' });
+      c.transactions.push({ id: newId(), desc: it.desc, val: it.val, date: isISO(it.date) ? it.date : '', ...(it.ext ? { ext: it.ext } : {}) });
       nOut++;
     }
   });
+  if (imp.tab === 'bank' && imp.synced) data.conexoes.forEach((c) => { if (imp.synced.includes(c.id)) c.sync = todayISO(); });
+  _extIndex = null;
   save({ immediate: true });
   closeModal('import');
   const ms = [...months].sort();
   if (ms.length === 1 && ms[0] !== ui.month) setMonth(ms[0]); else renderAll();
   undoToast(`${plural(nOut, 'saída importada', 'saídas importadas')}${nIn ? ` e ${plural(nIn, 'entrada', 'entradas')}` : ''} em ${ms.map(monthShortLabel).join(', ')}`, snap);
+}
+
+/* ─── Open Finance (Pluggy) ────────────────────────────────────────── */
+/*
+  O segredo da Pluggy fica só no servidor (funções em /api/pluggy, na Vercel).
+  O app pede um token de conexão, abre o widget Pluggy Connect e guarda o
+  itemId em data.conexoes. Cada transação importada leva "ext" = id da Pluggy,
+  para não entrar duas vezes em sincronizações seguintes.
+*/
+const PLUGGY_CONNECT_JS = 'https://cdn.pluggy.ai/pluggy-connect/v2.8.2/pluggy-connect.js';
+let _extIndex = null;
+function isImportedExt(ext) {
+  if (!_extIndex) {
+    _extIndex = new Set();
+    Object.values(data.db).forEach((l) => l.forEach((c) => c.transactions.forEach((t) => { if (t.ext) _extIndex.add(t.ext); })));
+    Object.values(data.rendas).forEach((l) => l.forEach((e) => { if (e.ext) _extIndex.add(e.ext); }));
+  }
+  return _extIndex.has(ext);
+}
+function bankDefaultFrom() {
+  const syncs = (data.conexoes || []).map((c) => c.sync).filter(isISO).sort();
+  const d = new Date();
+  if (syncs.length) { const [y, m, dd] = syncs[0].split('-').map(Number); d.setFullYear(y, m - 1, dd - 5); }   // margem para lançamentos que chegam atrasados
+  else d.setMonth(d.getMonth() - 1, 1);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+function bankTabHTML() {
+  if (!fbUser) return `<div class="notice warn">${icon('alert')}<div>Entre com sua conta Google para conectar seu banco.</div></div>`;
+  const list = data.conexoes.map((c) => `<div>${icon('bank', 'i-sm')}<b>${esc(c.nome)}</b>
+      <span class="muted" style="margin-left:auto">${c.sync ? 'sincronizado em ' + esc(fmtDateShort(c.sync)) : 'ainda não sincronizado'}</span>
+      <button type="button" class="icon-btn sm" data-act="of-reconnect" data-id="${esc(c.id)}" title="Reconectar (se o banco pedir nova autorização)" aria-label="Reconectar ${esc(c.nome)}" ${imp.busy ? 'disabled' : ''}>${icon('refresh', 'i-sm')}</button>
+      <button type="button" class="icon-btn sm" data-act="of-remove" data-id="${esc(c.id)}" title="Desconectar" aria-label="Desconectar ${esc(c.nome)}" ${imp.busy ? 'disabled' : ''}>${icon('trash', 'i-sm')}</button></div>`).join('');
+  return `<div class="notice">${icon('shield')}<div>Conecte sua conta pelo <b>Open Finance</b>, com autorização no app do seu banco. O Castelay só <b>lê</b> seus lançamentos e não consegue movimentar dinheiro. Você pode desconectar quando quiser.</div></div>
+    <div class="file-list">${list || '<div class="muted">Nenhum banco conectado ainda.</div>'}</div>
+    <div class="row-2" style="align-items:end;margin-top:12px">
+      <div class="field"><label for="impFrom">Buscar lançamentos desde</label><input class="input" type="date" id="impFrom" value="${esc(imp.from)}" max="${todayISO()}" data-change="of-from"></div>
+      <div class="field"><button type="button" class="btn btn-secondary" data-act="of-connect" ${imp.busy ? 'disabled' : ''}>${icon('plus', 'i-sm')}Conectar banco</button></div>
+    </div>
+    ${imp.busy ? `<div class="progress-line"><span></span></div><p class="hint" id="impStatus" style="margin-top:8px;text-align:center">${esc(imp.status || '')}</p>` : ''}`;
+}
+async function apiFetch(path, opts = {}, retry = true) {
+  const res = await fetch(path, { ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}), Authorization: 'Bearer ' + fbIdToken } });
+  if (res.status === 401 && retry && LS.get('fbSession') && await doTokenRefresh()) return apiFetch(path, opts, false);
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(d.error || (res.status === 404 && !d.error ? 'Open Finance indisponível neste endereço (as funções /api só rodam na Vercel).' : 'Falha no Open Finance (HTTP ' + res.status + ')'));
+  return d;
+}
+let _pluggyScript = null;
+function loadPluggyConnect() {
+  if (window.PluggyConnect) return Promise.resolve();
+  if (!_pluggyScript) _pluggyScript = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = PLUGGY_CONNECT_JS; s.async = true;
+    s.onload = resolve;
+    s.onerror = () => { _pluggyScript = null; reject(new Error('Não foi possível carregar o widget da Pluggy. Verifique a conexão.')); };
+    document.head.appendChild(s);
+  });
+  return _pluggyScript;
+}
+function setBankBusy(busy, status) {
+  imp.busy = busy; imp.status = status || '';
+  refreshImport();
+}
+async function connectBank(itemId) {
+  if (!fbUser) { toast('Entre com sua conta para conectar um banco', 'error'); return; }
+  setBankBusy(true, 'Abrindo a conexão segura…');
+  try {
+    const [tok] = await Promise.all([apiFetch('/api/pluggy/connect-token', { method: 'POST', body: JSON.stringify(itemId ? { itemId } : {}) }), loadPluggyConnect()]);
+    const widget = new window.PluggyConnect({
+      connectToken: tok.accessToken,
+      includeSandbox: !!tok.sandbox,
+      onSuccess: (payload) => {
+        const item = (payload && payload.item) || payload || {};
+        if (!item.id) return;
+        const nome = (item.connector && item.connector.name) || 'Banco';
+        const cur = data.conexoes.find((c) => c.id === item.id);
+        if (cur) cur.nome = nome; else data.conexoes.push({ id: item.id, nome, sync: '' });
+        save({ immediate: true });
+        if (isOpen('import')) refreshImport();
+        toast(`${nome} conectado! Agora é só buscar os lançamentos.`);
+      },
+      onError: (err) => { toast((err && err.message) || 'Não foi possível conectar o banco', 'error'); }
+    });
+    await widget.init();
+  } catch (e) {
+    toast(e.message || 'Falha ao abrir a conexão', 'error');
+  } finally {
+    if (imp) setBankBusy(false);
+  }
+}
+async function removeBank(id) {
+  const c = data.conexoes.find((x) => x.id === id);
+  if (!c) return;
+  const ok = await confirmDialog({ title: `Desconectar ${c.nome}?`, text: 'O Castelay deixa de acessar esse banco e os dados dele são apagados da Pluggy. Os lançamentos já importados continuam aqui.', confirm: 'Desconectar', danger: true });
+  if (!ok) return;
+  try { await apiFetch('/api/pluggy/item?id=' + encodeURIComponent(id), { method: 'DELETE' }); }
+  catch (e) { if (!/não encontrada/i.test(e.message)) { toast(e.message, 'error'); return; } }
+  data.conexoes = data.conexoes.filter((x) => x.id !== id);
+  save({ immediate: true });
+  if (isOpen('import')) refreshImport();
+  toast(`${c.nome} desconectado`);
+}
+// Categorias da Pluggy que indicam dinheiro mudando de bolso, não gasto real
+const PLUGGY_NEUTRAL = /same person transfer|credit card payment/i;
+async function fetchBankItems() {
+  if (!fbUser) throw new Error('Entre com sua conta para buscar lançamentos do banco');
+  if (!data.conexoes.length) throw new Error('Conecte um banco primeiro');
+  const inp = $('#impFrom');
+  if (inp && isISO(inp.value)) imp.from = inp.value;
+  if (!isISO(imp.from)) throw new Error('Escolha a data inicial');
+  const items = [], problems = [];
+  imp.synced = [];
+  try {
+    for (const c of data.conexoes) {
+      setBankBusy(true, `Buscando lançamentos de ${c.nome}…`);
+      try {
+        const d = await apiFetch('/api/pluggy/transactions', { method: 'POST', body: JSON.stringify({ itemId: c.id, from: imp.from }) });
+        if (d.item && d.item.name) c.nome = d.item.name;
+        if (d.item && /LOGIN_ERROR|OUTDATED|WAITING_USER_INPUT/.test(d.item.status)) problems.push(`${c.nome} precisa ser reconectado`);
+        (d.transactions || []).forEach((t) => {
+          if (!isISO(t.date) || t.date < imp.from) return;
+          const it = { kind: t.kind === 'in' ? 'in' : 'out', val: Math.abs(num(t.val)), date: t.date, desc: t.desc, ext: t.id };
+          if (PLUGGY_NEUTRAL.test(t.category || '')) it.include = false;
+          items.push(it);
+        });
+        imp.synced.push(c.id);
+      } catch (e) { problems.push(`${c.nome}: ${e.message}`); }
+    }
+  } finally { imp.busy = false; imp.status = ''; }
+  if (problems.length) toast(problems.join(' · '), 'warn');
+  if (!imp.synced.length) throw new Error('Não foi possível buscar os lançamentos');
+  return items;
 }
 
 /* Leitura de arquivos */
@@ -4002,6 +4154,9 @@ const ACTIONS = {
   'imp-flip': (el) => { const it = findItem(el.dataset.key); it.kind = it.kind === 'in' ? 'out' : 'in'; if (it.kind === 'out' && !it.cat) { const g = guessCategory(it.desc); if (g) { it.cat = g.cat; it.tipo = g.tipo; it.auto = true; } } markDuplicates(); refreshImport(); },
   'imp-invert': () => { imp.items.forEach((it) => { if (it.fromCsv) it.kind = it.kind === 'in' ? 'out' : 'in'; }); prepareItems(imp.items); refreshImport(); },
   'imp-all': (el) => { imp.items.forEach((i) => { i.include = el.dataset.on === '1'; }); refreshImport(); },
+  'of-connect': () => connectBank(),
+  'of-reconnect': (el) => connectBank(el.dataset.id),
+  'of-remove': (el) => removeBank(el.dataset.id),
 
   // configurações e conta
   'open-settings': () => { closePopover(); openSettings(); },
@@ -4055,7 +4210,8 @@ const CHANGES = {
   privacy: (el) => togglePrivacy(el.checked),
   'imp-files': (el) => setImportFiles(el.files),
   'imp-include': (el) => { const it = findItem(el.dataset.key); it.include = el.checked; el.closest('.review-item').classList.toggle('off', !el.checked); updateImportSummary(); },
-  'imp-target': (el) => { imp.target = el.value; markDuplicates(); refreshImport(); }
+  'imp-target': (el) => { imp.target = el.value; markDuplicates(); refreshImport(); },
+  'of-from': (el) => { if (isISO(el.value)) imp.from = el.value; }
 };
 
 document.addEventListener('click', (e) => {
