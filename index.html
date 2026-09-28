@@ -3550,7 +3550,8 @@ async function processImport() {
     refreshImport();
   } catch (e) {
     imp.busy = false;
-    refreshImport();
+    imp.step = 1;
+    try { refreshImport(); } catch (e2) { /* a mensagem abaixo ainda precisa aparecer */ }
     toast(e.message || 'Falha na importação', 'error');
   }
 }
@@ -3562,6 +3563,7 @@ function prepareItems(items) {
     it.key = 'i' + (n++);
     it.val = round2(Math.abs(it.val));
     it.desc = str(it.desc).replace(/\s+/g, ' ').slice(0, 120);
+    it.cat = str(it.cat);   // lançamentos sem categoria sugerida chegam sem o campo
     if (it.include === undefined) it.include = true;
     if (it.kind === 'out' && !it.cat) {
       const g = guessCategory(it.desc);
