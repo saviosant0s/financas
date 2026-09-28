@@ -3719,19 +3719,20 @@ function isImportedExt(ext) {
   return _extIndex.has(ext);
 }
 function bankDefaultFrom() {
-  const syncs = (data.conexoes || []).map((c) => c.sync).filter(isISO).sort();
+  const cx = data.conexoes || [];
+  const syncs = cx.map((c) => c.sync).filter(isISO).sort();
   const d = new Date();
-  if (syncs.length) { const [y, m, dd] = syncs[0].split('-').map(Number); d.setFullYear(y, m - 1, dd - 5); }   // margem para lançamentos que chegam atrasados
+  if (syncs.length && syncs.length === cx.length) { const [y, m, dd] = syncs[0].split('-').map(Number); d.setFullYear(y, m - 1, dd - 5); }   // margem para lançamentos que chegam atrasados
   else d.setMonth(d.getMonth() - 1, 1);
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 function bankTabHTML() {
   if (!fbUser) return `<div class="notice warn">${icon('alert')}<div>Entre com sua conta Google para conectar seu banco.</div></div>`;
   const list = data.conexoes.map((c) => `<div>${icon('bank', 'i-sm')}<b>${esc(c.nome)}</b>
-      <span class="muted" style="margin-left:auto">${c.sync ? 'sincronizado em ' + esc(fmtDateShort(c.sync)) : 'ainda não sincronizado'}</span>
+      <span class="muted" style="margin-left:auto">${c.sync ? 'importado até ' + esc(fmtDateShort(c.sync)) : 'conectado · nada importado ainda'}</span>
       <button type="button" class="icon-btn sm" data-act="of-reconnect" data-id="${esc(c.id)}" title="Reconectar (se o banco pedir nova autorização)" aria-label="Reconectar ${esc(c.nome)}" ${imp.busy ? 'disabled' : ''}>${icon('refresh', 'i-sm')}</button>
       <button type="button" class="icon-btn sm" data-act="of-remove" data-id="${esc(c.id)}" title="Desconectar" aria-label="Desconectar ${esc(c.nome)}" ${imp.busy ? 'disabled' : ''}>${icon('trash', 'i-sm')}</button></div>`).join('');
-  return `<div class="notice">${icon('shield')}<div>Conecte sua conta pelo <b>Open Finance</b>, com autorização no app do seu banco. O Castelay só <b>lê</b> seus lançamentos e não consegue movimentar dinheiro. Você pode desconectar quando quiser.</div></div>
+  return `<div class="notice">${icon('shield')}<div>Conecte sua conta pelo <b>Open Finance</b>, com autorização no app do seu banco. O Castelay só <b>lê</b> seus lançamentos e não consegue movimentar dinheiro. Você pode desconectar quando quiser.${data.conexoes.some((c) => /meu ?pluggy/i.test(c.nome)) ? ' Pelo <b>MeuPluggy</b>, conecte um banco por vez: clique em “Conectar banco” de novo para cada um.' : ''}</div></div>
     <div class="file-list">${list || '<div class="muted">Nenhum banco conectado ainda.</div>'}</div>
     <div class="row-2" style="align-items:end;margin-top:12px">
       <div class="field"><label for="impFrom">Buscar lançamentos desde</label><input class="input" type="date" id="impFrom" value="${esc(imp.from)}" max="${todayISO()}" data-change="of-from"></div>
@@ -3740,7 +3741,12 @@ function bankTabHTML() {
     ${imp.busy ? `<div class="progress-line"><span></span></div><p class="hint" id="impStatus" style="margin-top:8px;text-align:center">${esc(imp.status || '')}</p>` : ''}`;
 }
 async function apiFetch(path, opts = {}, retry = true) {
-  const res = await fetch(path, { ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}), Authorization: 'Bearer ' + fbIdToken } });
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 75000);
+  let res;
+  try { res = await fetch(path, { ...opts, signal: ctrl.signal, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}), Authorization: 'Bearer ' + fbIdToken } }); }
+  catch (e) { throw new Error(ctrl.signal.aborted ? 'o banco demorou demais para responder, tente de novo' : 'sem conexão com o servidor'); }
+  finally { clearTimeout(timer); }
   if (res.status === 401 && retry && LS.get('fbSession') && await doTokenRefresh()) return apiFetch(path, opts, false);
   const d = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(d.error || (res.status === 404 && !d.error ? 'Open Finance indisponível neste endereço (as funções /api só rodam na Vercel).' : 'Falha no Open Finance (HTTP ' + res.status + ')'));
@@ -3782,7 +3788,8 @@ async function connectBank(itemId) {
       },
       onError: (err) => { toast((err && err.message) || 'Não foi possível conectar o banco', 'error'); }
     });
-    await widget.init();
+    // init() resolve quando o widget aparece; não prendemos a tela se ele demorar
+    await Promise.race([widget.init(), new Promise((r) => setTimeout(r, 10000))]);
   } catch (e) {
     toast(e.message || 'Falha ao abrir a conexão', 'error');
   } finally {
@@ -3811,14 +3818,17 @@ async function fetchBankItems() {
   if (!isISO(imp.from)) throw new Error('Escolha a data inicial');
   const items = [], problems = [];
   imp.synced = [];
+  const n = data.conexoes.length;
+  setBankBusy(true, n > 1 ? `Buscando lançamentos de ${n} bancos…` : `Buscando lançamentos de ${data.conexoes[0].nome}…`);
   try {
-    for (const c of data.conexoes) {
-      setBankBusy(true, `Buscando lançamentos de ${c.nome}…`);
+    await Promise.all(data.conexoes.map(async (c) => {
       try {
         const d = await apiFetch('/api/pluggy/transactions', { method: 'POST', body: JSON.stringify({ itemId: c.id, from: imp.from }) });
         if (d.item && d.item.name) c.nome = d.item.name;
+        const txs = d.transactions || [];
         if (d.item && /LOGIN_ERROR|OUTDATED|WAITING_USER_INPUT/.test(d.item.status)) problems.push(`${c.nome} precisa ser reconectado`);
-        (d.transactions || []).forEach((t) => {
+        if (d.updating && !txs.length) { problems.push(`${c.nome} ainda está sincronizando com o banco, tente de novo em alguns minutos`); return; }
+        txs.forEach((t) => {
           if (!isISO(t.date) || t.date < imp.from) return;
           const it = { kind: t.kind === 'in' ? 'in' : 'out', val: Math.abs(num(t.val)), date: t.date, desc: t.desc, ext: t.id };
           if (PLUGGY_NEUTRAL.test(t.category || '')) it.include = false;
@@ -3826,10 +3836,11 @@ async function fetchBankItems() {
         });
         imp.synced.push(c.id);
       } catch (e) { problems.push(`${c.nome}: ${e.message}`); }
-    }
+    }));
   } finally { imp.busy = false; imp.status = ''; }
+  items.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  if (!imp.synced.length) throw new Error(problems.join(' · ') || 'Não foi possível buscar os lançamentos');
   if (problems.length) toast(problems.join(' · '), 'warn');
-  if (!imp.synced.length) throw new Error('Não foi possível buscar os lançamentos');
   return items;
 }
 
