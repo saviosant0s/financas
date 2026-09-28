@@ -18,6 +18,19 @@ async function accountTransactions(accountId, from) {
   return out;
 }
 
+function partyName(t, out) {
+  const p = t.paymentData || {};
+  const who = out ? p.receiver : p.payer;
+  return String((who && who.name) || (t.merchant && (t.merchant.name || t.merchant.businessName)) || '').trim().slice(0, 60);
+}
+
+/** Parcela do cartão (ex.: 3 de 10). */
+function installments(t) {
+  const m = t.creditCardMetadata || {};
+  const n = Number(m.installmentNumber), tot = Number(m.totalInstallments);
+  return n > 0 && tot > 1 ? { inst: n, instTotal: tot } : {};
+}
+
 /** Pelo MeuPluggy todas as conexões se chamam "MeuPluggy"; o nome das contas diz qual banco é. */
 function connectionName(item, accounts) {
   const base = (item.connector && item.connector.name) || 'Banco';
@@ -52,7 +65,10 @@ module.exports = handler(['POST'], async (req) => {
         account: accName,
         accountId: acc.id,
         card: isCard,
-        category: t.category || ''
+        category: t.category || '',
+        // Nome de quem recebeu (saída) ou pagou (entrada) — ajuda nas regras "Pix de Fulano"
+        party: partyName(t, out),
+        ...installments(t)
       });
     }
     return list;
