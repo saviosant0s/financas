@@ -3573,7 +3573,7 @@ function prepareItems(items) {
       const known = knownCategories().find((c) => norm(c.name) === norm(it.cat));
       it.tipo = known ? known.tipo : inferTipo(it.cat);
     }
-    if (it.tipo === 'T' || /transferencia entre contas|mesma titularidade|pagamento de fatura|pagamento recebido|resgate/.test(norm(it.desc))) it.include = false;
+    if (it.tipo === 'T' || /transferencia entre contas|mesma titularidade|pagamento de fatura|pagamento recebido|resgate/.test(norm(it.desc))) { it.include = false; it.why = it.why || 'transferência entre suas contas'; }
   });
   const dated = items.filter((i) => isISO(i.date)).length;
   imp.target = dated >= items.length / 2 ? 'auto' : ui.month;
@@ -3586,7 +3586,8 @@ function markDuplicates() {
   imp.items.forEach((it) => {
     const k = itemMonth(it);
     let dup = false;
-    if (it.ext && isImportedExt(it.ext)) dup = true;
+    it.dupExt = !!(it.ext && isImportedExt(it.ext));
+    if (it.dupExt) dup = true;
     else if (it.kind === 'out') dup = allTx(k).some((t) => Math.abs(t.val - it.val) < 0.005 && ((it.date && t.date === it.date) || norm(t.desc) === norm(it.desc)));
     else dup = incomes(k).some((e) => Math.abs(e.val - it.val) < 0.005 && norm(e.desc) === norm(it.desc));
     if (dup && !it.dup) it.include = false;
@@ -3608,14 +3609,14 @@ function importReviewHTML() {
   const row = (it) => it.kind === 'out'
     ? `<div class="review-item ${it.include ? '' : 'off'}" data-key="${it.key}">
         <input type="checkbox" ${it.include ? 'checked' : ''} data-change="imp-include" data-key="${it.key}" aria-label="Incluir">
-        <div class="rd"><b title="${esc(it.desc)}">${esc(it.desc || '—')}</b><span>${isISO(it.date) ? esc(fmtDateShort(it.date)) : 'sem data'}${it.dup ? ' · <span class="warn-ink">possível duplicado</span>' : ''}${it.auto ? ' · sugerido' : ''}</span></div>
+        <div class="rd"><b title="${esc(it.desc)}">${esc(it.desc || '—')}</b><span>${isISO(it.date) ? esc(fmtDateShort(it.date)) : 'sem data'}${it.dup ? ` · <span class="warn-ink">${it.dupExt ? 'já importado' : 'possível duplicado'}</span>` : ''}${!it.include && !it.dup && it.why ? ` · <span class="warn-ink">${esc(it.why)}</span>` : ''}${it.auto ? ' · sugerido' : ''}</span></div>
         <input class="input cat-in ${it.include && !it.cat ? 'need' : ''}" list="impCats" value="${esc(it.cat || '')}" placeholder="Categoria" data-input="imp-cat" data-key="${it.key}" aria-label="Categoria">
         <span class="rv">${money(it.val)}</span>
         <button type="button" class="icon-btn sm" data-act="imp-flip" data-key="${it.key}" title="Mover para entradas" aria-label="Mover para entradas">${icon('in', 'i-sm')}</button>
       </div>`
     : `<div class="review-item income ${it.include ? '' : 'off'}" data-key="${it.key}">
         <input type="checkbox" ${it.include ? 'checked' : ''} data-change="imp-include" data-key="${it.key}" aria-label="Incluir">
-        <div class="rd"><b title="${esc(it.desc)}">${esc(it.desc || 'Entrada')}</b><span>${isISO(it.date) ? esc(fmtDateShort(it.date)) : 'sem data'}${it.dup ? ' · <span class="warn-ink">possível duplicado</span>' : ''}</span></div>
+        <div class="rd"><b title="${esc(it.desc)}">${esc(it.desc || 'Entrada')}</b><span>${isISO(it.date) ? esc(fmtDateShort(it.date)) : 'sem data'}${it.dup ? ` · <span class="warn-ink">${it.dupExt ? 'já importado' : 'possível duplicado'}</span>` : ''}${!it.include && !it.dup && it.why ? ` · <span class="warn-ink">${esc(it.why)}</span>` : ''}</span></div>
         <span class="rv pos">+${money(it.val)}</span>
         <button type="button" class="icon-btn sm" data-act="imp-flip" data-key="${it.key}" title="Mover para saídas" aria-label="Mover para saídas">${icon('out', 'i-sm')}</button>
       </div>`;
@@ -3833,7 +3834,7 @@ async function fetchBankItems() {
         txs.forEach((t) => {
           if (!isISO(t.date) || t.date < imp.from) return;
           const it = { kind: t.kind === 'in' ? 'in' : 'out', val: Math.abs(num(t.val)), date: t.date, desc: t.desc, ext: t.id };
-          if (PLUGGY_NEUTRAL.test(t.category || '')) it.include = false;
+          if (PLUGGY_NEUTRAL.test(t.category || '')) { it.include = false; it.why = /card/i.test(t.category) ? 'pagamento de fatura' : 'transferência entre suas contas'; }
           items.push(it);
         });
         imp.synced.push(c.id);
